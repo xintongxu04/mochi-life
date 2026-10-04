@@ -2,79 +2,19 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: [
-        SortDescriptor(\WeightEntry.date, order: .reverse),
-        SortDescriptor(\WeightEntry.createdAt, order: .reverse),
-    ])
-    private var entries: [WeightEntry]
-    @AppStorage("weightUnit") private var unit: WeightUnit = .kilograms
-    @State private var isAddingEntry = false
-
     var body: some View {
-        NavigationStack {
-            List {
-                if !entries.isEmpty {
-                    Section {
-                        WeightChartView(entries: entries, unit: unit)
-                    }
-                }
-                Section {
-                    ForEach(entries) { entry in
-                        HStack {
-                            Text(entry.date, format: .dateTime.day().month(.abbreviated).year())
-                            Spacer()
-                            Text(unit.formatted(kilograms: entry.kilograms))
-                                .monospacedDigit()
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("weightEntry")
-                    }
-                    .onDelete(perform: deleteEntries)
-                }
+        TabView {
+            Tab("Weight", systemImage: "scalemass") {
+                WeightView()
             }
-            .overlay {
-                if entries.isEmpty {
-                    ContentUnavailableView(
-                        "No weights yet",
-                        systemImage: "scalemass",
-                        description: Text("Tap + to log Mochi's first weight.")
-                    )
-                }
-            }
-            .safeAreaInset(edge: .top) {
-                Picker("Unit", selection: $unit) {
-                    ForEach(WeightUnit.allCases) { unit in
-                        Text(unit.rawValue).tag(unit)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            }
-            .navigationTitle("Mochi Life")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Add Weight", systemImage: "plus") {
-                        isAddingEntry = true
-                    }
-                }
-            }
-            .sheet(isPresented: $isAddingEntry) {
-                AddWeightView(unit: unit)
+            Tab("Calories", systemImage: "fork.knife") {
+                CaloriesView()
             }
         }
-    }
-
-    private func deleteEntries(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(entries[index])
-        }
-        try? modelContext.save()
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: WeightEntry.self, inMemory: true)
+        .modelContainer(for: [WeightEntry.self, Food.self], inMemory: true)
 }

@@ -7,6 +7,6 @@ struct MochiLifeApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: WeightEntry.self)
+        .modelContainer(for: [WeightEntry.self, Food.self])
     }
 }
