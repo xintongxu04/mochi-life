@@ -14,16 +14,24 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(entries) { entry in
-                    HStack {
-                        Text(entry.date, format: .dateTime.day().month(.abbreviated).year())
-                        Spacer()
-                        Text(unit.formatted(kilograms: entry.kilograms))
-                            .monospacedDigit()
+                if !entries.isEmpty {
+                    Section {
+                        WeightChartView(entries: entries, unit: unit)
                     }
-                    .accessibilityElement(children: .combine)
                 }
-                .onDelete(perform: deleteEntries)
+                Section {
+                    ForEach(entries) { entry in
+                        HStack {
+                            Text(entry.date, format: .dateTime.day().month(.abbreviated).year())
+                            Spacer()
+                            Text(unit.formatted(kilograms: entry.kilograms))
+                                .monospacedDigit()
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("weightEntry")
+                    }
+                    .onDelete(perform: deleteEntries)
+                }
             }
             .overlay {
                 if entries.isEmpty {
