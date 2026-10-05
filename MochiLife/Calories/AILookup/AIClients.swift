@@ -120,22 +120,41 @@ struct BraveSearchClient: WebSearchClient {
     }
 }
 
-/// DeepSeek chat completions (OpenAI format) with JSON output, temperature 0 and thinking turned
-/// off (thinking mode ignores temperature).
+/// The DeepSeek model and request settings for AI lookup — the only place the model is named.
+///
+/// Chosen 2026-10-05 from DeepSeek's models & pricing page and API reference: `deepseek-flash`
+/// (DeepSeek-V4.1-Flash) supports JSON output, has a 1M-token context, is the speed tier, and is
+/// the cheapest. Re-verify the identifier whenever DeepSeek changes its lineup.
+enum DeepSeekModelConfig {
+    static let model = "deepseek-flash"
+    /// Choosing a page needs only a short JSON answer.
+    static let selectionMaxTokens = 300
+    /// Room for the full extraction JSON, including long ingredient lists.
+    static let extractionMaxTokens = 2_000
+    /// Per request; a timeout is reported as the usual "took too long" error.
+    static let requestTimeout: TimeInterval = 45
+}
+
+/// DeepSeek chat completions (OpenAI format) with JSON output, temperature 0, streaming off and
+/// thinking turned off (thinking mode ignores temperature and is slower).
 struct DeepSeekClient: ChatCompletionClient {
     let apiKey: String
-    static let model = "deepseek-flash"
 
     private struct Body: Encodable {
         struct ResponseFormat: Encodable { var type = "json_object" }
         struct Thinking: Encodable { var type = "disabled" }
-        var model = DeepSeekClient.model
+        var model = DeepSeekModelConfig.model
         var messages: [ChatMessage]
         var temperature = 0.0
         var max_tokens: Int
         var response_format = ResponseFormat()
         var thinking = Thinking()
         var stream = false
+    }
+
+    private struct ErrorBody: Decodable {
+        struct Detail: Decodable { var message: String? }
+        var error: Detail?
     }
 
     private struct Response: Decodable {
@@ -162,9 +181,10 @@ struct DeepSeekClient: ChatCompletionClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONEncoder().encode(Body(messages: messages, max_tokens: maxTokens))
         do {
-            let session = HTTPCheck.session(timeout: 60)
+            let session = HTTPCheck.session(timeout: DeepSeekModelConfig.requestTimeout)
             defer { session.finishTasksAndInvalidate() }
             let (data, response) = try await session.data(for: request)
+            try Self.checkModelAvailable(response, data: data, purpose: purpose)
             try HTTPCheck.validate(response, service: .deepSeek, purpose: "deepseek_\(purpose)")
             let decoded = try JSONDecoder().decode(Response.self, from: data)
             let usage = decoded.usage
@@ -175,6 +195,16 @@ struct DeepSeekClient: ChatCompletionClient {
         } catch {
             throw HTTPCheck.translate(error)
         }
+    }
+
+    /// A request error that names the model means DeepSeek no longer offers this app's model
+    /// (DeepSeek's docs don't define a specific code, so 400, 404 and 422 are checked).
+    private static func checkModelAvailable(_ response: URLResponse, data: Data, purpose: String) throws {
+        guard let status = (response as? HTTPURLResponse)?.statusCode, [400, 404, 422].contains(status) else { return }
+        let message = (try? JSONDecoder().decode(ErrorBody.self, from: data))?.error?.message?.lowercased() ?? ""
+        guard message.contains("model") else { return }
+        AILog.logger.error("deepseek_\(purpose, privacy: .public) model_unavailable model=\(DeepSeekModelConfig.model, privacy: .public) http_status=\(status)")
+        throw LookupFailure.modelUnavailable
     }
 }
 

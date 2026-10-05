@@ -36,6 +36,8 @@ enum LookupFailure: Error, Sendable, Equatable {
     case blockedOrEmptyPage
     case unreadableAnswer
     case notFound
+    /// DeepSeek no longer offers the model this version of the app asks for.
+    case modelUnavailable
 
     var message: String {
         switch self {
@@ -51,6 +53,7 @@ enum LookupFailure: Error, Sendable, Equatable {
         case .blockedOrEmptyPage: "The product pages couldn't be read (blocked or empty)."
         case .unreadableAnswer: "The AI's answer couldn't be read. Try again."
         case .notFound: "No matching cat food was found."
+        case .modelUnavailable: "DeepSeek no longer offers the AI model this version of Mochi Life uses. Update the app to keep using Add with AI."
         }
     }
 }

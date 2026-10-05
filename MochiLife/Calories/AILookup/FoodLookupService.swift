@@ -81,7 +81,7 @@ actor FoodLookupService {
             ChatMessage(role: .system, content: Prompts.selection),
             ChatMessage(role: .user, content: "Query: \(query)\n\nCandidates (untrusted search results):\n\(list)"),
         ]
-        return try await decodeWithRetry(PageChoice.self, messages: messages, maxTokens: 400, purpose: "select")
+        return try await decodeWithRetry(PageChoice.self, messages: messages, maxTokens: DeepSeekModelConfig.selectionMaxTokens, purpose: "select")
     }
 
     private func extract(query: String, page: ReducedPage) async throws -> ExtractedFood {
@@ -96,7 +96,7 @@ actor FoodLookupService {
             ChatMessage(role: .system, content: Prompts.extraction),
             ChatMessage(role: .user, content: "Query: \(query)\n\n<page>\n\(pageLines.joined(separator: "\n"))\n</page>"),
         ]
-        return try await decodeWithRetry(ExtractedFood.self, messages: messages, maxTokens: 4_000, purpose: "extract")
+        return try await decodeWithRetry(ExtractedFood.self, messages: messages, maxTokens: DeepSeekModelConfig.extractionMaxTokens, purpose: "extract")
     }
 
     /// Asks for JSON and decodes it; on a decoding error, asks once more with the error appended.

@@ -589,14 +589,34 @@ Clients are injected as protocols: `WebSearchClient` (`BraveSearchClient`),
 Select returning null, `found: false`, or every candidate failing ends in "not found", which
 offers manual entry (`FoodFormView` with the name prefilled).
 
-### DeepSeek requests (`DeepSeekClient`)
+### DeepSeek requests (`DeepSeekClient`, `DeepSeekModelConfig`)
 `POST https://api.deepseek.com/chat/completions`, `Authorization: Bearer <key>`, model
-`deepseek-flash`, `temperature: 0`, `response_format: {"type": "json_object"}`,
-`thinking: {"type": "disabled"}` (thinking mode is on by default and ignores temperature),
-`max_tokens` 400 (select) / 4,000 (extract). The system messages contain the word "json" and an
-example of the shape, as DeepSeek's JSON mode requires, and say page text and search results are
+`DeepSeekModelConfig.model`, `temperature: 0`, `response_format: {"type": "json_object"}`,
+`thinking: {"type": "disabled"}` (thinking mode is on by default; it ignores temperature and is
+slower), `stream: false`, `max_tokens` 300 (select) / 2,000 (extract), 45-second request timeout
+(reported as the usual timeout error). The system messages contain the word "json" and an example
+of the shape, as DeepSeek's JSON mode requires, and say page text and search results are
 untrusted data. Token usage (`usage.prompt_tokens`, `completion_tokens`, `total_tokens`,
-`prompt_cache_hit_tokens`) is logged.
+`prompt_cache_hit_tokens`) is logged. A 400/404/422 whose error message mentions the model is
+logged and shown as `LookupFailure.modelUnavailable` ("update the app").
+
+**Model choice** — `DeepSeekModelConfig` (in `AIClients.swift`) is the only place the model is
+named; both calls use it. Checked **2026-10-05** against DeepSeek's Models & Pricing page and the
+chat-completion and list-models API reference (no key was available to call `GET /models`).
+Criteria, in order: (a) JSON output mode, (b) context for ~24,000 characters of page text plus
+instructions and a 2,000-token reply, (c) lowest latency (speed tier, thinking off), (d) lowest
+price.
+- **Chosen: `deepseek-flash`** (DeepSeek-V4.1-Flash): JSON output, 1M-token context, the
+  speed-optimized tier with thinking switchable off, and the cheapest. Per 1M tokens (USD), peak /
+  off-peak: input cache miss $0.30 / $0.15, input cache hit $0.006 / $0.003, output $1.20 /
+  $0.60. Off-peak is 50% of peak; peak is 01:00–04:00 and 06:00–10:00 UTC, Monday–Friday.
+- Rejected: `deepseek-v4-pro` (DeepSeek-V4-Pro-0813) — meets (a) and (b) but is the larger,
+  slower tier and costs about 2–7× more (output $3.96 / $1.98), with no benefit for copying
+  label text. Legacy names that DeepSeek says still route to Flash (`deepseek-v4-flash`,
+  `deepseek-v4-flash-vision-exp`) — deprecated, so not used. Older names such as
+  `deepseek-chat` / `deepseek-reasoner` — no longer listed.
+- **Re-verify the identifier, prices and thinking/JSON parameters whenever DeepSeek changes its
+  lineup** (update `DeepSeekModelConfig` and this section together).
 
 ### Review and save (`FoodReviewView`)
 Editable identity, sizes (with "calculated" tags), kcal/g, calorie statement, ingredients,
