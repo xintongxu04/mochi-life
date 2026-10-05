@@ -41,7 +41,30 @@ The Calories tab opens on **Today**.
 - Each entry keeps its own copy of the food's name and calories from when it
   was logged, so editing or deleting a saved food later never changes past
   entries.
+- Under the total, see calories eaten against Mochi's daily calories, as numbers
+  and a progress bar (like "180 of 260 kcal · estimate"). Going over just changes
+  the bar's color slightly and shows how much over.
+- A **Daily Calories** chart shows one bar per day for the last 7 or 30 days,
+  with a dashed line at Mochi's daily calories. Days with nothing logged have
+  no bar.
 - The **Saved Foods** button at the top left opens the food library below.
+
+### Calories: daily calories estimate
+
+- The app estimates how many calories Mochi needs a day, using the Merck
+  Veterinary Manual method: resting energy = 70 × (weight in kg) to the power
+  0.75, times a factor (kitten under 1 year 2.5; adult spayed or neutered 1.2;
+  adult not spayed or neutered 1.4; adult who gains weight easily 1.0),
+  rounded to the nearest 5 kcal. It uses her latest weight from the Weight tab
+  and her birthday and spay status from the Mochi tab.
+- If her weight, birthday or (for adults) spay status is missing or "not
+  sure", the app doesn't guess. It says what to fill in, with a button that
+  goes there.
+- The settings screen (the sliders button at the top left of the Calories
+  tab) has a "Gains weight easily" switch, a place to type your own daily
+  target from your vet (which then replaces the estimate everywhere), and a
+  plain explanation of how the estimate was worked out. The estimate is a
+  starting point, not veterinary advice.
 
 ### Calories: saved foods
 
@@ -122,6 +145,5 @@ own phone. Don't publish them anywhere public.
 These are not built yet:
 
 - Scheduled or repeating meals
-- Calorie goals and recommendations
-- Charts of what Mochi eats
+- Weight-loss plans
 - Reminders and notifications (including for vaccinations)

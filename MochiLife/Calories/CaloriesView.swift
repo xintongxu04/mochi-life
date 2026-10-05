@@ -29,11 +29,16 @@ struct DayLogView: View {
         DayEntriesList(day: day, dayControls: dayControls, onSwipe: move(by:))
             .navigationTitle(title)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItemGroup(placement: .topBarLeading) {
                     NavigationLink {
                         SavedFoodsView()
                     } label: {
                         Label("Saved Foods", systemImage: "books.vertical")
+                    }
+                    NavigationLink {
+                        CalorieTargetSettingsView()
+                    } label: {
+                        Label("Daily Calories", systemImage: "slider.horizontal.3")
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
@@ -98,19 +103,17 @@ private struct DayEntriesList<Controls: View>: View {
     private var total: Double { entries.reduce(0) { $0 + $1.kilocalories } }
 
     var body: some View {
+        CalorieTargetReader { target in
+            list(target: target)
+        }
+    }
+
+    private func list(target: CalorieTarget) -> some View {
         List {
             Section {
                 VStack(spacing: 12) {
                     dayControls
-                    VStack(spacing: 2) {
-                        Text("\(Portion.formatKilocalories(total)) kcal")
-                            .font(.largeTitle.bold())
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                            .accessibilityIdentifier("dayTotal")
-                        Text("eaten")
-                            .foregroundStyle(.secondary)
-                    }
+                    CalorieProgressView(eaten: total, target: target)
                 }
                 .padding(.vertical, 4)
                 .contentShape(.rect)
@@ -142,6 +145,10 @@ private struct DayEntriesList<Controls: View>: View {
                     }
                 }
             }
+
+            Section("Daily Calories") {
+                CalorieChartView(target: target)
+            }
         }
         .sheet(item: $entryBeingEdited) { entry in
             NavigationStack {
@@ -157,6 +164,43 @@ private struct DayEntriesList<Controls: View>: View {
                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
                 onSwipe(value.translation.width > 0 ? -1 : 1)
             }
+    }
+}
+
+/// Calories eaten against the daily target, as numbers and a progress bar. Going over just
+/// changes the color slightly and says by how much.
+private struct CalorieProgressView: View {
+    let eaten: Double
+    let target: CalorieTarget
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("\(Portion.formatKilocalories(eaten)) kcal")
+                .font(.largeTitle.bold())
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .accessibilityIdentifier("dayTotal")
+            if let goal = target.dailyKilocalories {
+                let isOver = eaten > goal
+                Text("\(Portion.formatKilocalories(eaten)) of \(Portion.formatKilocalories(goal)) kcal · \(target.label.lowercased())")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                ProgressView(value: min(eaten / goal, 1))
+                    .tint(isOver ? .indigo : .accentColor)
+                if isOver {
+                    Text("\(Portion.formatKilocalories(eaten - goal)) kcal over")
+                        .font(.subheadline)
+                        .foregroundStyle(.indigo)
+                }
+            } else {
+                Text("eaten")
+                    .foregroundStyle(.secondary)
+                if case let .missing(details) = target {
+                    MissingCalorieDetailsView(missing: details)
+                        .padding(.top, 4)
+                }
+            }
+        }
     }
 }
 
