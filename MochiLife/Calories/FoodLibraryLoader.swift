@@ -176,7 +176,8 @@ private struct Product: Decodable {
         food.kilocaloriesPerGram = sizes.first?.kilocaloriesPerGram ?? kcalPerG.first?.kcalPerG ?? 0
         food.brand = brand
         food.line = line
-        food.kindRawValue = (FoodKind(rawValue: type) ?? .food).rawValue
+        // The bundled library's "food" products are canned and pouched wet food.
+        food.kindRawValue = (FoodKind(rawValue: type) ?? .wetFood).rawValue
         food.sizes = sizes
         food.calorieStatement = calorieStatement
         food.ingredients = ingredients

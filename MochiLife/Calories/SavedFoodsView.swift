@@ -280,6 +280,7 @@ private struct FoodRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .accessibilityValue(food.kind.displayName)
         .accessibilityIdentifier("savedFood")
     }
 

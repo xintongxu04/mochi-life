@@ -8,7 +8,7 @@ import Testing
 @MainActor
 struct BackupRoundTripTests {
     @Test func exportAndRestoreKeepEveryRecordAndPhoto() async throws {
-        let schema = Schema(versionedSchema: SchemaV4.self)
+        let schema = Schema(versionedSchema: SchemaV5.self)
         let source = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let target = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let work = URL.temporaryDirectory.appending(path: "backup-test-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -34,7 +34,7 @@ struct BackupRoundTripTests {
         context.insert(manual)
 
         let aiFood = Food(name: "Paw Lickin' Chicken", kilocaloriesPerGram: 0.85, brand: "Weruva", line: "Classic",
-                          kind: .food,
+                          kind: .wetFood,
                           sizes: [FoodSize(name: "3 oz can", grams: 85, kilocalories: 72.3, kilocaloriesPerGram: 0.85, isCalculated: true)],
                           calorieStatement: "850 kcal/kg", ingredients: "Chicken, water",
                           guaranteedAnalysis: [GuaranteedAnalysisRow(nutrient: "Crude protein", amount: "12% min")],
@@ -58,6 +58,7 @@ struct BackupRoundTripTests {
         context.insert(carried)
         let quick = FoodLogEntry(foodName: "Treat", kilocalories: 5, loggedAt: date, createdAt: date.addingTimeInterval(1))
         quick.foodLibraryIdentifier = "user/food-test"
+        quick.kind = .treat
         context.insert(quick)
 
         // A feeding schedule already caught up to today, and one entry it made.
@@ -115,7 +116,7 @@ struct BackupRoundTripTests {
         #expect(exported.payload.foods.count == 3)
         #expect(exported.payload.foodLog.count == 4)
         #expect(exported.payload.schedules.count == 1)
-        #expect(exported.formatVersion == 2)
+        #expect(exported.formatVersion == 3)
         #expect(exported.payload.vaccinations.count == 1)
         #expect(exported.payload.medicalRecords.count == 1)
         #expect(exported.payload.profile != nil)

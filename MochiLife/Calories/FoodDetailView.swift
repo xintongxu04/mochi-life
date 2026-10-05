@@ -22,13 +22,11 @@ struct FoodDetailView: View {
                         .font(.title2.bold())
                     Text([food.brandTitle, food.line].compactMap(\.self).joined(separator: " · "))
                         .foregroundStyle(.secondary)
-                    if food.kind != .food {
-                        Text(food.kind.rawValue.capitalized)
-                            .font(.caption.bold())
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(.tint.opacity(0.15), in: .capsule)
-                    }
+                    Text(food.kind.displayName)
+                        .font(.caption.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.tint.opacity(0.15), in: .capsule)
                 }
                 .padding(.vertical, 4)
             }

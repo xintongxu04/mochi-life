@@ -8,6 +8,9 @@ enum LaunchMaintenance {
         _ = CatProfile.current(in: context)
         FoodLibraryLoader.updateBundledLibraries(in: context)
         deriveMissingFractions(in: context)
+        // Repeat-safe: anything still without a kind gets one (normally done by the migration).
+        FoodKindBackfill.run(in: context)
+        if context.hasChanges { Persistence.save(context) }
         ScheduleMaterializer(context: context).materialize()
     }
 

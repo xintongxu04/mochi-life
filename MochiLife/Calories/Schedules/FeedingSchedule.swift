@@ -17,6 +17,8 @@ final class FeedingSchedule {
     var foodPhotoKey: String?
     /// The food's sizes and calories, for editing the amount later.
     var portionSource: PortionSource?
+    /// The food's `FoodKind` raw value, given to every entry this schedule makes. (V5)
+    var foodKindRawValue: String?
 
     // Amount, as the size-and-portion picker represents it.
     /// `"containers"` or `"grams"`.
@@ -65,6 +67,7 @@ final class FeedingSchedule {
         foodSeedID = food.seedID
         foodPhotoKey = food.photoKey
         portionSource = PortionSource(food)
+        foodKindRawValue = food.kind.rawValue
     }
 
     /// Copies the amount and calories chosen in the picker.
@@ -77,6 +80,10 @@ final class FeedingSchedule {
         grams = portion.measure == .grams ? portion.grams : nil
         kilocaloriesPerOccurrence = portion.kilocalories ?? kilocaloriesPerOccurrence
         isKilocaloriesOverridden = portion.customKilocalories != nil
+    }
+
+    var kind: FoodKind {
+        FoodKind.stored(foodKindRawValue, hasContainerSizes: !(portionSource?.sizes.isEmpty ?? true))
     }
 
     var exactContainers: Fraction? {
@@ -133,6 +140,7 @@ final class FeedingSchedule {
         entry.grams = grams
         entry.isCustomKilocalories = isKilocaloriesOverridden
         entry.scheduleID = id
+        entry.kindRawValue = kind.rawValue
         return entry
     }
 }

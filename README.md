@@ -162,7 +162,15 @@ The app opens on the Calories screen for **Today**.
   then by product. Foods without a brand are grouped under "My foods".
 - Each Tiki Cat food shows a small product photo next to it in lists and search
   results. The photos are stored inside the app, so they work offline. Foods
-  without a photo (such as ones you add yourself) show a simple placeholder icon.
+  and log entries without a photo show a little pixel-art picture for their kind.
+- **Food kinds:** every food and every log entry is Kibble, Wet food, Treat,
+  Supplement or Topper. Pick it from a row of five picture buttons when adding
+  or editing a food, making a quick entry (Kibble to start with), or editing a
+  logged entry. Add with AI guesses it from the product (you can change it).
+  Foods from before this was added were sorted automatically: canned and
+  pouched foods (including all the Tiki Cat foods) became Wet food, foods
+  measured only by weight became Kibble, and quick entries became Kibble.
+  Calories count the same whatever the kind.
 - **Add with AI** (the sparkles button in Saved Foods): type a food's name, or take or
   choose a photo of the package front (its text is read on the iPhone; the photo is never
   uploaded). The app searches the web with Brave Search, has DeepSeek pick the

@@ -28,7 +28,7 @@ struct FoodEditorView: View {
     @State private var brand = ""
     @State private var line = ""
     @State private var name = ""
-    @State private var kind = FoodKind.food
+    @State private var kind = FoodKind.kibble
     // Calories
     @State private var sizes: [EditableSize] = []
     @State private var perGramText = ""
@@ -492,11 +492,7 @@ struct FoodEditorView: View {
             TextField("Line (optional)", text: $line)
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("Line")
-            Picker("Type", selection: $kind) {
-                ForEach(FoodKind.allCases, id: \.self) { kind in
-                    Text(kind.rawValue.capitalized).tag(kind)
-                }
-            }
+            FoodKindSelector(kind: $kind)
         } header: {
             Text("Product")
         } footer: {
@@ -663,7 +659,7 @@ struct FoodEditorView: View {
         food.brand = trimmed(brand).isEmpty ? nil : trimmed(brand)
         food.line = trimmed(line).isEmpty ? nil : trimmed(line)
         food.kilocaloriesPerGram = perGram
-        food.kindRawValue = kind.rawValue
+        food.kind = kind
         food.sizes = completeSizes
         food.calorieStatement = trimmed(calorieStatement).isEmpty ? nil : trimmed(calorieStatement)
         food.ingredients = trimmed(ingredients).isEmpty ? nil : trimmed(ingredients)

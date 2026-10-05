@@ -74,7 +74,7 @@ extension FoodLogEntryDTO {
             containersDenominator: entry.containersDenominator, kilocalories: entry.kilocalories,
             isCustomKilocalories: entry.isCustomKilocalories, createdAt: entry.createdAt,
             carryGroupID: entry.carryGroupID, carryDay: entry.carryDay, openedAt: entry.openedAt,
-            scheduleID: entry.scheduleID
+            scheduleID: entry.scheduleID, kind: entry.kindRawValue
         )
     }
 
@@ -97,6 +97,7 @@ extension FoodLogEntryDTO {
         entry.carryDay = carryDay
         entry.openedAt = openedAt
         entry.scheduleID = scheduleID
+        entry.kindRawValue = kind
         return entry
     }
 }
@@ -115,7 +116,7 @@ extension FeedingScheduleDTO {
             isKilocaloriesOverridden: schedule.isKilocaloriesOverridden, label: schedule.label,
             weekdays: schedule.weekdays, startDate: schedule.startDate, endDate: schedule.endDate,
             isPaused: schedule.isPaused, lastMaterializedDay: schedule.lastMaterializedDay,
-            createdAt: schedule.createdAt, updatedAt: schedule.updatedAt
+            createdAt: schedule.createdAt, updatedAt: schedule.updatedAt, kind: schedule.foodKindRawValue
         )
     }
 
@@ -140,6 +141,7 @@ extension FeedingScheduleDTO {
         schedule.isPaused = isPaused
         schedule.lastMaterializedDay = lastMaterializedDay
         schedule.updatedAt = updatedAt
+        schedule.foodKindRawValue = kind
         return schedule
     }
 }

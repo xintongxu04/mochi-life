@@ -358,15 +358,7 @@ private struct LogEntryRow: View {
 
     var body: some View {
         HStack(spacing: Self.spacing) {
-            if entry.isQuickEntry {
-                Image(systemName: "bolt")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 44, height: 44)
-                    .background(.fill.tertiary, in: .rect(cornerRadius: 8))
-            } else {
-                FoodThumbnail(libraryIdentifier: entry.foodLibraryIdentifier, size: 44)
-            }
+            FoodThumbnail(libraryIdentifier: entry.foodLibraryIdentifier, kind: entry.kind, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.foodName)
                     .lineLimit(2)
@@ -390,6 +382,7 @@ private struct LogEntryRow: View {
         // One separator for every row, set explicitly at the text column (carried and scheduled
         // rows included).
         .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
+        .accessibilityValue(entry.kind.displayName)
     }
 
     /// A small icon in a fixed-width slot, centred on its caption line, then the caption.
@@ -412,7 +405,7 @@ private struct ScheduledPreviewRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            FoodThumbnail(libraryIdentifier: schedule.foodPhotoKey, size: 44)
+            FoodThumbnail(libraryIdentifier: schedule.foodPhotoKey, kind: schedule.kind, size: 44)
                 .opacity(0.5)
             VStack(alignment: .leading, spacing: 2) {
                 Text(schedule.title)
@@ -438,6 +431,6 @@ private struct ScheduledPreviewRow: View {
         .padding(.vertical, 2)
         .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Scheduled preview: \(schedule.title), \(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal, not counted yet")
+        .accessibilityLabel("Scheduled preview: \(schedule.title), \(schedule.kind.displayName), \(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal, not counted yet")
     }
 }

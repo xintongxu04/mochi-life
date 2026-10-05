@@ -36,6 +36,9 @@ final class FoodLogEntry {
     /// The feeding schedule that made this entry, if any. Kept after the schedule is deleted.
     /// Nil for entries logged by hand. (V4)
     var scheduleID: UUID?
+    /// The `FoodKind` raw value: copied from the food when logged, or chosen for a quick entry.
+    /// Nil only before `FoodKindBackfill` has run on an older entry. (V5)
+    var kindRawValue: String?
 
     init(foodName: String, kilocalories: Double, loggedAt: Date, createdAt: Date = .now) {
         self.foodName = foodName
@@ -46,6 +49,11 @@ final class FoodLogEntry {
 
     var isQuickEntry: Bool { portionSource == nil }
 
+    var kind: FoodKind {
+        get { FoodKind.stored(kindRawValue, hasContainerSizes: !(portionSource?.sizes.isEmpty ?? true)) }
+        set { kindRawValue = newValue.rawValue }
+    }
+
     /// Copies the food's details and the chosen portion into this entry.
     func record(_ food: Food, portion: Portion) {
         foodName = food.name
@@ -53,6 +61,7 @@ final class FoodLogEntry {
         foodLine = food.line
         foodLibraryIdentifier = food.photoKey
         portionSource = PortionSource(food)
+        kindRawValue = food.kind.rawValue
         record(portion)
     }
 
@@ -134,6 +143,7 @@ final class FoodLogEntry {
             carried.containersNumerator = portion.numerator
             carried.containersDenominator = portion.denominator
             carried.isCustomKilocalories = isCustomKilocalories
+            carried.kindRawValue = kindRawValue
             carried.carryGroupID = group
             carried.carryDay = day
             carried.openedAt = loggedAt

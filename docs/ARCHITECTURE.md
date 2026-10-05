@@ -97,7 +97,9 @@ Targets:
 | `FoodLibraryLoader.swift` | Versioned, repeat-safe upsert of bundled food libraries (`tiki-cat-wet-food.json`) into `Food` records, keyed on `seedID`; seed-ID backfill; remembers deleted seeded foods. |
 | `FoodLogEntry.swift` | `@Model FoodLogEntry` (one thing eaten), snapshot/record helpers, carry-forward entry creation. |
 | `FoodSearch.swift` | Word-based, case- and accent-insensitive food search. |
-| `FoodThumbnail.swift` | `FoodThumbnail` view and `FoodThumbnails` lookup of bundled product photos. |
+| `FoodThumbnail.swift` | `FoodThumbnail`, the one thumbnail view for foods, entries and schedules (photo, else the kind's pixel-art default), and `FoodThumbnails` lookup of bundled product photos. |
+| `FoodKindSelector.swift` | The kind picker: five equal-width chips (picture above name). |
+| `FoodKindBackfill.swift` | Repeat-safe assignment of kinds to foods, entries and schedules (V5 migration, launch, restore). |
 | `FoodDetailView.swift` | One food's page: photo, sizes and calories, portion picker, "Log This", ingredients, analysis, notes, source. |
 | `FoodEditorView.swift` | **The one form for saved foods** — create (by hand), review (AI result) and edit: photo, identity, sizes, kcal/g (per gram or per 100 g), calorie statement, ingredients, guaranteed analysis, notes, source; inline validation; duplicate check on review. |
 | `PhotoCandidatePickerView.swift` | "Find online": grid of up to 8 photo candidates, loaded lazily with cancellation. |
@@ -204,11 +206,26 @@ A failure to open the store calls `fatalError`.
 - `SchemaV3` (3.0.0) — adds `Food.originRawValue` and `Food.thumbnailKey` (both optional).
   FoodLogEntry is a frozen nested copy (it changed in V4; V2 lists the same frozen copy); the
   other models are the live types.
-- `SchemaV4` (4.0.0, current) — adds the `FeedingSchedule` model and `FoodLogEntry.scheduleID`
-  (optional). Its `models` are the live types.
+- `SchemaV4` (4.0.0) — adds the `FeedingSchedule` model and `FoodLogEntry.scheduleID`
+  (optional). FoodLogEntry and FeedingSchedule are frozen nested copies (they changed in V5).
+- `SchemaV5` (5.0.0, current) — adds `FoodLogEntry.kindRawValue` and
+  `FeedingSchedule.foodKindRawValue` (both optional), and splits the foods' old "food" kind into
+  kibble and wet food. Its `models` are the live types.
 - Stage V1 → V2: `.lightweight` (only additive). Stage V2 → V3: `.lightweight` (two optional
   properties). Stage V3 → V4: `.lightweight` (a new model and one optional property; existing
-  entries get `scheduleID = nil`, meaning logged by hand). V3 → V4 was checked on 2026-10-05 on the
+  entries get `scheduleID = nil`, meaning logged by hand). Stage V4 → V5: **`.custom`**. The
+  store gains the two optional columns, then `didMigrate` runs `FoodKindBackfill` and saves.
+  - Foods still on "food": bundled Tiki Cat products (they have a seed ID) become wet food;
+    other foods with container sizes become wet food; weight-only foods become kibble. Treat,
+    supplement and topper are kept.
+  - Entries take their saved food's kind. If that food is gone, the serving rule applies to the
+    entry's own size copy; quick entries become kibble.
+  - Schedules take their food's kind the same way.
+
+  V4 → V5 was checked on 2026-10-05 on the simulator's real store: all 103 foods kept, with 99
+  wet food (96 Tiki Cat, 3 own), 1 kibble, 2 topper, 1 supplement; the 1 log entry became wet
+  food. `FoodKindBackfill` also runs at every launch and after a restore, touching only items
+  without a valid kind. V3 → V4 was checked on 2026-10-05 on the
   simulator's real store (4 weights, 103 foods, profile, vaccination, medical record: all kept;
   the new table and column added). V2 → V3 was checked on 2026-10-04 with a copy of a real V2 store (everything kept,
   new columns added). Data fixes that need the bundled food file or
@@ -244,7 +261,7 @@ General facts that apply to every model:
 | `createdAt` | `Date` | |
 | `brand` | `String?` | `nil` → shown under "My foods". |
 | `line` | `String?` | `nil` → "Other" group (or listed directly if the brand has no lines). |
-| `kindRawValue` | `String` = `"food"` | `FoodKind`: `food`, `topper`, `supplement`, `treat`. |
+| `kindRawValue` | `String` = `"food"` | `FoodKind`: `kibble`, `wetFood`, `treat`, `supplement`, `topper` (V5). The stored default `"food"` is the pre-V5 kind, read as kibble or wet food by the serving rule and converted by `FoodKindBackfill`. |
 | `sizes` | `[FoodSize]` = `[]` | Cans/pouches. Empty for gram-only foods (all user-added foods). |
 | `calorieStatement` | `String?` | Brand's wording, verbatim. |
 | `ingredients` | `String?` | |
@@ -284,6 +301,7 @@ details when logged, so later edits or deletion of a `Food` never change history
 | `carryDay` | `Int` = `0` | 0 = the entry the can was opened with; 1, 2, … = following days. |
 | `openedAt` | `Date?` | For carried entries: when the can was opened. |
 | `scheduleID` | `UUID?` | The `FeedingSchedule` that made the entry (`isScheduled`); kept after the schedule is deleted. Nil = logged by hand (all entries before V4). Scheduled entries are dated at the start of their day. (V4) |
+| `kindRawValue` | `String?` | `FoodKind`: copied from the food when logged (or its schedule, or the entry it's carried from), or chosen for a quick entry; changeable when editing. Nil only until `FoodKindBackfill` runs. (V5) |
 
 ### `FeedingSchedule` (`Calories/Schedules/FeedingSchedule.swift`) (V4)
 A food fed on a routine, counted automatically (§14). Like a log entry it is a **snapshot**:
@@ -294,6 +312,7 @@ no relationship to `Food`, so deleting or editing the food never changes it.
 | `id` | `UUID`, **unique** | Copied into each entry's `scheduleID`. |
 | `foodName`, `foodBrand`, `foodLine`, `foodSeedID` | `String` / `String?` | Copied from the food. |
 | `foodPhotoKey` | `String?` | The food's `photoKey`, for the thumbnail. |
+| `foodKindRawValue` | `String?` | The food's `FoodKind`, given to each entry it makes. (V5) |
 | `portionSource` | `PortionSource?` | Copy of the food's sizes and kcal/g, for editing the amount. |
 | `measureRawValue` | `String` | `"containers"` or `"grams"`. |
 | `sizeName` | `String?` | Size used (containers). |
@@ -980,8 +999,8 @@ free-provisioned build. Reached from Settings ("Back Up and Restore", via the ri
 ### Format
 - One file, extension `.mochibackup`, UTType `com.xintongxu.mochilife.backup` (conforms to
   `public.data`, `public.json`), exported and registered as a document type in `MochiLife/Info.plist`.
-- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (2), `schemaVersion` (the SwiftData version,
-  "4.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
+- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (3), `schemaVersion` (the SwiftData version,
+  "5.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
   = `foodThumbnail` | `profilePhoto`, `base64`).
 - Dates are ISO 8601 UTC with milliseconds, written from a rounded whole number of milliseconds so
   they read back and re-encode identically. Numbers are plain JSON numbers (the app has no
@@ -1013,8 +1032,10 @@ and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cance
 1. `BackupReader.prepare` (off the main actor, cancellable): security-scoped read; reject files
    over 100 MB; check it's JSON; read `formatVersion`/`schemaVersion` and refuse newer ones
    ("update the app"); decode through `upgrade(_:from:)` (one explicit step per older format
-   version: v1 → v2 adds an empty `schedules` list, and missing `scheduleID`s decode as nil; v2
-   is current); validate (also schedules: food name, weekdays 1–127, kcal 0–100,000, amounts,
+   version: v1 → v2 adds an empty `schedules` list, and missing `scheduleID`s decode as nil; v2 →
+   v3 reads as is (entries' and schedules' `kind` decode as nil, and foods may say "food");
+   after the restore `FoodKindBackfill` assigns kinds with the migration's rules; v3 is current;
+   kinds are validated as V5 kinds, with "food" also accepted for foods); validate (also schedules: food name, weekdays 1–127, kcal 0–100,000, amounts,
    end ≥ start, unique IDs; weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
    denominators > 0, carry day ≥ 0, target ≤ 5,000, safe file names, valid base64), with distinct
    messages; stage photo files in a temporary folder.
@@ -1431,3 +1452,46 @@ and plays eating for 6 loops, then grooming for 3.
   action toggles the ring.
 - Ring buttons: labelled with their names, each with a hint describing its action.
 - The open ring is a modal container that closes with the escape gesture.
+
+---
+
+## 16. Food kinds and default pictures
+
+- **`FoodKind`** (`Calories/Food.swift`): kibble, wetFood, treat, supplement, topper. The display
+  names are Kibble, Wet food, Treat, Supplement and Topper. It extends the existing kind (food,
+  topper, supplement, treat); "food" was split by the serving rule (`byServing`: container sizes
+  → wet food, weight only → kibble).
+- **Who has a kind:**
+  - saved foods (`kindRawValue`)
+  - log entries (`kindRawValue`): copied from the food, schedule or opened-can entry; chosen for
+    a quick entry
+  - schedules (`foodKindRawValue`)
+- **Default pictures:** five 256 × 256 px pixel-art PNGs, copied unchanged into
+  `Assets.xcassets/FoodKind/` (folder with namespace): `default_kibble`, `default_wet`,
+  `default_treat`, `default_supplement`, `default_topper`. Each is in the **@3x slot** only
+  (about 85 pt). The obsolete `default_food.png` isn't used.
+- **`FoodThumbnail`** is the one thumbnail everywhere: the day log (including carried and
+  scheduled rows), scheduled previews, Recent/Frequent, search results and choices, Saved Foods
+  lists, the food page, schedules, and the log and schedule form headers.
+  - It shows the photo if there is one.
+  - Otherwise it shows the kind's picture with `.interpolation(.none)`, scaled to fit with 12%
+    padding on the placeholder background (`.fill.tertiary`), at the same size and corner radius
+    as photos.
+  - The lightning-bolt and fork-and-knife placeholders are gone.
+  - The picture is decorative (hidden from VoiceOver); rows add the kind name as their
+    accessibility value.
+- **`FoodKindSelector`:** one flat row of five equal-width chips, each the kind's picture (32 pt,
+  `.interpolation(.none)`) above its name in caption2. The selected chip is tinted and outlined;
+  one tap selects. The row is one accessibility container labelled "Kind of food". There's no
+  segmented control, menu or nesting. It's used in:
+  - Quick Entry (default Kibble)
+  - Edit Entry (any entry)
+  - the food form: manual, edit, and Add with AI review
+- **Add with AI preselection** (`FoodKind.guess`), in order:
+  1. The product's own type, if it's a treat, supplement or topper.
+  2. Words in its brand, line or name: treat; supplement, vitamin or probiotic; topper or
+     sprinkle; kibble or dry food; pâté, broth, mousse, pouch, can or wet.
+  3. Its dry or wet form.
+  4. The serving rule.
+- **Seed loader:** bundled "food" products are stored as wet food.
+- Kinds don't change calories, totals, the chart or any filtering.

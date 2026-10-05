@@ -14,11 +14,14 @@ extension UTType {
 enum BackupFormat {
     /// Raise when the file layout changes, and add an upgrade in `BackupDecoder.upgrade`.
     /// 2: adds `schedules` and `FoodLogEntryDTO.scheduleID` (format 1 files are upgraded).
-    static let currentFormatVersion = 2
+    /// 3: adds `kind` to log entries and schedules, and foods use the V5 kinds (kibble, wetFood,
+    /// treat, supplement, topper). Older files are read as is and `FoodKindBackfill` assigns the
+    /// missing kinds after restoring.
+    static let currentFormatVersion = 3
     static let fileExtension = "mochibackup"
     static let maximumFileSize = 100 * 1024 * 1024
     /// The SwiftData schema version the app writes.
-    static var currentSchemaVersion: Schema.Version { SchemaV4.versionIdentifier }
+    static var currentSchemaVersion: Schema.Version { SchemaV5.versionIdentifier }
 }
 
 struct BackupEnvelope: Codable, Sendable, Equatable {
@@ -131,6 +134,8 @@ struct FoodLogEntryDTO: Codable, Sendable, Equatable {
     var openedAt: Date?
     /// The feeding schedule that made the entry (format 2); nil for entries logged by hand.
     var scheduleID: UUID?
+    /// `FoodKind` raw value (format 3); missing in older files.
+    var kind: String?
 }
 
 struct FeedingScheduleDTO: Codable, Sendable, Equatable {
@@ -158,6 +163,8 @@ struct FeedingScheduleDTO: Codable, Sendable, Equatable {
     var lastMaterializedDay: Date?
     var createdAt: Date
     var updatedAt: Date
+    /// The food's `FoodKind` raw value (format 3); missing in older files.
+    var kind: String?
 }
 
 struct ProfileDTO: Codable, Sendable, Equatable {

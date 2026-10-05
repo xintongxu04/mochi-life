@@ -161,13 +161,13 @@ struct ScheduleEditorView: View {
 
     @ViewBuilder
     private var header: some View {
-        let (name, brand, line, photoKey): (String, String?, String?, String?) = switch mode {
-        case let .create(food): (food.name, food.brand, food.line, food.photoKey)
-        case let .edit(schedule): (schedule.foodName, schedule.foodBrand, schedule.foodLine, schedule.foodPhotoKey)
+        let (name, brand, line, photoKey, kind): (String, String?, String?, String?, FoodKind) = switch mode {
+        case let .create(food): (food.name, food.brand, food.line, food.photoKey, food.kind)
+        case let .edit(schedule): (schedule.foodName, schedule.foodBrand, schedule.foodLine, schedule.foodPhotoKey, schedule.kind)
         }
         Section {
             HStack(spacing: 12) {
-                FoodThumbnail(libraryIdentifier: photoKey, size: 56)
+                FoodThumbnail(libraryIdentifier: photoKey, kind: kind, size: 56)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
                         .font(.headline)

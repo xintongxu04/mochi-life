@@ -32,6 +32,8 @@ struct LogEntryForm: View {
     @State private var loggedAt = Date.now
     @State private var name = ""
     @State private var caloriesText = ""
+    /// Chosen for a quick entry (default kibble), or changed when editing an entry.
+    @State private var kind = FoodKind.kibble
     @State private var carriesRestForward = true
     @State private var isConfirmingLongPlan = false
     @State private var isAskingAboutCarriedEntries = false
@@ -53,6 +55,7 @@ struct LogEntryForm: View {
             _loggedAt = State(initialValue: entry.loggedAt)
             _name = State(initialValue: entry.foodName)
             _caloriesText = State(initialValue: Portion.formatKilocalories(entry.kilocalories))
+            _kind = State(initialValue: entry.kind)
         }
     }
 
@@ -110,6 +113,15 @@ struct LogEntryForm: View {
         Calendar.current.date(byAdding: .day, value: carryPlan.count, to: loggedAt) ?? loggedAt
     }
 
+    /// Quick entries choose a kind; any entry can change it when edited. Foods logged from a
+    /// saved food take that food's kind.
+    private var showsKindSelector: Bool {
+        switch mode {
+        case .quickEntry, .edit: true
+        case .logFood, .logSnapshot: false
+        }
+    }
+
     private var title: String {
         switch mode {
         case .logFood, .logSnapshot: "Log Food"
@@ -145,6 +157,11 @@ struct LogEntryForm: View {
                         Text("kcal")
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+            if showsKindSelector {
+                Section("Kind") {
+                    FoodKindSelector(kind: $kind)
                 }
             }
             if isLoggingNewFood && hasOpenedContainer {
@@ -212,22 +229,24 @@ struct LogEntryForm: View {
     private var header: some View {
         switch mode {
         case let .logFood(food, _):
-            foodHeader(name: food.name, brand: food.brandTitle, line: food.line, libraryIdentifier: food.libraryIdentifier)
+            foodHeader(name: food.name, brand: food.brandTitle, line: food.line, libraryIdentifier: food.photoKey, kind: food.kind)
         case let .logSnapshot(entry):
             foodHeader(name: entry.foodName, brand: entry.foodBrand ?? Food.noBrandTitle, line: entry.foodLine,
-                       libraryIdentifier: entry.foodLibraryIdentifier, note: "Not in saved foods · logged from an earlier entry")
+                       libraryIdentifier: entry.foodLibraryIdentifier, kind: entry.kind,
+                       note: "Not in saved foods · logged from an earlier entry")
         case let .edit(entry) where !entry.isQuickEntry:
-            foodHeader(name: entry.foodName, brand: entry.foodBrand ?? Food.noBrandTitle, line: entry.foodLine, libraryIdentifier: entry.foodLibraryIdentifier)
+            foodHeader(name: entry.foodName, brand: entry.foodBrand ?? Food.noBrandTitle, line: entry.foodLine,
+                       libraryIdentifier: entry.foodLibraryIdentifier, kind: kind)
         default:
             EmptyView()
         }
     }
 
     private func foodHeader(name: String, brand: String, line: String?, libraryIdentifier: String?,
-                            note: String? = nil) -> some View {
+                            kind: FoodKind, note: String? = nil) -> some View {
         Section {
             HStack(spacing: 12) {
-                FoodThumbnail(libraryIdentifier: libraryIdentifier, size: 56)
+                FoodThumbnail(libraryIdentifier: libraryIdentifier, kind: kind, size: 56)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
                         .font(.headline)
@@ -255,11 +274,14 @@ struct LogEntryForm: View {
                 logFood(carryingForward: carries)
             }
         case .quickEntry:
-            modelContext.insert(FoodLogEntry(foodName: trimmedName, kilocalories: quickCalories ?? 0, loggedAt: loggedAt))
+            let quick = FoodLogEntry(foodName: trimmedName, kilocalories: quickCalories ?? 0, loggedAt: loggedAt)
+            quick.kind = kind
+            modelContext.insert(quick)
             finish()
         case let .edit(entry):
             let before = EntrySnapshot(entry)
             entry.loggedAt = loggedAt
+            entry.kind = kind
             if entry.isQuickEntry {
                 entry.foodName = trimmedName
                 entry.kilocalories = quickCalories ?? entry.kilocalories
@@ -299,6 +321,7 @@ struct LogEntryForm: View {
             entry.foodLine = source.foodLine
             entry.foodLibraryIdentifier = source.foodLibraryIdentifier
             entry.portionSource = source.portionSource
+            entry.kindRawValue = source.kind.rawValue
             entry.record(portion)
         default:
             return

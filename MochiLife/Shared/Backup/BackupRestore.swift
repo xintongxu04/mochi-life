@@ -69,7 +69,7 @@ enum BackupReader {
         }
     }
 
-    /// One explicit step per older format version. Version 2 is the current format.
+    /// One explicit step per older format version. Version 3 is the current format.
     static func upgrade(_ data: Data, from formatVersion: Int) throws -> BackupEnvelope {
         switch formatVersion {
         case 1:
@@ -82,6 +82,12 @@ enum BackupReader {
             root["formatVersion"] = 2
             return try upgrade(JSONSerialization.data(withJSONObject: root), from: 2)
         case 2:
+            // Format 2 had no kinds on entries or schedules (they decode as nil) and foods used
+            // "food"; FoodKindBackfill assigns them after the restore.
+            var envelope = try BackupCoding.decoder().decode(BackupEnvelope.self, from: data)
+            envelope.formatVersion = 3
+            return envelope
+        case 3:
             return try BackupCoding.decoder().decode(BackupEnvelope.self, from: data)
         default:
             throw BackupError.invalidValue("format version \(formatVersion)")
@@ -127,6 +133,11 @@ enum BackupReader {
             try check((entry.containers ?? 0) >= 0 && (entry.grams ?? 0) >= 0, "a negative amount in a log entry")
             try check((entry.containersDenominator ?? 1) > 0, "a fraction with denominator 0 in a log entry")
             try check(entry.carryDay >= 0, "a negative carry-forward day")
+            try check(entry.kind.map { FoodKind(rawValue: $0) != nil } ?? true, "the kind “\(entry.kind ?? "")” in a log entry")
+        }
+        for food in payload.foods {
+            try check(FoodKind(rawValue: food.kind) != nil || food.kind == FoodKind.legacyFoodRawValue,
+                      "the kind “\(food.kind)” of “\(food.name)”")
         }
         for schedule in payload.schedules {
             try check(!schedule.foodName.isEmpty, "a feeding schedule without a food name")
@@ -233,6 +244,10 @@ enum BackupRestorer {
         }
         FoodLibraryLoader.updateBundledLibraries(in: context, defaults: defaults)
         _ = CatProfile.current(in: context)
+        // Backups from before kinds: give foods, entries and schedules their kind (same rules as
+        // the V4 → V5 migration).
+        FoodKindBackfill.run(in: context)
+        try? Persistence.saveOrThrow(context)
         // Restored schedules catch up from their own last day; existing entries aren't duplicated.
         ScheduleMaterializer(context: context).materialize()
         Persistence.logger.notice("Restore completed from a backup made \(prepared.envelope.createdAt.formatted(.iso8601), privacy: .public)")

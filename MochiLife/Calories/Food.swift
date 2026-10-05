@@ -11,7 +11,8 @@ final class Food {
     /// Nil for foods the user adds without a brand; these are grouped under "My foods".
     var brand: String?
     var line: String?
-    var kindRawValue: String = FoodKind.food.rawValue
+    /// A `FoodKind` raw value ("food" for foods saved before V5 until they're converted).
+    var kindRawValue: String = "food"
     /// The cans or pouches the food comes in. Empty for foods measured only in grams.
     var sizes: [FoodSize] = []
     /// The calorie statement exactly as the brand writes it.
@@ -37,7 +38,7 @@ final class Food {
         kilocaloriesPerGram: Double,
         brand: String? = nil,
         line: String? = nil,
-        kind: FoodKind = .food,
+        kind: FoodKind = .kibble,
         sizes: [FoodSize] = [],
         calorieStatement: String? = nil,
         ingredients: String? = nil,
@@ -71,7 +72,10 @@ final class Food {
     static let noBrandTitle = "My foods"
     static let noLineTitle = "Other"
 
-    var kind: FoodKind { FoodKind(rawValue: kindRawValue) ?? .food }
+    var kind: FoodKind {
+        get { FoodKind.stored(kindRawValue, hasContainerSizes: !sizes.isEmpty) }
+        set { kindRawValue = newValue.rawValue }
+    }
 
     /// Where the food came from. Foods saved before this was recorded count as seeded if they
     /// have a seed ID, otherwise as added by hand.
@@ -91,11 +95,69 @@ final class Food {
     }
 }
 
-enum FoodKind: String, CaseIterable {
-    case food
-    case topper
-    case supplement
+/// What kind of food something is. Stored as the raw value in `Food.kindRawValue`,
+/// `FoodLogEntry.kindRawValue` and `FeedingSchedule.foodKindRawValue`. Before schema V5 foods
+/// used a single "food" kind; that's split into kibble and wet food (`FoodKindBackfill`).
+enum FoodKind: String, Codable, CaseIterable, Sendable {
+    case kibble
+    case wetFood
     case treat
+    case supplement
+    case topper
+
+    /// The kind every food had before V5, read only to convert it.
+    static let legacyFoodRawValue = "food"
+
+    var displayName: String {
+        switch self {
+        case .kibble: "Kibble"
+        case .wetFood: "Wet food"
+        case .treat: "Treat"
+        case .supplement: "Supplement"
+        case .topper: "Topper"
+        }
+    }
+
+    /// The pixel-art picture shown for items of this kind that have no photo.
+    var defaultImageName: String {
+        switch self {
+        case .kibble: "FoodKind/default_kibble"
+        case .wetFood: "FoodKind/default_wet"
+        case .treat: "FoodKind/default_treat"
+        case .supplement: "FoodKind/default_supplement"
+        case .topper: "FoodKind/default_topper"
+        }
+    }
+
+    /// The rule for anything without a kind yet: food in cans, pouches or other containers is
+    /// wet food; food measured only by weight is kibble.
+    static func byServing(hasContainerSizes: Bool) -> FoodKind {
+        hasContainerSizes ? .wetFood : .kibble
+    }
+
+    /// A kind from a stored raw value, converting the old "food" with the serving rule.
+    static func stored(_ rawValue: String?, hasContainerSizes: Bool) -> FoodKind {
+        rawValue.flatMap(FoodKind.init(rawValue:)) ?? byServing(hasContainerSizes: hasContainerSizes)
+    }
+
+    /// A best guess for a food found online: the product's own type if it's a treat,
+    /// supplement or topper; then clear words in its name; then dry or wet form; then the
+    /// serving rule. The owner can always change it.
+    static func guess(type: String?, form: String?, text: String, hasContainerSizes: Bool) -> FoodKind {
+        if let type = type.flatMap({ FoodKind(rawValue: $0.lowercased()) }), type != .kibble, type != .wetFood {
+            return type
+        }
+        let words = text.lowercased()
+        func mentions(_ terms: [String]) -> Bool { terms.contains { words.contains($0) } }
+        if mentions(["treat"]) { return .treat }
+        if mentions(["supplement", "vitamin", "probiotic"]) { return .supplement }
+        if mentions(["topper", "sprinkle"]) { return .topper }
+        if mentions(["kibble", "dry food", "dry cat food"]) || form?.lowercased() == "dry" { return .kibble }
+        if mentions(["pâté", "pate", "broth", "mousse", "pouch", " can", "wet"]) || form?.lowercased() == "wet" {
+            return .wetFood
+        }
+        return byServing(hasContainerSizes: hasContainerSizes)
+    }
 }
 
 enum FoodOrigin: String, CaseIterable {

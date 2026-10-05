@@ -5,10 +5,11 @@ import SwiftData
 // MochiLifeMigrationPlan. Earlier versions keep frozen copies of their models so old stores can
 // still be recognized and upgraded. The live model types are always the latest version's.
 
-/// Version 4 (current): adds `FeedingSchedule` and `FoodLogEntry.scheduleID`. The live model
-/// types are this version.
-enum SchemaV4: VersionedSchema {
-    static let versionIdentifier = Schema.Version(4, 0, 0)
+/// Version 5 (current): adds `FoodLogEntry.kindRawValue` and `FeedingSchedule.foodKindRawValue`
+/// (both optional), and the foods' single "food" kind is split into kibble and wet food. The live
+/// model types are this version.
+enum SchemaV5: VersionedSchema {
+    static let versionIdentifier = Schema.Version(5, 0, 0)
 
     static var models: [any PersistentModel.Type] {
         [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self,
@@ -18,7 +19,7 @@ enum SchemaV4: VersionedSchema {
 
 enum MochiLifeMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self]
     }
 
     static var stages: [MigrationStage] {
@@ -31,7 +32,93 @@ enum MochiLifeMigrationPlan: SchemaMigrationPlan {
             // Adds a new model and one optional FoodLogEntry property; existing entries get nil
             // (logged by hand), so they keep their meaning.
             .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self),
+            // Adds two optional properties, then assigns every food, entry and schedule its kind
+            // (see FoodKindBackfill for the rules). Nothing is removed.
+            .custom(fromVersion: SchemaV4.self, toVersion: SchemaV5.self, willMigrate: nil, didMigrate: { context in
+                FoodKindBackfill.run(in: context)
+                try context.save()
+            }),
         ]
+    }
+}
+
+/// Version 4: adds `FeedingSchedule` and `FoodLogEntry.scheduleID`. FoodLogEntry and
+/// FeedingSchedule are frozen copies (they changed in V5); the other models are the live types
+/// (unchanged since V4). Don't change the frozen copies.
+enum SchemaV4: VersionedSchema {
+    static let versionIdentifier = Schema.Version(4, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self,
+         FeedingSchedule.self]
+    }
+
+    @Model
+    final class FoodLogEntry {
+        var loggedAt: Date
+        var foodName: String
+        var foodBrand: String?
+        var foodLine: String?
+        var foodLibraryIdentifier: String?
+        var portionSource: PortionSource?
+        var measureRawValue: String?
+        var sizeName: String?
+        var containers: Double?
+        var grams: Double?
+        var containersNumerator: Int?
+        var containersDenominator: Int?
+        var kilocalories: Double
+        var isCustomKilocalories: Bool = false
+        var createdAt: Date
+        var carryGroupID: UUID?
+        var carryDay: Int = 0
+        var openedAt: Date?
+        var scheduleID: UUID?
+
+        init(foodName: String, kilocalories: Double, loggedAt: Date, createdAt: Date) {
+            self.foodName = foodName
+            self.kilocalories = kilocalories
+            self.loggedAt = loggedAt
+            self.createdAt = createdAt
+        }
+    }
+
+    @Model
+    final class FeedingSchedule {
+        @Attribute(.unique) var id: UUID
+        var foodName: String
+        var foodBrand: String?
+        var foodLine: String?
+        var foodSeedID: String?
+        var foodPhotoKey: String?
+        var portionSource: PortionSource?
+        var measureRawValue: String
+        var sizeName: String?
+        var containersNumerator: Int?
+        var containersDenominator: Int?
+        var grams: Double?
+        var kilocaloriesPerOccurrence: Double
+        var isKilocaloriesOverridden: Bool = false
+        var label: String?
+        var weekdays: Int
+        var startDate: Date
+        var endDate: Date?
+        var isPaused: Bool = false
+        var lastMaterializedDay: Date?
+        var createdAt: Date
+        var updatedAt: Date
+
+        init(id: UUID, foodName: String, measureRawValue: String, kilocaloriesPerOccurrence: Double,
+             weekdays: Int, startDate: Date, createdAt: Date) {
+            self.id = id
+            self.foodName = foodName
+            self.measureRawValue = measureRawValue
+            self.kilocaloriesPerOccurrence = kilocaloriesPerOccurrence
+            self.weekdays = weekdays
+            self.startDate = startDate
+            self.createdAt = createdAt
+            self.updatedAt = createdAt
+        }
     }
 }
 

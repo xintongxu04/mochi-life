@@ -1,12 +1,18 @@
 import SwiftUI
 import UIKit
 
-/// A food's product photo, bundled with the app so it works offline, or a placeholder icon
-/// for foods without one.
+/// The one thumbnail for foods, log entries and schedules everywhere: the product photo
+/// (bundled or saved by the app) if there is one, else the pixel-art picture for its kind, on
+/// the placeholder background at the same size and corner radius.
 struct FoodThumbnail: View {
     /// The library food the photo belongs to; nil for foods without one.
     let libraryIdentifier: String?
     let size: CGFloat
+    /// Picks the default picture when there's no photo.
+    let kind: FoodKind
+
+    /// Padding around the default picture, as a fraction of the size.
+    static let defaultImageInset: CGFloat = 0.12
 
     /// Set when showing a saved food, so its photo is resolved fresh on every draw.
     private var food: Food?
@@ -14,13 +20,15 @@ struct FoodThumbnail: View {
     init(food: Food, size: CGFloat) {
         self.libraryIdentifier = food.photoKey
         self.size = size
+        self.kind = food.kind
         self.food = food
     }
 
     /// - Parameter libraryIdentifier: A seed ID, or an older "<library>/<name>" identifier
     ///   (log entries saved before seed IDs existed keep that form).
-    init(libraryIdentifier: String?, size: CGFloat) {
+    init(libraryIdentifier: String?, kind: FoodKind, size: CGFloat) {
         self.libraryIdentifier = libraryIdentifier
+        self.kind = kind
         self.size = size
     }
 
@@ -32,9 +40,11 @@ struct FoodThumbnail: View {
                     .scaledToFit()
                     .background(.white)
             } else {
-                Image(systemName: "fork.knife")
-                    .font(.system(size: size * 0.4))
-                    .foregroundStyle(.secondary)
+                Image(kind.defaultImageName)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .padding(size * Self.defaultImageInset)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.fill.tertiary)
             }

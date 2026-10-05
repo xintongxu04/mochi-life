@@ -108,7 +108,7 @@ private struct ScheduleRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            FoodThumbnail(libraryIdentifier: schedule.foodPhotoKey, size: 44)
+            FoodThumbnail(libraryIdentifier: schedule.foodPhotoKey, kind: schedule.kind, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(schedule.title)
                     .lineLimit(2)
@@ -145,5 +145,6 @@ private struct ScheduleRow: View {
         }
         .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
         .accessibilityElement(children: .combine)
+        .accessibilityValue(schedule.kind.displayName)
     }
 }

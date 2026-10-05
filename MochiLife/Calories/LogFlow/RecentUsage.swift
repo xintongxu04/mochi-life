@@ -34,6 +34,8 @@ enum RecentUsage {
         var brand: String?
         var line: String?
         var photoKey: String?
+        /// For the default picture when there's no photo.
+        var kind: FoodKind = .kibble
         /// Like "1/2 of a 2.8 oz can", or "12 kcal" for a quick entry.
         var detail: String?
 
@@ -87,17 +89,17 @@ enum RecentUsage {
         if entry.isQuickEntry {
             let name = entry.foodName
             return Item(id: "", key: "quick-\(name.lowercased())", target: .quickEntry(name: name, kilocalories: entry.kilocalories),
-                        portion: nil, name: name, detail: "\(Portion.formatKilocalories(entry.kilocalories)) kcal")
+                        portion: nil, name: name, kind: entry.kind, detail: "\(Portion.formatKilocalories(entry.kilocalories)) kcal")
         }
         if let food = savedFood(for: entry, keyed: keyed, byPhotoKey: byPhotoKey) {
             return Item(id: "", key: "food-\(food.persistentModelID.hashValue)", target: .food(food), portion: entry.portion,
                         name: food.name, brand: food.brandTitle, line: food.line, photoKey: food.photoKey,
-                        detail: entry.amountDescription)
+                        kind: food.kind, detail: entry.amountDescription)
         }
         let key = FoodMatching.key(brand: entry.foodBrand, line: entry.foodLine, name: entry.foodName)
         return Item(id: "", key: "snapshot-\(key)", target: .snapshot(entry), portion: entry.portion,
                     name: entry.foodName, brand: entry.foodBrand ?? Food.noBrandTitle, line: entry.foodLine,
-                    photoKey: entry.foodLibraryIdentifier, detail: entry.amountDescription)
+                    photoKey: entry.foodLibraryIdentifier, kind: entry.kind, detail: entry.amountDescription)
     }
 
     private static func withSection(_ item: Item, _ section: Section) -> Item {

@@ -417,6 +417,7 @@ struct FoodChoiceRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .accessibilityValue(food.kind.displayName)
         .accessibilityElement(children: .combine)
     }
 }
@@ -428,15 +429,7 @@ private struct UsageRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if case .quickEntry = item.target {
-                Image(systemName: "bolt")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 44, height: 44)
-                    .background(.fill.tertiary, in: .rect(cornerRadius: 8))
-            } else {
-                FoodThumbnail(libraryIdentifier: item.photoKey, size: 44)
-            }
+            FoodThumbnail(libraryIdentifier: item.photoKey, kind: item.kind, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name)
                 Text([item.brand, item.line, item.detail].compactMap { $0 }.joined(separator: " · "))
@@ -454,6 +447,7 @@ private struct UsageRow: View {
                 .foregroundStyle(.tertiary)
                 .accessibilityHidden(true)
         }
+        .accessibilityValue(item.kind.displayName)
         .accessibilityElement(children: .combine)
     }
 }

@@ -445,7 +445,9 @@ extension FoodLookupService {
             brand: food.brand ?? "",
             line: food.line ?? "",
             name: food.name ?? "",
-            kind: food.type.flatMap { FoodKind(rawValue: $0.lowercased()) } ?? .food,
+            kind: FoodKind.guess(type: food.type, form: food.form,
+                                 text: [food.brand, food.line, food.name].compactMap { $0 }.joined(separator: " "),
+                                 hasContainerSizes: !reading.sizes.isEmpty),
             form: food.parsedForm ?? .other,
             sizes: reading.sizes.map {
                 FoodDraft.Size(label: $0.label, container: $0.container, grams: $0.grams, kilocalories: $0.kilocalories)
