@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// Mochi's animated sprite, 132 × 126 pt (the frames' 352:336 aspect), with a soft ground shadow
-/// at her feet. Frames advance 8 times a second only while the view is on screen and the app is
-/// active; under Reduce Motion it's a still picture.
+/// at her feet. Frames advance at the current state's rate (8 fps, sleeping 4 fps) only while the
+/// view is on screen and the app is active. Under Reduce Motion the picture stays still, but the
+/// clock keeps running so the sleep rules and sequence steps still move on.
 struct MochiSpriteView: View {
     let animator: MochiAnimator
 
@@ -15,7 +16,12 @@ struct MochiSpriteView: View {
     /// The feet's baseline: 320 of 336 px from the top of every frame.
     static let baseline = size.height * 320 / 336
 
-    private var isRunning: Bool { isVisible && scenePhase == .active && !reduceMotion }
+    private var isRunning: Bool { isVisible && scenePhase == .active }
+
+    private struct ClockKey: Equatable {
+        var isRunning: Bool
+        var fps: Double
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -42,10 +48,14 @@ struct MochiSpriteView: View {
         }
         .onDisappear { isVisible = false }
         .onChange(of: reduceMotion) { _, newValue in animator.reduceMotion = newValue }
-        // The frame clock: lives and dies with the view, paused when hidden or inactive.
-        .task(id: isRunning) {
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { animator.appBecameActive() }
+        }
+        // The frame clock: lives and dies with the view, paused when hidden or inactive, and
+        // restarted at the new rate when the state's frame rate changes.
+        .task(id: ClockKey(isRunning: isRunning, fps: animator.state.fps)) {
             guard isRunning else { return }
-            let interval = Duration.seconds(1 / MochiState.sitting.fps)
+            let interval = Duration.seconds(1 / animator.state.fps)
             while !Task.isCancelled {
                 try? await Task.sleep(for: interval)
                 guard !Task.isCancelled else { return }

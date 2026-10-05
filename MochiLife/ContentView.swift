@@ -42,6 +42,8 @@ struct ContentView: View {
                 }
             }
             .sensoryFeedback(.impact(weight: .light), trigger: home.isMenuOpen) { _, isOpen in isOpen }
+            // Any touch anywhere resets Mochi's inactivity timer (it doesn't wake her).
+            .background { TouchActivityReporter { [home] in home.animator.userTouchedApp() } }
             .environment(home)
             .environment(\.openScreen, OpenScreenAction(home: home))
             .environment(\.foodLogged, FoodLoggedAction(home: home))

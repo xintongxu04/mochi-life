@@ -41,8 +41,6 @@ final class MochiHome {
         safeAreaTop + toolbarRowHeight + toolbarRowGap
     }
 
-    static let playLoops = 10
-    static let eatingLoops = 6
     /// A food was logged; Mochi eats once the Calories screen is showing again.
     private var pendingEating = false
 
@@ -62,14 +60,29 @@ final class MochiHome {
         path = NavigationPath()
     }
 
-    /// Tapping Mochi opens or closes the ring. It never interrupts her current animation.
+    /// Tapping Mochi opens or closes the ring straight away, and wakes her if she's asleep (she
+    /// stretches while the ring opens). It never interrupts her current animation otherwise.
     func spriteTapped() {
+        animator.spriteTouched()
         withAnimation(.easeOut(duration: 0.2)) { isMenuOpen.toggle() }
     }
 
-    /// The Play button: 10 loops (about 20 s); tapping again restarts them.
+    /// The start of a drag on Mochi: wakes her if she's asleep.
+    func spriteDragStarted() {
+        isMenuOpen = false
+        animator.spriteTouched()
+    }
+
+    /// Petting (long-press): closes the ring and grooms, unless she's eating.
+    @discardableResult
+    func pet() -> Bool {
+        isMenuOpen = false
+        return animator.pet()
+    }
+
+    /// The Play button: playing for 10 loops (about 20 s); tapping again restarts them.
     func playWithBall() {
-        animator.play(.playing, loops: Self.playLoops)
+        animator.playWithBall()
     }
 
     // MARK: - Eating
@@ -80,14 +93,14 @@ final class MochiHome {
         pendingEating = true
     }
 
-    /// Plays the eating animation (6 loops, about 12 s) if a food was logged and the Calories
-    /// screen is showing with nothing over it, after the sheet has had time to slide away.
+    /// Plays the eat-then-groom sequence if a food was logged and the Calories screen is showing
+    /// with nothing over it, after the sheet has had time to slide away.
     func playEatingIfPending() {
         guard pendingEating, !isSpriteHidden, path.isEmpty else { return }
         pendingEating = false
         Task {
             try? await Task.sleep(for: .milliseconds(450))
-            animator.play(.eating, loops: Self.eatingLoops)
+            animator.ateFood()
         }
     }
 }

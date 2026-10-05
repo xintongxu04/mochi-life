@@ -18,9 +18,18 @@ tabs). Messages in the app use the name from her profile (**Mochi** unless you c
     next time). If you drop her partly off screen, she springs back in.
   - The list underneath still scrolls normally around her.
   - She hides on other screens and while Log Food is open.
-- She lives her own life: she sits for 6–12 seconds, then plays with her ball or
-  stretches, then sits again.
-- After you log a food, she eats from her bowl for about 12 seconds.
+- She lives her own life. She rests (sitting, or loafing with her paws tucked
+  in), then plays with her ball or stretches, then rests again.
+- **She sleeps:** all night from 11 pm to 7 am, and in the day if nobody has
+  touched the app for 3 minutes. Tapping, dragging or long-pressing her, Play,
+  or logging a food wakes her (she stretches first when tapped, dragged or
+  asked to play). At night she stays awake for a little while, then goes back
+  to sleep.
+- After you log a food, she eats from her bowl for about 12 seconds, then
+  grooms herself for about 6.
+- **Pet her:** press and hold on Mochi for about half a second and she grooms
+  herself (with a soft buzz). It doesn't interrupt a meal. VoiceOver users can
+  use the "Pet Mochi" action.
 - **Tap Mochi** to open five round glass icon buttons around her (a full ring,
   or a half or quarter fan when she's near an edge or corner). Clockwise:
   - **Eat** (fork and knife) opens Log Food (the same as the Log Food button).

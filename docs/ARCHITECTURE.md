@@ -1242,8 +1242,11 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 | "Go to Weight / Go to Mochi" (calorie estimate) | "Go to Weight / Go to Profile", which push the screen (`openScreen`). |
 
 ### Sprite assets and frame spec
-- **Frames:** 64 PNGs, `mochi_<state>_<NN>` (sitting, eating, playing, stretching; NN 01–16).
-  They are copied byte-for-byte from the owner's asset folder (not trimmed, re-padded,
+- **Frames:** 112 PNGs, `mochi_<state>_<NN>` for seven states (sitting, eating, playing,
+  stretching, grooming, sleeping, loafing; NN 01–16). `mochi_sleeping_13` is intentionally
+  byte-identical to `mochi_sleeping_14` (the original frame 13 had a tail artifact); don't
+  "fix" or deduplicate it. The last 48 (grooming, sleeping, loafing) were added on 2026-10-05,
+  each checked against its source by SHA-256. They are copied byte-for-byte from the owner's asset folder (not trimmed, re-padded,
   recolored or re-encoded) into `Assets.xcassets/Mochi/` (folder with `provides-namespace`), one
   image set each, PNG in the **@2x slot only**. Names are referenced as `Mochi/mochi_<state>_<NN>`.
 - **Canvas:** 352 × 336 px, transparent, soft alpha edges. The feet sit on a fixed baseline
@@ -1281,13 +1284,19 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 - **Hit testing:** the layer has no background, so only her own 132 × 126 rectangle
   (`contentShape(Rectangle())`, moved with `.offset`) takes touches. The list underneath scrolls
   normally everywhere else.
-- **Gestures:**
-  `DragGesture(minimumDistance: 8, coordinateSpace: .global).exclusively(before: TapGesture())`.
-  - **Drag:** once the finger moves 8 pt it's a drag, and she follows 1:1 in both axes.
-  - **Tap:** if the finger lifts before moving 8 pt, the drag fails and the tap fires, toggling
-    the ring.
-  - **Feedback:** starting a drag closes the ring and gives a light haptic. Her animation keeps
-    running while dragged.
+- **Gestures:** one `DragGesture(minimumDistance: 0, coordinateSpace: .global)` on her
+  rectangle, with a small state machine that tells three gestures apart:
+  - **Drag:** the finger moves 8 pt or more. She follows 1:1, the ring closes, and there's a
+    light haptic. If she's asleep she wakes and stretches. Before the long-press fires, this
+    cancels it (no grooming). After it fires, the drag still proceeds and grooming continues.
+  - **Long-press (petting):** held 0.45 s (a `Task` started on touch-down) with less than 8 pt of
+    movement. It calls `MochiHome.pet()`: the ring closes, she grooms, with a soft haptic. It's
+    ignored during a meal. Its release is not treated as a tap.
+  - **Tap:** released before 0.45 s and before moving 8 pt. Toggles the ring (and wakes her with
+    a stretch if she's asleep).
+
+  Her animation keeps running while dragged. VoiceOver: the default action toggles the ring, and
+  a custom action **"Pet Mochi"** grooms.
 - **Persistence:** her top-left corner is stored in screen points in
   `@AppStorage("mochi.origin.x"/".y")` (−1 = not saved).
   - On placement it's used as is, and clamped only if it now falls outside the bounds.
@@ -1306,28 +1315,53 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   stays anchored to her.
 
 ### `MochiState`, `MochiAnimator`, `MochiSpriteView`
-- `MochiState`: 16 frames at 8 fps for every state, so one loop lasts 2 s.
-- `MochiAnimator` (`@Observable @MainActor`) publishes `state` and `frameIndex`. It runs an
-  **autonomous schedule:**
-  1. Sitting for 3–6 loops (6–12 s).
-  2. Then a random activity: playing for 4–6 loops (weight 0.6) or stretching for 1–2 loops
-     (weight 0.4). The same activity is never picked three times in a row
-     (`nextActivity(after:random:)`).
-  3. Then a new sitting segment, and so on.
-  
-  Eating is never picked on its own. Scheduled changes happen only at loop boundaries (frame 16
-  → frame 01).
-- **User one-shots** (`play(_:loops:)`) cut in immediately and run whole loops, then the schedule
-  resumes with a sitting segment.
-  - **Play:** 10 loops (~20 s); tapping Play again restarts them.
-  - **Food logged:** eating for 6 loops (~12 s).
-  - Opening the ring never interrupts the current animation.
-- **Memory:** only sitting's frames and the active state's are kept decoded
-  (`preparingForDisplay()`). Others are dropped when the state changes.
-- `MochiSpriteView`: the clock is a `.task` loop (8 per second) keyed on "visible and app
-  active". There is no free-running `Timer`.
-- **Reduce Motion:** a still `mochi_sitting_01`, with no schedule. A one-shot shows that state's
-  frame 08 for 1.5 s, then returns to sitting.
+- `MochiState`: sitting, eating, playing, stretching, grooming, sleeping, loafing. Each has 16
+  frames. `fps` is per state: 8 for all, except **sleeping at 4** (one loop = 4 s, slow
+  breathing; the asset manifest says 8, the owner's spec says 4).
+- `MochiAnimator` (`@Observable @MainActor`) publishes `state` and `frameIndex`. State changes
+  happen at loop boundaries (frame 16 → 01), except user sequences, which cut in at once.
+- **Awake schedule:** a rest segment, then one activity, repeated.
+
+  | Segment | Choice | Weight | Length |
+  |---|---|---|---|
+  | Rest | sitting | 0.6 | 3–6 loops |
+  | Rest | loafing | 0.4 | 4–8 loops |
+  | Activity | playing | 0.55 | 4–6 loops |
+  | Activity | stretching | 0.45 | 1–2 loops |
+
+  The same activity is never picked three times in a row. The scheduler picks from private
+  `Rest` and `Activity` enums that don't contain eating or grooming, and `schedule(_:loops:)`
+  asserts it. So **eating and grooming are reachable only through the triggers below.**
+- **Sleep rules:**
+  - **Night:** 23:00–07:00 local time. She sleeps (holds sleeping) instead of the awake cycle.
+  - **Day:** after **180 s** of visible time with no touch anywhere in the app, she falls asleep
+    at the next loop boundary and holds it.
+  - **Touches:** any touch resets the inactivity count but doesn't wake her. Touches are counted
+    by `TouchActivityReporter`, a window-level `UIGestureRecognizer` that never recognizes and
+    never cancels or delays touches.
+  - **When rules are checked:** at each loop boundary, and when the app becomes active
+    (`appBecameActive`). Time is counted in clock ticks, so nothing runs in the background.
+- **Wake triggers and sequences** (queued `(state, loops)` steps, played back to back at loop
+  boundaries, then a fresh rest segment; there are no timers between steps):
+
+  | Trigger | Sequence |
+  |---|---|
+  | Tap or drag while asleep | stretching × 1 (the ring still opens at once on a tap) |
+  | Play | playing × 10 (a stretch × 1 first if she was asleep). Replaces any sequence, including a meal (no grooming after). |
+  | A food logged (§ eating trigger) | eating × 6 → grooming × 3. A new log restarts from eating. |
+  | Long-press | grooming × 3, ignored during eating, replaces playing |
+
+  After a wake at night she stays up for one full awake cycle **and** at least 60 s, then sleeps
+  again. In the day, the inactivity count restarts.
+- **Memory:** only sitting's frames and the active state's are kept decoded. Others are dropped
+  when the state changes.
+- `MochiSpriteView`: the clock is a `.task` keyed on (visible and app active, current fps). It
+  ticks at the state's rate, re-keys when the rate changes, and stops when hidden or in the
+  background. There is no free-running `Timer`.
+- **Reduce Motion:** still pictures, but the clock keeps running so the rules still move on.
+  - Sleeping frame 01 when a sleep rule applies, otherwise sitting frame 01, with no autonomous
+    activities.
+  - Each sequence step shows that state's frame 08 for 1.5 s, then the next step or sitting.
 
 ### Radial action menu (`RadialActionMenu`)
 - **Buttons:** five icon-only 48 pt circles (the hit target is the whole circle) with
@@ -1390,7 +1424,7 @@ explicit signal, not store observation, so these never trigger it:
 - restores
 
 `MochiHome` remembers it. When the Calories root is showing with nothing over it, it waits 0.45 s
-and plays eating for 6 loops.
+and plays eating for 6 loops, then grooming for 3.
 
 ### Accessibility
 - Mochi: one element labelled "Mochi", hint "Opens actions", with the button trait. Its default

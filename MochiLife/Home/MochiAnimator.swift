@@ -1,18 +1,26 @@
 import Observation
 import UIKit
 
-/// Drives Mochi's sprite at 8 fps (one loop = 16 frames = 2 s).
+/// Drives Mochi's sprite. Each state runs at its own frame rate (`MochiState.fps`); every change
+/// of state happens at a loop boundary (frame 16 → frame 01), except user-triggered sequences,
+/// which cut in immediately.
 ///
-/// **Autonomous schedule:** a sitting segment of 3–6 loops (6–12 s), then an activity — playing
-/// for 4–6 loops (chance 0.6) or stretching for 1–2 loops (0.4), never the same activity three
-/// times in a row — then a new sitting segment, and so on. Eating is never picked on its own.
-/// Scheduled changes happen only at loop boundaries (frame 16 → frame 01 of the next state).
+/// **Awake schedule:** a rest segment (sitting 3–6 loops, weight 0.6, or loafing 4–8 loops, 0.4),
+/// then an activity (playing 4–6 loops, 0.55, or stretching 1–2 loops, 0.45; never the same
+/// activity three times in a row), repeated. The scheduler can't pick eating or grooming: its
+/// picks come from enums that only contain the rest and activity states.
 ///
-/// **User one-shots:** `play(_:loops:)` (Play button, a logged food) cuts in immediately, runs
-/// whole loops, then the schedule resumes with a sitting segment. Playing again restarts it.
+/// **Sleep:** from 23:00 to 07:00 she sleeps instead. In the day she falls asleep after 180 s of
+/// visible time with no touch anywhere in the app. Wake triggers (tap, drag, long-press, Play, a
+/// logged food) wake her; after a night wake she stays up for a full awake cycle and at least 60 s.
 ///
-/// The clock is `MochiSpriteView`'s task, which calls `advance()` only while the sprite is visible
-/// and the app is active. Memory: only sitting's frames and the current state's are kept decoded.
+/// **Sequences:** queued (state, loops) steps played back to back at loop boundaries, then the
+/// schedule resumes with a rest segment. Play: playing × 10. A logged food: eating × 6 then
+/// grooming × 3. Petting (long-press): grooming × 3. Waking by tap, drag or Play stretches once
+/// first.
+///
+/// Time only passes while the sprite's clock runs (visible, app active); nothing runs in the
+/// background. Memory: only sitting's frames and the current state's are kept decoded.
 @Observable
 @MainActor
 final class MochiAnimator {
@@ -20,93 +28,255 @@ final class MochiAnimator {
     private(set) var frameIndex = 0
     /// Set by the view from the Reduce Motion setting.
     var reduceMotion = false {
-        didSet { if reduceMotion != oldValue { startSittingSegment() } }
+        didSet { if reduceMotion != oldValue { startRest() } }
     }
+
+    // MARK: Timings and weights
 
     static let sittingLoops = 3...6
+    static let loafingLoops = 4...8
+    static let sittingWeight = 0.6
     static let playingLoops = 4...6
     static let stretchingLoops = 1...2
-    static let playingWeight = 0.6
+    static let playingWeight = 0.55
+    static let playLoops = 10
+    static let eatingLoops = 6
+    static let groomingLoops = 3
+    static let wakeStretchLoops = 1
+    static let inactivitySleepSeconds: Double = 180
+    static let nightWakeMinimumSeconds: Double = 60
+    /// Night is from 23:00 until 07:00 local time.
+    static let nightStartHour = 23
+    static let nightEndHour = 7
+    /// Under Reduce Motion, each sequence step shows one still frame for this long.
+    static let reducedMotionStepSeconds = 1.5
 
-    /// Whole loops left in the current segment (including the one playing).
+    enum SleepReason { case night, inactivity }
+
+    /// What the current state is part of.
+    private enum Segment {
+        case rest, activity, sleep(SleepReason), sequence
+    }
+
+    /// The scheduler's choices. Eating and grooming aren't in either, so the scheduler can never
+    /// pick them.
+    private enum Rest { case sitting, loafing }
+    private enum Activity { case playing, stretching }
+
+    @ObservationIgnored private var segment = Segment.rest
     @ObservationIgnored private var loopsRemaining = 0
-    /// The last two autonomous activities, to avoid a third in a row.
-    @ObservationIgnored private var recentActivities: [MochiState] = []
+    @ObservationIgnored private var queue: [(MochiState, Int)] = []
+    @ObservationIgnored private var recentActivities: [Activity] = []
+    /// Visible seconds since the last touch anywhere in the app.
+    @ObservationIgnored private var inactiveSeconds: Double = 0
+    /// Set when woken at night: seconds awake since, and whether a full awake cycle has finished.
+    @ObservationIgnored private var nightWake: (seconds: Double, cycleDone: Bool)?
+    @ObservationIgnored private var reducedMotionTicks = 0
     @ObservationIgnored private var frames: [MochiState: [UIImage]] = [:]
-    @ObservationIgnored private var reducedMotionReturn: Task<Void, Never>?
+    /// The clock, replaceable for previews.
+    @ObservationIgnored var now: () -> Date = { .now }
 
     init() {
-        startSittingSegment()
+        if isNight { startSleep(.night) } else { startRest() }
     }
 
-    /// Plays `state` now for `loops` full loops, then resumes the schedule with sitting. Under
-    /// Reduce Motion, shows that state's frame 08 for about 1.5 seconds instead.
-    func play(_ state: MochiState, loops: Int) {
-        reducedMotionReturn?.cancel()
-        setState(state)
-        if reduceMotion {
-            frameIndex = MochiState.representativeFrame
-            reducedMotionReturn = Task { [weak self] in
-                try? await Task.sleep(for: .seconds(1.5))
-                guard !Task.isCancelled else { return }
-                self?.startSittingSegment()
-            }
-        } else {
-            frameIndex = 0
-            loopsRemaining = max(1, loops)
+    // MARK: - Triggers
+
+    /// Any touch anywhere in the app: resets the inactivity timer, but doesn't wake her.
+    func userTouchedApp() {
+        inactiveSeconds = 0
+    }
+
+    /// A tap or the start of a drag on Mochi: if she's asleep, she wakes and stretches once.
+    func spriteTouched() {
+        inactiveSeconds = 0
+        guard isSleeping else { return }
+        wake()
+        startSequence([(.stretching, Self.wakeStretchLoops)])
+    }
+
+    /// The Play button: playing × 10 (a stretch first if she was asleep). Replaces any sequence.
+    func playWithBall() {
+        let wasSleeping = isSleeping
+        wake()
+        startSequence((wasSleeping ? [(.stretching, Self.wakeStretchLoops)] : []) + [(.playing, Self.playLoops)])
+    }
+
+    /// A food was logged: eating × 6, then grooming × 3. A new one restarts from eating.
+    func ateFood() {
+        wake()
+        startSequence([(.eating, Self.eatingLoops), (.grooming, Self.groomingLoops)])
+    }
+
+    /// Petting (long-press): grooming × 3. Ignored during a meal. Returns whether she grooms.
+    @discardableResult
+    func pet() -> Bool {
+        if state == .eating, case .sequence = segment { return false }
+        wake()
+        startSequence([(.grooming, Self.groomingLoops)])
+        return true
+    }
+
+    /// The app became active: check night and day straight away.
+    func appBecameActive() {
+        switch segment {
+        case .sleep(.night) where !isNight:
+            startRest()
+        case .rest, .activity:
+            if isNight && nightWake == nil { startSleep(.night) }
+        default:
+            break
         }
     }
 
-    /// One frame step (1/8 s). Called by the sprite view's clock only while it's visible.
+    // MARK: - Clock
+
+    /// One frame step at the current state's frame rate. Called by the sprite view's clock only
+    /// while it's visible and the app is active.
     func advance() {
-        guard !reduceMotion else { return }
-        guard frameIndex + 1 >= state.frameCount else {
-            frameIndex += 1
+        let seconds = 1 / state.fps
+        inactiveSeconds += seconds
+        nightWake?.seconds += seconds
+        if reduceMotion {
+            // Still frames; a "loop" is one 1.5 s step for sequences, one second otherwise.
+            reducedMotionTicks += 1
+            let ticks = Int((isInSequence ? Self.reducedMotionStepSeconds : 1) * state.fps)
+            if reducedMotionTicks >= ticks {
+                reducedMotionTicks = 0
+                loopBoundary()
+            }
             return
         }
-        // Loop boundary.
-        frameIndex = 0
-        loopsRemaining -= 1
-        guard loopsRemaining <= 0 else { return }
-        if state == .sitting {
-            startActivity(Self.nextActivity(after: recentActivities, random: Double.random(in: 0..<1)))
-        } else {
-            startSittingSegment()
+        frameIndex += 1
+        if frameIndex >= state.frameCount {
+            frameIndex = 0
+            loopBoundary()
         }
     }
 
     /// The frame to draw now.
     var currentImage: UIImage? {
-        let index = reduceMotion && state == .sitting ? 0 : frameIndex
+        let index = reduceMotion ? (isInSequence ? MochiState.representativeFrame : 0) : frameIndex
         let images = images(for: state)
         return images.indices.contains(index) ? images[index] : nil
     }
 
-    /// The next autonomous activity: playing with probability 0.6, else stretching, but never a
-    /// third of the same in a row.
-    static func nextActivity(after recent: [MochiState], random: Double) -> MochiState {
-        var pick: MochiState = random < playingWeight ? .playing : .stretching
-        if recent.count >= 2, recent.suffix(2).allSatisfy({ $0 == pick }) {
-            pick = pick == .playing ? .stretching : .playing
+    // MARK: - Loop boundaries
+
+    private func loopBoundary() {
+        switch segment {
+        case let .sleep(reason):
+            // Night sleep ends in the morning; inactivity sleep lasts until a wake trigger.
+            if reason == .night && !isNight { startRest() }
+        case .sequence:
+            loopsRemaining -= 1
+            if reduceMotion { loopsRemaining = 0 }
+            guard loopsRemaining <= 0 else { return }
+            if queue.isEmpty {
+                startRest()
+            } else {
+                let next = queue.removeFirst()
+                play(next.0, loops: next.1)
+            }
+        case .rest, .activity:
+            if let reason = sleepReasonNow() {
+                startSleep(reason)
+                return
+            }
+            if reduceMotion { return }
+            loopsRemaining -= 1
+            guard loopsRemaining <= 0 else { return }
+            if case .rest = segment {
+                startActivity()
+            } else {
+                nightWake?.cycleDone = true
+                startRest()
+            }
         }
-        return pick
     }
 
-    // MARK: - Private
+    /// Whether the awake schedule should give way to sleep now.
+    private func sleepReasonNow() -> SleepReason? {
+        if isNight {
+            guard let wake = nightWake else { return .night }
+            return wake.cycleDone && wake.seconds >= Self.nightWakeMinimumSeconds ? .night : nil
+        }
+        nightWake = nil
+        return inactiveSeconds >= Self.inactivitySleepSeconds ? .inactivity : nil
+    }
 
-    private func startActivity(_ activity: MochiState) {
+    // MARK: - Segments
+
+    private func startSequence(_ steps: [(MochiState, Int)]) {
+        guard let first = steps.first else { return }
+        queue = Array(steps.dropFirst())
+        play(first.0, loops: first.1)
+    }
+
+    private func play(_ newState: MochiState, loops: Int) {
+        segment = .sequence
+        setState(newState)
+        frameIndex = reduceMotion ? MochiState.representativeFrame : 0
+        reducedMotionTicks = 0
+        loopsRemaining = max(1, loops)
+    }
+
+    private func startRest() {
+        queue = []
+        segment = .rest
+        let rest: Rest = Double.random(in: 0..<1) < Self.sittingWeight ? .sitting : .loafing
+        switch rest {
+        case .sitting: schedule(.sitting, loops: Int.random(in: Self.sittingLoops))
+        case .loafing: schedule(.loafing, loops: Int.random(in: Self.loafingLoops))
+        }
+        if reduceMotion { setState(.sitting) }
+    }
+
+    private func startActivity() {
+        segment = .activity
+        var activity: Activity = Double.random(in: 0..<1) < Self.playingWeight ? .playing : .stretching
+        if recentActivities.count >= 2, recentActivities.suffix(2).allSatisfy({ $0 == activity }) {
+            activity = activity == .playing ? .stretching : .playing
+        }
         recentActivities = Array((recentActivities + [activity]).suffix(2))
-        setState(activity)
-        frameIndex = 0
-        loopsRemaining = Int.random(in: activity == .playing ? Self.playingLoops : Self.stretchingLoops)
+        switch activity {
+        case .playing: schedule(.playing, loops: Int.random(in: Self.playingLoops))
+        case .stretching: schedule(.stretching, loops: Int.random(in: Self.stretchingLoops))
+        }
     }
 
-    private func startSittingSegment() {
-        reducedMotionReturn?.cancel()
-        reducedMotionReturn = nil
-        setState(.sitting)
+    private func startSleep(_ reason: SleepReason) {
+        queue = []
+        segment = .sleep(reason)
+        nightWake = nil
+        schedule(.sleeping, loops: .max)
+    }
+
+    /// A state chosen by the scheduler (never eating or grooming).
+    private func schedule(_ newState: MochiState, loops: Int) {
+        assert(newState != .eating && newState != .grooming, "The scheduler must never pick eating or grooming")
+        setState(newState)
         frameIndex = 0
-        loopsRemaining = Int.random(in: Self.sittingLoops)
+        reducedMotionTicks = 0
+        loopsRemaining = loops
+    }
+
+    private func wake() {
+        inactiveSeconds = 0
+        if isNight { nightWake = (0, false) }
+    }
+
+    private var isSleeping: Bool {
+        if case .sleep = segment { true } else { false }
+    }
+
+    private var isInSequence: Bool {
+        if case .sequence = segment { true } else { false }
+    }
+
+    private var isNight: Bool {
+        let hour = Calendar.current.component(.hour, from: now())
+        return hour >= Self.nightStartHour || hour < Self.nightEndHour
     }
 
     private func setState(_ newState: MochiState) {
