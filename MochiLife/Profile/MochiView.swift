@@ -26,6 +26,13 @@ struct MochiView: View {
                 detailsSection
                 vaccinationsSection
                 medicalHistorySection
+                Section {
+                    NavigationLink {
+                        BackupRestoreView()
+                    } label: {
+                        Label("Back Up and Restore", systemImage: "externaldrive")
+                    }
+                }
             }
             .navigationTitle(profile?.displayName ?? CatProfile.defaultName)
             .toolbar {

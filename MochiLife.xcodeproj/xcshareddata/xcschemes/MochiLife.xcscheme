@@ -33,6 +33,17 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA0000000000000000000035"
+               BuildableName = "MochiLifeTests.xctest"
+               BlueprintName = "MochiLifeTests"
+               ReferencedContainer = "container:MochiLife.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "AA0000000000000000000020"
                BuildableName = "MochiLifeUITests.xctest"
                BlueprintName = "MochiLifeUITests"

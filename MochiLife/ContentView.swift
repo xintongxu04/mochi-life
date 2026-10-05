@@ -24,6 +24,8 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [CatProfile]
     @State private var selectedTab = AppTab.weight
+    /// A backup file opened from Files, AirDrop or the share sheet.
+    @State private var openedBackup: RestoreSource?
 
     private var catName: String { profiles.current?.displayName ?? CatProfile.defaultName }
 
@@ -42,6 +44,14 @@ struct ContentView: View {
         .environment(\.openTab, OpenTabAction(selection: $selectedTab))
         .environment(\.catName, catName)
         .task { LaunchMaintenance.run(in: modelContext) }
+        .onOpenURL { url in
+            guard url.pathExtension.lowercased() == BackupFormat.fileExtension else { return }
+            selectedTab = .mochi
+            openedBackup = RestoreSource(url: url)
+        }
+        .sheet(item: $openedBackup) { source in
+            RestoreFlowView(url: source.url)
+        }
     }
 }
 

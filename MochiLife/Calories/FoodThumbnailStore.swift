@@ -20,10 +20,22 @@ enum FoodThumbnailStore {
     static let longEdge = 200
     static let jpegQuality = 0.72
 
-    private static let directory = URL.applicationSupportDirectory.appending(path: "FoodThumbnails", directoryHint: .isDirectory)
+    static let directory = URL.applicationSupportDirectory.appending(path: "FoodThumbnails", directoryHint: .isDirectory)
     nonisolated(unsafe) private static let cache = NSCache<NSString, UIImage>()
 
     static func isStoredKey(_ key: String) -> Bool { key.hasPrefix(keyPrefix) }
+
+    /// "food-abc.jpg" for "user/food-abc"; nil for bundled keys or unsafe names.
+    static func fileName(forKey key: String) -> String? {
+        fileURL(forKey: key)?.lastPathComponent
+    }
+
+    /// Forgets cached images after files change outside `setPhoto` (a restore).
+    @MainActor
+    static func invalidateCache() {
+        cache.removeAllObjects()
+        ThumbnailRevision.shared.bump()
+    }
 
     static func image(forKey key: String) -> UIImage? {
         if let cached = cache.object(forKey: key as NSString) { return cached }

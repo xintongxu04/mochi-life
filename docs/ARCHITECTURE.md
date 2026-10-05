@@ -23,7 +23,7 @@ something described here must update this file in the same commit (see `CLAUDE.m
 | Other Apple frameworks | Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
 | Network services | Optional, owner-supplied keys: Brave Search Web Search API and DeepSeek chat completions (§11). No other networking. |
 | Third-party dependencies | None. No Swift packages, CocoaPods or Carthage. |
-| Info.plist | Generated (`GENERATE_INFOPLIST_FILE = YES`). Keys set via build settings: display name "Mochi Life", `NSCameraUsageDescription` ("Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded."), generated launch screen and scene manifest. |
+| Info.plist | Generated (`GENERATE_INFOPLIST_FILE = YES`) and merged with `MochiLife/Info.plist` (`INFOPLIST_FILE`; excluded from the synchronized group's resources by an exception set), which declares the backup file type (`UTExportedTypeDeclarations`, `CFBundleDocumentTypes`, `LSSupportsOpeningDocumentsInPlace = NO`). Other keys set via build settings: display name "Mochi Life", `NSCameraUsageDescription` ("Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded."), generated launch screen and scene manifest. |
 | Bundle IDs | `com.xintongxu.MochiLife`, `com.xintongxu.MochiLifeUITests` |
 
 Simulator used for development: **iPhone 18 Pro** (iOS 27.0).
@@ -41,6 +41,8 @@ app bundle root, so bundled file names must be unique.
 Targets:
 - **MochiLife** (app), from folder `MochiLife/`.
 - **MochiLifeUITests** (UI test bundle, `TEST_TARGET_NAME = MochiLife`), from `MochiLifeUITests/`.
+- **MochiLifeTests** (unit test bundle hosted in the app, `TEST_HOST`/`BUNDLE_LOADER`), from
+  `MochiLifeTests/`; uses Swift Testing.
 - Shared scheme `MochiLife.xcscheme` builds the app and runs the UI tests (not parallelized).
 
 ### `MochiLife/` (app)
@@ -58,6 +60,10 @@ Targets:
 | `Persistence.swift` | `Persistence.save(_:)` — the only way data is saved; logs failures with `os.Logger` and shows a Try Again / Discard Changes alert. |
 | `NumberInput.swift` | The one parser for typed numbers, with a `Field` (range + decimal places) per kind of input. |
 | `LaunchMaintenance.swift` | Repeat-safe upkeep run each time the app opens: single profile, food library update, missing fractions. |
+| `Backup/BackupFormat.swift` | `UTType.mochiBackup`, `BackupFormat`, `BackupEnvelope`, `BackupPayload` and all backup DTOs, `BackupCounts`, `BackupError`, `BackupCoding` (JSON, ISO 8601 ms dates). |
+| `Backup/BackupMapping.swift` | Explicit model ↔ DTO mapping, both directions. |
+| `Backup/BackupService.swift` | `BackupService` (`@ModelActor`, builds the envelope on a background context), `BackupSettings` (UserDefaults in/out), `BackupFiles` (writing, export, safety backups). |
+| `Backup/BackupRestore.swift` | `PreparedRestore`, `BackupReader` (read, decode, upgrade, validate, stage), `BackupRestorer` (replace all data in one save). |
 
 **`Weight/`**
 | File | Purpose |
@@ -113,6 +119,7 @@ Targets:
 | `ProfileFormView.swift` | Edit Mochi's basic facts, photo from library or camera. |
 | `VaccinationFormView.swift` | Add/edit a vaccination. |
 | `MedicalRecordFormView.swift` | Add/edit a medical history entry. |
+| `BackupRestoreView.swift` | "Back Up and Restore" screen and `RestoreFlowView` (summary, confirmation, safety backup, restore). |
 | `CameraPicker.swift` | `UIImagePickerController` wrapper for taking a photo (hidden when no camera, e.g. the simulator). |
 
 **`Resources/`**
@@ -129,6 +136,11 @@ Targets:
 | `SavedFoodsUITests.swift` | Browse/search/details; add/edit/delete foods; no duplicate import and deleted foods stay deleted. |
 
 UI tests expect a **fresh install** (no saved data). See §10 for their current state.
+
+### `MochiLifeTests/`
+| File | Purpose |
+|---|---|
+| `BackupRoundTripTests.swift` | One of every backed-up record, export → file → read/validate → restore into a second in-memory container → export again; compares every field and the photo files. |
 
 ### Other files
 - `README.md` — plain-language description for the owner (kept in sync with features).
@@ -272,6 +284,8 @@ so a profile always exists; views read it with `@Query` + `profiles.current` (ol
 | `loadedFoodLibrary.<library>` | `Bool` | Legacy (pre-versioning) "version 1 imported" flag; read only, treated as version 1 |
 | `deletedSeedIDs` | `[String]` | Seed IDs of seeded foods the owner deleted, so updates don't re-add them |
 | `aiLookup.date`, `aiLookup.count` | `String`, `Int` | Today's AI lookup count (`AILookupLimit`) |
+| `braveImageSearch.unavailable` | `Bool` | The Brave key's plan refused image search (`ImageSearchAvailability`) |
+| `backup.lastExport` | `Double` | Last successful backup export (seconds since the reference date) |
 
 API keys for AI lookup are **not** in UserDefaults: they are Keychain generic passwords (service
 `com.xintongxu.MochiLife.ailookup`, accounts `brave_search` and `deepseek`,
@@ -344,7 +358,8 @@ Food log entries are snapshots and are never changed by an update.
 ```
 MochiLifeApp
 └─ WindowGroup → ContentView  (TabView, selection: AppTab, default .weight;
-                               .task → LaunchMaintenance.run; provides catName)
+                               .task → LaunchMaintenance.run; provides catName;
+                               .onOpenURL(.mochibackup) → sheet RestoreFlowView)
    ├─ Tab "Weight" (scalemass)   → WeightView
    │    NavigationStack — title "Mochi Life"
    │      List: WeightChartView section (if entries) + entries
@@ -382,6 +397,7 @@ MochiLifeApp
    └─ Tab <cat's name, default "Mochi"> (pawprint) → MochiView
         NavigationStack — title = profile name (default "Mochi")
           List: photo + age, Details, Vaccinations, Medical History
+          NavigationLink → BackupRestoreView (fileImporter; sheet RestoreFlowView; ShareLink)
           toolbar "Edit": sheet → ProfileFormView (own NavigationStack)
             fullScreenCover: CameraPicker
           sheets: VaccinationFormView, MedicalRecordFormView (add and edit)
@@ -472,6 +488,9 @@ closes via an `onFinish` closure instead of `dismiss`.
 - **Cat's name** — never hard-code "Mochi" in user-facing text; use the `catName`
   environment value (or `CatProfile.displayName`).
 - **Schema changes** — follow the rule in §3 (new `VersionedSchema` + `MigrationStage`).
+- **Backups** — every new persisted field (model property or behavior-changing UserDefaults
+  setting) must be added to the backup DTOs, to `BackupMapping.swift`, and to
+  `BackupRoundTripTests` in the same change (§12).
 - **Secrets** — API keys only in the Keychain (`AIKeychain`), never in source, UserDefaults,
   logs or the repository. Logs (`AILog`, category `aiLookup`) record stage durations, HTTP
   statuses and DeepSeek token usage only — never keys, query text or page content.
@@ -695,4 +714,70 @@ photo, and a first note with confidence and form.
 - `LookupFailure` messages: offline, timeout, key rejected (401/403, names the service), no
   balance (402), rate limited (429), server error (5xx), blocked or empty page, unreadable
   answer, not found, missing key, daily limit.
+
+---
+
+## 12. Backup and restore (`Shared/Backup/`, `Profile/BackupRestoreView.swift`)
+
+Purpose: move data between devices (simulator → iPhone) and survive reinstalls of a
+free-provisioned build. Reached from the Mochi tab ("Back Up and Restore"); opening a
+`.mochibackup` from Files, AirDrop or the share sheet starts a restore (`ContentView.onOpenURL`).
+
+### Format
+- One file, extension `.mochibackup`, UTType `com.xintongxu.mochilife.backup` (conforms to
+  `public.data`, `public.json`), exported and registered as a document type in `MochiLife/Info.plist`.
+- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (1), `schemaVersion` (the SwiftData version,
+  "3.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
+  = `foodThumbnail` | `profilePhoto`, `base64`).
+- Dates are ISO 8601 UTC with milliseconds, written from a rounded whole number of milliseconds so
+  they read back and re-encode identically. Numbers are plain JSON numbers (the app has no
+  `Decimal` values; Doubles round-trip exactly). Portions keep numerator/denominator; weights are
+  in kilograms.
+- **DTO rule:** the backup uses dedicated Codable DTOs (`WeightDTO`, `FoodDTO`, `FoodLogEntryDTO`,
+  `ProfileDTO`, `VaccinationDTO`, `MedicalRecordDTO`, `SettingsDTO`, …) mapped explicitly in
+  `BackupMapping.swift`. Models are never Codable or serialized directly.
+
+### Contents
+- Included: all weights; foods of origin manual and aiLookup in full; seeded foods only where
+  `isUserModified` (as overrides keyed by `seedID`); `deletedSeedIDs`; every food log entry with
+  its portion snapshot, exact fraction and carry fields (`carryGroupID`, `carryDay`, `openedAt`);
+  the profile (photo as a `profilePhoto` file); vaccinations; medical history; settings
+  (`weightUnit`, own calorie target, gains weight easily); and every photo file in
+  Application Support/FoodThumbnails referenced by a food or log entry. There are no feeding
+  schedules or scheduled-meal fields in the app.
+- Excluded: API keys and anything in the Keychain; AI lookup counters; the image-search
+  availability flag; the last-export date; bundled seed data and photos. The seed version
+  marker isn't stored; restore resets it so the bundled foods are re-applied.
+
+### Export
+`BackupFiles.exportCurrentData`: `BackupService` (a `@ModelActor`) fetches on a background
+context and builds the envelope (records sorted deterministically); the JSON is written
+atomically off the main actor to the temporary folder as `MochiLife-YYYY-MM-DD-HHmm.mochibackup`
+and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cancellable.
+
+### Restore
+1. `BackupReader.prepare` (off the main actor, cancellable): security-scoped read; reject files
+   over 100 MB; check it's JSON; read `formatVersion`/`schemaVersion` and refuse newer ones
+   ("update the app"); decode through `upgrade(_:from:)` (one explicit step per older format
+   version; v1 is current); validate (weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
+   denominators > 0, carry day ≥ 0, target ≤ 5,000, safe file names, valid base64), with distinct
+   messages; stage photo files in a temporary folder.
+2. `RestoreFlowView` shows the backup's date, device and app version, and per-type counts next to
+   this device's.
+3. Explicit destructive confirmation.
+4. Automatic safety backup of the current data to Documents/SafetyBackups (three most recent kept;
+   listed on the screen with restore and delete). If it can't be written, nothing changes.
+5. `BackupRestorer.restore` (main actor, one save): seeded foods the backup overrides are updated
+   in place (their seed ID is unique), every other record is deleted, the backup's records are
+   inserted, and `Persistence.saveOrThrow` saves once. On failure: `rollback()`, staged files
+   discarded, existing data and files untouched, specific error shown. Only after the save: staged
+   photos move into place, unreferenced photo files are removed, settings and `deletedSeedIDs` are
+   written, the seed version marker is reset and `FoodLibraryLoader.updateBundledLibraries` re-adds
+   bundled foods (skipping edited and deleted ones, no duplicates), and the single profile is
+   ensured. The replacement runs on the main context so screens never hold deleted objects; the
+   slow work (reading, decoding, staging, safety backup) is off the main actor.
+
+### Rule
+Every new persisted field must be added to the backup DTOs, the mapping, and
+`BackupRoundTripTests`; a new file layout needs a new `formatVersion` and an upgrade step.
 

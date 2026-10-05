@@ -160,6 +160,16 @@ The Calories tab opens on **Today**.
 If saving ever fails, the app tells you and lets you try again or discard the
 change, instead of failing silently.
 
+- **Back Up and Restore** (on the Mochi tab): save all your data — weights, foods
+  you added or edited, the food log, Mochi's profile and photo, vaccinations,
+  medical history, your settings and saved food photos — to one
+  `.mochibackup` file you can AirDrop or save to Files or iCloud Drive. Restoring
+  a backup (from Files, or by opening the file) shows what's in it next to
+  what's on the iPhone, asks before replacing everything, and first saves a
+  safety backup of the current data (the last three are kept and can be
+  restored). Backups don't include your API keys. The file contains Mochi's
+  health records in readable form, so keep it private.
+
 Everything you enter (weights, the kg / lb choice, foods, food log entries and
 Mochi's profile, vaccinations and medical history) stays saved on the phone
 after you close and reopen the app. Nothing is sent anywhere, except what "Add with AI"

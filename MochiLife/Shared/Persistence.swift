@@ -14,12 +14,22 @@ enum Persistence {
     @discardableResult
     static func save(_ context: ModelContext) -> Bool {
         do {
-            try context.save()
+            try saveOrThrow(context)
             return true
         } catch {
-            logger.error("Save failed: \(error.localizedDescription, privacy: .public)")
             showAlert(for: error, context: context)
             return false
+        }
+    }
+
+    /// The same save, for callers that show their own error (such as a restore): logs and
+    /// rethrows instead of showing an alert.
+    nonisolated static func saveOrThrow(_ context: ModelContext) throws {
+        do {
+            try context.save()
+        } catch {
+            logger.error("Save failed: \(error.localizedDescription, privacy: .public)")
+            throw error
         }
     }
 
