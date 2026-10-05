@@ -74,7 +74,8 @@ struct RadialActionMenu: View {
 
     /// Picks the preset from her position (once per opening) and opens.
     private func open(center: CGPoint, screen: CGSize, safeArea: EdgeInsets) {
-        let top = max(safeArea.top, home.restingTopLimit) + Self.margin
+        // The same top limit as Mochi's own area: just below the toolbar button row.
+        let top = MochiHome.topLimit(safeAreaTop: safeArea.top)
         let bounds = CGRect(x: safeArea.leading + Self.margin, y: top,
                             width: screen.width - safeArea.leading - safeArea.trailing - 2 * Self.margin,
                             height: screen.height - safeArea.bottom - Self.margin - top)

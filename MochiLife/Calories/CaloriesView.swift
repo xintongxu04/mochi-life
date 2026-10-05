@@ -64,11 +64,6 @@ struct DayLogView: View {
     var body: some View {
         @Bindable var home = home
         DayEntriesList(day: day, isFuture: isFuture, dayControls: dayControls, onSwipe: move(by:))
-            // The expanded bar's bottom at rest: the fixed top of floating Mochi's area. Values
-            // seen while the bar collapses are smaller and are ignored.
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.frame(in: .global).minY + proxy.safeAreaInsets.top
-            } action: { home.noteRestingTopLimit($0) }
             .navigationTitle(title)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {

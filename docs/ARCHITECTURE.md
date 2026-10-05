@@ -1263,15 +1263,17 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   *(Fixed 2026-10-05: she used to be an overlay on the Calories root view inside the stack, and
   her point was re-derived every render from the saved fractions times a safe-area frame that
   shrank as the large title collapsed. So she drifted while scrolling.)*
-- **Live position:** an absolute `origin` (`@State`). It's converted from the saved fractions
-  only when she's first placed (once the top limit is known) or if the screen size really
-  changes. It's converted back to fractions only at drag end. It's never re-clamped or
-  re-derived in response to scroll-driven geometry.
-- **Clamp region:** the screen inset 8 pt, using the side and bottom safe-area insets read from
-  the root `GeometryReader`. The top is a **fixed limit**: the bottom of the expanded navigation
-  bar, `MochiHome.restingTopLimit`. `DayLogView` reports its frame top plus safe-area top with
-  `onGeometryChange`, and only the largest value (at rest, title expanded) is kept, so it doesn't
-  follow the bar as it collapses. That keeps her below the bar and clear of the Log Food button.
+- **Live position:** an absolute `origin` (`@State`), set when she's placed (on launch, or if the
+  screen size really changes) and at drag end. It's never re-clamped or re-derived in response to
+  scroll-driven geometry.
+- **Drag bounds:** the screen inset by the safe area + 8 pt on the leading, trailing and bottom
+  sides. The **top limit** is just below the toolbar button row: the window's top safe area +
+  the standard 44 pt inline navigation bar (the row with the three leading icon buttons and Log
+  Food) + 4 pt (`MochiHome.topLimit(safeAreaTop:)`). It's a constant in the root coordinate space
+  that never follows the bar as the large title collapses. She may sit over the large "Today"
+  title, the summary card and the list.
+  *(Until 2026-10-05 the top was the bottom of the expanded bar including the large title, so
+  she couldn't go above the start of the food list.)*
 - **Animation:** her offset has no implicit animation (`.transaction` clears it). The only
   animated move is the explicit spring when she's released outside the region. The lift on
   pick-up (scale 1.06 and a soft shadow) uses a scoped `.animation { }` that covers only those
@@ -1286,9 +1288,13 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
     the ring.
   - **Feedback:** starting a drag closes the ring and gives a light haptic. Her animation keeps
     running while dragged.
-- **Persistence:** her top-left corner is stored as fractions 0…1 of the clamp region in
-  `@AppStorage("mochi.position.x"/".y")` (−1 = never moved). The default is bottom-trailing, 16 pt
-  from the safe edges. She stays exactly where she's dropped (no edge-snapping).
+- **Persistence:** her top-left corner is stored in screen points in
+  `@AppStorage("mochi.origin.x"/".y")` (−1 = not saved).
+  - On placement it's used as is, and clamped only if it now falls outside the bounds.
+  - Positions saved by older versions as fractions of the old area
+    (`mochi.position.x`/`.y`) are converted once.
+  - The default is bottom-trailing, 16 pt from the safe edges. She stays exactly where she's
+    dropped (no edge-snapping).
 - **Visibility:** she shows only on the Calories root with nothing presented over it
   (`MochiHome.isSpriteHidden`). She's hidden whenever:
   - a screen is pushed (`path` isn't empty), or
@@ -1337,8 +1343,9 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 - **Placement** (`RadialMenuGeometry`, pure, no views): drawn in an overlay on `ContentView`,
   above the navigation bar. **The ring's centre is always Mochi's centre** and never moves; the
   radius is **96 pt**.
-  - **Bounds:** the screen inset by the safe area + 4 pt, with the top at the expanded navigation
-    bar's bottom (`restingTopLimit`) + 4 pt.
+  - **Bounds:** the screen inset by the safe area + 4 pt, with the top at Mochi's own top limit
+    (`MochiHome.topLimit`, just below the toolbar button row). The near-top test and the fit check
+    use it, so no button can cover the toolbar buttons.
   - **Near edges** (`nearEdges(center:bounds:previous:)`): an edge becomes near when her centre
     is less than R + 28 = 124 pt from it. It stops being near only beyond R + 52 = 148 pt
     (hysteresis). The last set is kept in memory (`MochiHome.menuNearEdges`, not saved to disk)

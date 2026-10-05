@@ -4,23 +4,28 @@ import SwiftUI
 ///
 /// **Coordinate space:** a full-screen root layer (`ContentView`, above the `NavigationStack`,
 /// `.ignoresSafeArea()`), so her position is in screen points and nothing that happens while the
-/// list scrolls (the large title collapsing, the bar or safe area changing) can move her. Her
-/// position is an absolute point while the app runs. It's converted to and from the saved
-/// fractions (0…1 of the allowed range) only when she's first placed, when a drag ends, and if
-/// the screen size really changes.
+/// list scrolls (the large title collapsing, the bar or safe area changing) can move her.
 ///
-/// **Clamp region:** the screen inset 8 pt, with the side and bottom safe-area insets, and a fixed
-/// top limit at the bottom of the expanded navigation bar (`MochiHome.restingTopLimit`, measured
-/// at rest; it doesn't follow the bar as it collapses).
+/// **Drag area:** the screen inset by the safe area + 8 pt at the sides and bottom; the top is
+/// just below the toolbar button row (`MochiHome.topLimit`: the window's top safe area + the
+/// 44 pt inline bar + 4 pt), a constant. She may sit over the large title, the summary card and
+/// the list.
+///
+/// **Saved position:** her top-left corner in screen points. When she's placed (launch, or a real
+/// screen size change) it's used as is, and clamped only if it now falls outside the area.
+/// Positions saved by older versions as fractions of the area are converted once.
 ///
 /// Only her own rectangle takes touches. Drag (8 pt or more) moves her 1:1; a tap toggles the
 /// ring. Dropped outside the region, she springs back in; otherwise she stays where dropped.
 struct FloatingMochiView: View {
     let home: MochiHome
 
-    /// Fractions of the allowed range; −1 means "never moved" (use the default corner).
-    @AppStorage("mochi.position.x") private var storedX = -1.0
-    @AppStorage("mochi.position.y") private var storedY = -1.0
+    /// Her top-left corner in screen points; −1 means "not saved".
+    @AppStorage("mochi.origin.x") private var savedX = -1.0
+    @AppStorage("mochi.origin.y") private var savedY = -1.0
+    /// Older versions saved fractions (0…1) of the area; read once to convert.
+    @AppStorage("mochi.position.x") private var legacyFractionX = -1.0
+    @AppStorage("mochi.position.y") private var legacyFractionY = -1.0
     /// Her top-left corner in screen points, while the screen is live.
     @State private var origin: CGPoint?
     /// The screen size `origin` was placed for.
@@ -34,7 +39,7 @@ struct FloatingMochiView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let region = Self.region(screen: proxy.size, safeArea: proxy.safeAreaInsets, topLimit: home.restingTopLimit)
+            let region = Self.region(screen: proxy.size, safeArea: proxy.safeAreaInsets)
             ZStack(alignment: .topLeading) {
                 if let origin {
                     MochiSpriteView(animator: home.animator)
@@ -57,11 +62,11 @@ struct FloatingMochiView: View {
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
-            // Placed once the resting top limit is known, and again only if the screen size changes.
-            .onChange(of: PlacementKey(screen: proxy.size, hasTopLimit: home.restingTopLimit > 0), initial: true) { _, key in
-                guard key.hasTopLimit, placedScreenSize != key.screen else { return }
-                placedScreenSize = key.screen
-                origin = Self.origin(storedX: storedX, storedY: storedY, in: region)
+            // Placed when the screen size is known, and again only if it really changes.
+            .onChange(of: proxy.size, initial: true) { _, screen in
+                guard screen != .zero, placedScreenSize != screen else { return }
+                placedScreenSize = screen
+                place(in: region)
             }
         }
         .ignoresSafeArea()
@@ -71,9 +76,21 @@ struct FloatingMochiView: View {
     /// True only during the spring-back after a release outside the region.
     @State private var isSettling = false
 
-    private struct PlacementKey: Equatable {
-        var screen: CGSize
-        var hasTopLimit: Bool
+    /// Her saved point, clamped only if it's now outside the area; else the converted older
+    /// fractions; else the default corner.
+    private func place(in region: CGRect) {
+        let point: CGPoint
+        if savedX >= 0, savedY >= 0 {
+            point = CGPoint(x: savedX, y: savedY)
+        } else if legacyFractionX >= 0, legacyFractionY >= 0 {
+            point = CGPoint(x: region.minX + CGFloat(min(max(legacyFractionX, 0), 1)) * region.width,
+                            y: region.minY + CGFloat(min(max(legacyFractionY, 0), 1)) * region.height)
+        } else {
+            point = Self.defaultOrigin(in: region)
+        }
+        let placed = region.contains(point) ? point : Self.clamp(point, in: region)
+        origin = placed
+        (savedX, savedY) = (Double(placed.x), Double(placed.y))
     }
 
     private var tap: some Gesture {
@@ -92,7 +109,7 @@ struct FloatingMochiView: View {
             .onEnded { value in
                 let dropped = CGPoint(x: origin.x + value.translation.width, y: origin.y + value.translation.height)
                 let clamped = Self.clamp(dropped, in: region)
-                (storedX, storedY) = Self.fractions(of: clamped, in: region)
+                (savedX, savedY) = (Double(clamped.x), Double(clamped.y))
                 if clamped == dropped {
                     self.origin = clamped
                     translation = .zero
@@ -112,10 +129,10 @@ struct FloatingMochiView: View {
     // MARK: - Position
 
     /// Where her top-left corner may go, in screen points.
-    static func region(screen: CGSize, safeArea: EdgeInsets, topLimit: CGFloat) -> CGRect {
+    static func region(screen: CGSize, safeArea: EdgeInsets) -> CGRect {
         let size = MochiSpriteView.size
         let minX = safeArea.leading + inset
-        let minY = max(topLimit, safeArea.top) + inset
+        let minY = MochiHome.topLimit(safeAreaTop: safeArea.top)
         let maxX = max(minX, screen.width - safeArea.trailing - inset - size.width)
         let maxY = max(minY, screen.height - safeArea.bottom - inset - size.height)
         return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
@@ -125,20 +142,9 @@ struct FloatingMochiView: View {
         CGPoint(x: min(max(point.x, region.minX), region.maxX), y: min(max(point.y, region.minY), region.maxY))
     }
 
-    static func fractions(of point: CGPoint, in region: CGRect) -> (Double, Double) {
-        func fraction(_ value: CGFloat, _ start: CGFloat, _ span: CGFloat) -> Double {
-            span > 0 ? Double((value - start) / span) : 0
-        }
-        return (fraction(point.x, region.minX, region.width), fraction(point.y, region.minY, region.height))
-    }
-
-    /// The saved position, or bottom-trailing 16 pt from the safe edges if she was never moved.
-    static func origin(storedX: Double, storedY: Double, in region: CGRect) -> CGPoint {
-        guard storedX >= 0, storedY >= 0 else {
-            let edgeShift = defaultEdgeDistance - inset
-            return clamp(CGPoint(x: region.maxX - edgeShift, y: region.maxY - edgeShift), in: region)
-        }
-        return CGPoint(x: region.minX + CGFloat(min(max(storedX, 0), 1)) * region.width,
-                       y: region.minY + CGFloat(min(max(storedY, 0), 1)) * region.height)
+    /// Bottom-trailing, 16 pt from the safe edges.
+    static func defaultOrigin(in region: CGRect) -> CGPoint {
+        let edgeShift = defaultEdgeDistance - inset
+        return clamp(CGPoint(x: region.maxX - edgeShift, y: region.maxY - edgeShift), in: region)
     }
 }
