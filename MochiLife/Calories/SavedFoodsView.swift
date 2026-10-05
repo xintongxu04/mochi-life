@@ -177,7 +177,8 @@ private struct FoodRow: View {
 
     var body: some View {
         NavigationLink(value: food) {
-            HStack {
+            HStack(spacing: 12) {
+                FoodThumbnail(food: food, size: 44)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(food.name)
                     if showsBrandAndLine {

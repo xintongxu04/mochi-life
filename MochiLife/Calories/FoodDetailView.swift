@@ -9,6 +9,13 @@ struct FoodDetailView: View {
     var body: some View {
         Form {
             Section {
+                FoodThumbnail(food: food, size: 160)
+                    .frame(maxWidth: .infinity)
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+
+            Section {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(food.name)
                         .font(.title2.bold())

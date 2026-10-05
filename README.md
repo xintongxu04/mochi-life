@@ -25,10 +25,13 @@ The app has two tabs at the bottom: **Weight** and **Calories**.
   app opens, so reopening it never creates duplicates.
 - Browse foods by brand, then by line (with how many products are in each),
   then by product. Foods without a brand are grouped under "My foods".
+- Each Tiki Cat food shows a small product photo next to it in lists and search
+  results. The photos are stored inside the app, so they work offline. Foods
+  without a photo (such as ones you add yourself) show a simple placeholder icon.
 - Search by brand, line and product name together. Search updates as you type,
   ignores capital letters and accents, and matches words in any order
   ("tuna pate" finds "Grill Tuna & Prawn Pâté").
-- Open any food to see:
+- Open any food to see a larger product photo at the top, then:
   - each size with its calories per can or pouch (a small "calculated" label
     marks figures that were worked out rather than printed by the brand)
   - calories per gram
@@ -66,8 +69,10 @@ read in October 2026. Two of the foods come from Tiki Cat brand-page text
 that was pasted in by hand (those foods say so in their notes). Each food's
 page in the app links to its source.
 
-The app doesn't show product photos yet. Product names, details and any
-product photos belong to Tiki Cat and are for personal use only.
+The product photos also come from those Tiki Cat product pages (the main photo
+on each page, shrunk to a small thumbnail). Product names, details and photos
+belong to Tiki Cat and are for personal use only, in this private app on my
+own phone. Don't publish them anywhere public.
 
 ## What's planned next
 
@@ -77,4 +82,3 @@ These are not built yet:
   that food pages already have
 - Daily calorie totals
 - Scheduled meals
-- Product photos
