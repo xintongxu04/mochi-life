@@ -8,8 +8,13 @@ struct FoodThumbnail: View {
     let libraryIdentifier: String?
     let size: CGFloat
 
+    /// Set when showing a saved food, so its photo is resolved fresh on every draw.
+    private var food: Food?
+
     init(food: Food, size: CGFloat) {
-        self.init(libraryIdentifier: food.photoKey, size: size)
+        self.libraryIdentifier = food.photoKey
+        self.size = size
+        self.food = food
     }
 
     /// - Parameter libraryIdentifier: A seed ID, or an older "<library>/<name>" identifier
@@ -21,7 +26,7 @@ struct FoodThumbnail: View {
 
     var body: some View {
         Group {
-            if let image = FoodThumbnails.image(forLibraryIdentifier: libraryIdentifier) {
+            if let image = resolvedImage {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
@@ -37,6 +42,13 @@ struct FoodThumbnail: View {
         .frame(width: size, height: size)
         .clipShape(.rect(cornerRadius: size * 0.18))
         .accessibilityHidden(true)
+    }
+
+    private var resolvedImage: UIImage? {
+        // Reading the revision redraws this view when a saved photo is replaced in place.
+        _ = ThumbnailRevision.shared.value
+        if let food { return FoodThumbnails.image(for: food) }
+        return FoodThumbnails.image(forLibraryIdentifier: libraryIdentifier)
     }
 }
 
@@ -57,8 +69,23 @@ enum FoodThumbnails {
         return names
     }()
 
+    /// Resolution order: the food's saved photo file, else its bundled photo, else nil
+    /// (placeholder). A food whose photo was removed shows the placeholder.
+    static func image(for food: Food) -> UIImage? {
+        if food.thumbnailKey == FoodThumbnailStore.noPhotoKey { return nil }
+        if let key = food.thumbnailKey, let image = FoodThumbnailStore.image(forKey: key) { return image }
+        return [food.seedID, food.libraryIdentifier].lazy.compactMap { $0 }
+            .compactMap { image(forLibraryIdentifier: $0) }.first
+    }
+
+    /// The bundled photo for a seeded food, ignoring any saved replacement.
+    static func bundledImage(for food: Food) -> UIImage? {
+        [food.seedID, food.libraryIdentifier].lazy.compactMap { $0 }
+            .compactMap { image(forLibraryIdentifier: $0) }.first
+    }
+
     static func image(forLibraryIdentifier identifier: String?) -> UIImage? {
-        guard let identifier else { return nil }
+        guard let identifier, identifier != FoodThumbnailStore.noPhotoKey else { return nil }
         if FoodThumbnailStore.isStoredKey(identifier) {
             return FoodThumbnailStore.image(forKey: identifier)
         }

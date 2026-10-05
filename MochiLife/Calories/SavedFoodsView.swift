@@ -137,7 +137,9 @@ struct SavedFoodsView: View {
             }
         }
         .sheet(isPresented: $isAddingFood) {
-            FoodFormView(food: nil)
+            NavigationStack {
+                FoodEditorView(mode: .create(name: nil)) { _ in isAddingFood = false }
+            }
         }
         .sheet(isPresented: $isAddingWithAI) {
             AddWithAIView()
@@ -279,6 +281,8 @@ private struct FoodRow: View {
         guard let context = foods.first?.modelContext else { return }
         FoodLibraryLoader.rememberDeletion(of: foods)
         for food in foods {
+            // The food's own photo file goes with it (log entries then show a placeholder).
+            if let key = food.thumbnailKey { FoodThumbnailStore.deleteFile(forKey: key) }
             context.delete(food)
         }
         Persistence.save(context)

@@ -125,7 +125,9 @@ struct FoodDetailView: View {
             Button("Edit") { isEditing = true }
         }
         .sheet(isPresented: $isEditing) {
-            FoodFormView(food: food)
+            NavigationStack {
+                FoodEditorView(mode: .edit(food)) { _ in isEditing = false }
+            }
         }
         .sheet(isPresented: $isLogging) {
             NavigationStack {

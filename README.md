@@ -101,7 +101,9 @@ The Calories tab opens on **Today**.
   choose a photo of the package front (its text is read on the iPhone; the photo is never
   uploaded). The app searches the web with Brave Search, has DeepSeek pick the
   manufacturer's page and copy the label details, works out the calorie maths itself, and
-  fetches a product photo. You review and edit everything before saving; if the food is
+  fetches a product photo (from the product page, or Brave image search if your
+  plan includes it; each image search counts toward the daily limit). If no
+  photo is found you can still save, and add one from the form. You review and edit everything before saving; if the food is
   already saved you can update it or save a new one. If nothing is found, you can enter it
   by hand with the name filled in. This needs your own Brave Search and DeepSeek API keys
   (entered in AI Lookup settings, stored only in the iPhone's Keychain), and is limited to
@@ -123,8 +125,19 @@ The Calories tab opens on **Today**.
   number over the worked-out one. "Log This" logs that portion straight away.
 - Add your own foods with a name, an optional brand and line, and calories
   typed either per gram or per 100 g (the app works out the per-gram figure).
-- Edit or delete any food, including the built-in Tiki Cat ones. The app warns
-  you about numbers that are far too high for any cat food.
+- Edit any food, including the built-in Tiki Cat ones, with the same full form
+  used for adding: brand, line, name, type, sizes (add, change, delete or
+  reorder), calories per gram (or per 100 g), calorie statement, ingredients,
+  guaranteed analysis, notes, source link and photo. The form explains anything
+  it can't accept (for example calories per gram must be between 0.2 and 6.0),
+  and Cancel throws away every change. Edited Tiki Cat foods are never
+  overwritten by later food-data updates.
+- Change a food's photo at the top of its edit form: choose one from your
+  library, take one, **Find Online** (up to 8 photos from the product's page or
+  Brave image search, using your Brave key), **Remove** it, or, for Tiki Cat
+  foods, **Reset** to the original. Food log entries show the food's current
+  photo.
+- Delete any food by swiping left. Its saved photo is deleted with it.
 
 ### Mochi (her profile)
 

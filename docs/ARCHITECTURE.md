@@ -82,12 +82,13 @@ Targets:
 | `FoodSearch.swift` | Word-based, case- and accent-insensitive food search. |
 | `FoodThumbnail.swift` | `FoodThumbnail` view and `FoodThumbnails` lookup of bundled product photos. |
 | `FoodDetailView.swift` | One food's page: photo, sizes and calories, portion picker, "Log This", ingredients, analysis, notes, source. |
-| `FoodFormView.swift` | Add/edit a saved food (name, brand, line, calories per gram or per size). |
+| `FoodEditorView.swift` | **The one form for saved foods** — create (by hand), review (AI result) and edit: photo, identity, sizes, kcal/g (per gram or per 100 g), calorie statement, ingredients, guaranteed analysis, notes, source; inline validation; duplicate check on review. |
+| `PhotoCandidatePickerView.swift` | "Find online": grid of up to 8 photo candidates, loaded lazily with cancellation. |
 | `LogEntryForm.swift` | Log a food, quick entry, or edit an entry; carry-forward switch and dialogs. Also `LogFoodSheet` (the "+" flow). |
 | `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions, number formatting, `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
 | `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
-| `FoodThumbnailStore.swift` | Photos the app saves for foods (`user/<uuid>` keys, JPEG files in Application Support/FoodThumbnails) and the shared ImageIO thumbnail maker. |
+| `FoodThumbnailStore.swift` | Photos the app saves for foods (one file per food, `user/<name>` keys, JPEG files in Application Support/FoodThumbnails), the "none" marker, the shared ImageIO thumbnail maker, and `ThumbnailRevision` (redraw on change). |
 
 **`Calories/AILookup/`** ("Add with AI", §11)
 | File | Purpose |
@@ -101,7 +102,8 @@ Targets:
 | `AILookupSettingsView.swift` | "AI Lookup" settings: keys, Test Keys, today's count, what is sent where. |
 | `PackageTextReader.swift` | Vision text recognition of a package photo, on device. |
 | `AddWithAIView.swift` | `AILookupSession` (state, Task, cancel) and the input / progress / not-found / failure screens. |
-| `FoodReviewView.swift` | Editable review form, duplicate check, Save. |
+| `ImageCandidateFinder.swift` | `ImageCandidate` and product-photo discovery in page HTML. |
+| `ProductPhotoFinder.swift` | Tries page candidates (up to 4), then Brave image search; gathers picker candidates. |
 
 **`Profile/`**
 | File | Purpose |
@@ -200,7 +202,7 @@ General facts that apply to every model:
 | `seedID` | `String?`, **unique** | The bundled file's stable product `id`. `nil` for user-added foods. (V2) |
 | `isUserModified` | `Bool` = `false` | Set when the owner saves an edit to a seeded food (including "Update Existing" from AI lookup); seed updates then leave it alone. (V2) |
 | `originRawValue` | `String?` | `FoodOrigin`: `seed`, `manual`, `aiLookup`. Nil for foods saved before V3; `origin` then reports `seed` if there's a seed ID, else `manual`. (V3) |
-| `thumbnailKey` | `String?` | `user/<uuid>` key of a photo the app saved (`FoodThumbnailStore`). Takes priority over the bundled photo. (V3) |
+| `thumbnailKey` | `String?` | Relative key of the food's saved photo, `user/<name>` (never a path), or `"none"` when the owner removed the photo (placeholder even for seeded foods). Nil = bundled photo if any. (V3) |
 
 `FoodSize`: `name` ("5.5 oz can"), `grams`, `kilocalories` (per whole container),
 `kilocaloriesPerGram`, `isCalculated` (brand didn't state that size's calories);
@@ -302,10 +304,23 @@ API keys for AI lookup are **not** in UserDefaults: they are Keychain generic pa
   (used by log entries saved with that form). Photos came from each product page's main image,
   shrunk to 200 px wide JPEGs; they belong to Tiki Cat and are for personal use only. Products
   added by a future data version have no photo until one is added to the map.
-- Photos the app saves at runtime (AI lookup, or "Replace" on the review form) can't go in the
-  bundle: `FoodThumbnailStore` writes them as JPEGs (same format, ≤ 200 px long edge, quality
-  0.72) to Application Support/FoodThumbnails/<uuid>.jpg and they're keyed `user/<uuid>`. They
-  are never deleted, because log entries may point at them.
+- **Photos the app saves** (AI lookup, library, camera, Find online) can't go in the bundle
+  (read-only). `FoodThumbnailStore.setPhoto` shrinks them off the main actor to the same format
+  (ImageIO, EXIF orientation applied, aspect-fit within 200 × 200, JPEG quality 0.72) and writes
+  atomically to Application Support/FoodThumbnails/<name>.jpg, where **<name> comes from the
+  food's stable identifier**: `seed-<seedID>` for seeded foods, otherwise `food-<hash>` of
+  SwiftData's `persistentModelID` (stable once saved, so new foods are saved before their photo
+  is written). The food stores only the key `user/<name>`.
+- **One file per food.** Replacing a photo overwrites that file (an older differently-named file
+  is deleted); Remove deletes it and sets `thumbnailKey = "none"` for seeded foods (nil for
+  others); Reset to original deletes it and clears the key; deleting a food deletes its file.
+  Bundled photos are never touched. `ThumbnailRevision` is bumped so views redraw.
+- **Display resolution order** (`FoodThumbnails.image(for:)`): the saved file, else the bundled
+  photo (seed ID, then older identifier), else the placeholder; `"none"` → placeholder.
+- **Log entries** copy the food's `photoKey` when logged, so they show the food's **current**
+  saved photo by reference: a replaced photo appears in old entries too, and after Remove or
+  deleting the food those entries show the placeholder. Entries logged before a seeded food got
+  a saved photo keep showing the bundled one.
 
 **Update** (`FoodLibraryLoader.updateBundledLibraries`, run by `LaunchMaintenance` from
 `ContentView`'s `.task` each launch, on the main context):
@@ -352,10 +367,10 @@ MochiLifeApp
    │    savedFoodsDestinations at the stack root:
    │      BrandSelection → BrandFoodsView → LineSelection → LineFoodsView
    │      Food → FoodDetailView
-   │        sheet: FoodFormView (edit) ; sheet: NavigationStack → LogEntryForm(.logFood, startingFrom: portion)
-   │      sheet: FoodFormView (add)
-   │      sheet: AddWithAIView (own NavigationStack): input → progress → FoodReviewView,
-   │        or not found / failure; pushes AILookupSettingsView; sheet FoodFormView
+   │        sheet: NavigationStack → FoodEditorView(.edit) ; sheet: NavigationStack → LogEntryForm(.logFood, startingFrom: portion)
+   │      sheet: NavigationStack → FoodEditorView(.create)
+   │      sheet: AddWithAIView (own NavigationStack): input → progress → FoodEditorView(.review),
+   │        or not found / failure; pushes AILookupSettingsView; sheet FoodEditorView(.create)
    │        (manual, name prefilled); fullScreenCover CameraPicker
    │
    │    LogFoodSheet (sheet): NavigationStack → SavedFoodsView(mode: .pick)
@@ -420,7 +435,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 | Saved foods: browse brand → line → product, search | `SavedFoodsView.swift`, `FoodSearch.swift` | Search is substring per word (no fuzzy matching). |
 | Tiki Cat library (99 foods) + thumbnails | `FoodLibraryLoader.swift`, `FoodThumbnail.swift`, `Resources/*` | Updates arrive only with a new app build carrying a higher `data_version`. New products have no photo until added to the map. |
 | Food detail page | `FoodDetailView.swift` | Shows kcal/g per size (or one "Per gram" row for foods without sizes). |
-| Add/edit/delete foods | `FoodFormView.swift`, `SavedFoodsView.swift` | Own foods are gram-only (no sizes). Editing a library food edits calories per size, not ingredients/analysis/notes/type. |
+| Add/edit/delete foods | `FoodEditorView.swift`, `SavedFoodsView.swift`, `PhotoCandidatePickerView.swift` | Every field is editable, including sizes (add, delete, reorder), notes, source and photo. kcal/g must be 0.2–6.0. Saving an edit of a seeded food sets `isUserModified`. |
 | Size-and-portion picker | `PortionPicker.swift`, `Portion.swift` | Typed amounts allow up to 3 decimal places. |
 | Food log (Today, days, + flow, quick entry, edit, delete, Log This) | `CaloriesView.swift`, `LogEntryForm.swift`, `FoodLogEntry.swift` | Forward navigation stops at the last future day with entries. Future days show calories as "planned" and are excluded from progress and the chart. Deleting several rows at once only asks about the last one with carried days. |
 | Carry-forward of opened cans | `CarryForward.swift`, `FoodLogEntry.swift`, `LogEntryForm.swift`, `CaloriesView.swift` | Older entries without an exact fraction get one at launch only if it's within 1e-6 of n/d with d ≤ 12. Plans over 90 days aren't offered; over 7 days ask first. |
@@ -519,6 +534,11 @@ closes via an `onFinish` closure instead of `dismiss`.
   only copies what the page says (JSON output, temperature 0, thinking off); kcal/g, grams
   from ounces, calculated per-container calories and sanity ranges are computed in
   `FoodDerivation`, so numbers are reproducible and checkable.
+- **One form component for saved foods** (`FoodEditorView` with create / review / edit modes),
+  so every way of making or changing a food validates and saves the same way.
+- **One photo file per food, named from its stable identifier** — replacing a photo updates it
+  everywhere (including log rows) without leaving orphaned files; no schema change was needed
+  (the key already lived in `thumbnailKey`, plus a `"none"` marker for a removed seeded photo).
 
 ## 10. Known issues and technical debt
 
@@ -542,7 +562,9 @@ closes via an `onFinish` closure instead of `dismiss`.
   error statuses aren't documented on its overview page; they're mapped like DeepSeek's.
 - **Pages that build their content with JavaScript** reduce to little text and may come back
   "not found".
-- **Saved AI photos are never cleaned up** (log entries may reference them).
+- **Log entries show a food's current photo by reference**, so after Remove or deleting the food
+  they show a placeholder (see §4).
+- **The photo picker's lazy downloads aren't cached** across openings.
 
 Resolved in the stabilization pass (2026-10-04): schema versioning, updatable seed data,
 silent save failures, the silent 5,000 kcal own-target limit, unreachable future carried
@@ -584,10 +606,25 @@ Clients are injected as protocols: `WebSearchClient` (`BraveSearchClient`),
    28.3495; per-container kcal = kcal/g × grams when not stated, tagged calculated; stated vs
    calculated differing by > 8 % keeps the stated value and adds a note; kcal/g outside
    0.2–6.0 and percentages outside 0–100 are dropped with a note.
-8. **Thumbnail** — og:image, then twitter:image, then JSON-LD image (resolved against the page
-   URL): https, 10 s, 5 MB, `image/*`, shrunk by `FoodThumbnailStore.thumbnailJPEG`.
+8. **Thumbnail** (`ImageCandidateFinder`, `ProductPhotoFinder`) — candidates in priority order:
+   og:image and og:image:secure_url; twitter:image and twitter:image:src; JSON-LD Product
+   images (string, array, or ImageObject url); `<link rel="image_src">`; then `<img>` in the
+   main product area (first element whose id/class mentions product, gallery or pdp, else
+   `<main>`), reading the largest srcset entry, data-src, data-lazy-src or src. Relative and
+   protocol-relative addresses resolve against the final page URL, http is upgraded to https,
+   and data: URIs, SVGs, sprites and images stated under 200 px are skipped. Download: desktop
+   Safari User-Agent, an image `Accept` header, `Referer` = the product page, 10 s, 5 MB,
+   content type jpeg/png/webp/avif/heic/heif/gif, decoded with ImageIO (decode failure = miss);
+   up to 4 candidates. **Fallback:** Brave image search
+   (`GET https://api.search.brave.com/res/v1/images/search`, `q` = "<brand> <line> <product>
+   cat food", `count` 8, `safesearch=strict`), counted toward the daily cap, trying up to 4
+   results' Brave-hosted `thumbnail.src` with the source page as Referer. If the key's plan
+   refuses image search (401/402/403/422), that's remembered (`ImageSearchAvailability`, reset
+   when a Brave key is saved) and the fallback is skipped. Logged per stage: candidate counts and
+   sources, host, HTTP status, content type, byte count, decode result — never page content.
+   A missing photo never blocks saving.
 Select returning null, `found: false`, or every candidate failing ends in "not found", which
-offers manual entry (`FoodFormView` with the name prefilled).
+offers manual entry (`FoodEditorView(.create)` with the name prefilled).
 
 ### DeepSeek requests (`DeepSeekClient`, `DeepSeekModelConfig`)
 `POST https://api.deepseek.com/chat/completions`, `Authorization: Bearer <key>`, model
@@ -618,13 +655,15 @@ price.
 - **Re-verify the identifier, prices and thinking/JSON parameters whenever DeepSeek changes its
   lineup** (update `DeepSeekModelConfig` and this section together).
 
-### Review and save (`FoodReviewView`)
-Editable identity, sizes (with "calculated" tags), kcal/g, calorie statement, ingredients,
-guaranteed analysis, photo (Replace with PhotosPicker, Remove), source link, confidence and
-notes. Save needs a name and kcal/g (typed, or from a complete size). Sizes need grams and
-calories to be saved. Duplicate check by `FoodMatching.key` (normalized brand + line + name)
-offers Update Existing or Save as New. Saved foods get `origin = .aiLookup`, `sourceURL`,
-`thumbnailKey`, and a first note with confidence and form; they work everywhere other foods do.
+### Review and save (`FoodEditorView(.review)`)
+The same editor as create/edit (§7), prefilled from the draft, with the confidence shown and a
+non-blocking "No product photo was found" note plus Find online / Library / Camera when the
+automatic photo failed. Validation (inline, Save disabled while invalid): product name; numbers
+through `NumberInput`; kcal/g 0.2–6.0 (also each size's implied kcal/g); percentages 0–100;
+at least one calorie basis (kcal/g, or a size with grams and kcal); source must be an http(s)
+address. Sizes without name, grams and kcal aren't saved. Duplicate check by `FoodMatching.key`
+offers Update Existing or Save as New. Saved foods get `origin = .aiLookup`, `sourceURL`, the
+photo, and a first note with confidence and form.
 
 ### Keys, limits and errors
 - `AILookupSettingsView`: SecureFields for both keys (Keychain only, see §3), Test Keys (Brave:

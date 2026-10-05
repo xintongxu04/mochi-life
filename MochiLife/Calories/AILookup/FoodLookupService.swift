@@ -7,11 +7,14 @@ actor FoodLookupService {
     private let search: any WebSearchClient
     private let chat: any ChatCompletionClient
     private let fetcher: any WebFetcher
+    private let imageSearch: (any ImageSearchClient)?
 
-    init(search: any WebSearchClient, chat: any ChatCompletionClient, fetcher: any WebFetcher) {
+    init(search: any WebSearchClient, chat: any ChatCompletionClient, fetcher: any WebFetcher,
+         imageSearch: (any ImageSearchClient)?) {
         self.search = search
         self.chat = chat
         self.fetcher = fetcher
+        self.imageSearch = imageSearch
     }
 
     /// Looks up a cat food. Throws `LookupFailure.notFound` when nothing confident is found.
@@ -61,12 +64,11 @@ actor FoodLookupService {
         var draft = FoodDerivation.draft(from: extracted, sourceURL: page.url)
 
         try Task.checkCancellation()
-        if !page.imageCandidates.isEmpty {
-            await progress(.fetchingPhoto)
-            draft.thumbnailJPEG = await timed("thumbnail") { await self.thumbnail(from: page.imageCandidates) }
-            if draft.thumbnailJPEG == nil {
-                draft.notes.append("The product photo couldn't be downloaded.")
-            }
+        await progress(.fetchingPhoto)
+        let finder = ProductPhotoFinder(fetcher: fetcher, imageSearch: imageSearch)
+        let photoQuery = [draft.brand, draft.line, draft.name, "cat food"].filter { !$0.isEmpty }.joined(separator: " ")
+        draft.thumbnailJPEG = await timed("thumbnail") {
+            await finder.firstPhoto(pageCandidates: page.imageCandidates, searchQuery: photoQuery)
         }
         return draft
     }
@@ -115,16 +117,6 @@ actor FoodLookupService {
             }
         }
         throw LookupFailure.unreadableAnswer
-    }
-
-    private func thumbnail(from candidates: [URL]) async -> Data? {
-        for url in candidates where url.scheme?.lowercased() == "https" {
-            if Task.isCancelled { return nil }
-            if let data = try? await fetcher.fetchImage(url), let jpeg = FoodThumbnailStore.thumbnailJPEG(from: data) {
-                return jpeg
-            }
-        }
-        return nil
     }
 
     private func timed<T>(_ stage: String, _ work: () async throws -> T) async rethrows -> T {

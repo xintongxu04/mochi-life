@@ -5,25 +5,18 @@ struct ReducedPage: Sendable {
     struct Product: Sendable {
         var name: String?
         var brand: String?
-        var image: String?
+        /// Every image the JSON-LD gives (string, array, or ImageObject url).
+        var images: [String]
         var description: String?
     }
 
     var url: URL
     var title: String?
     var ogTitle: String?
-    var ogImage: String?
-    var twitterImage: String?
     var products: [Product]
     var text: String
-
-    /// Image candidates in the order to try: og:image, twitter:image, then JSON-LD images,
-    /// resolved against the page address.
-    var imageCandidates: [URL] {
-        ([ogImage, twitterImage] + products.map(\.image))
-            .compactMap { $0 }
-            .compactMap { URL(string: $0.trimmingCharacters(in: .whitespacesAndNewlines), relativeTo: url)?.absoluteURL }
-    }
+    /// Product photo candidates in priority order (see `ImageCandidateFinder`).
+    var imageCandidates: [ImageCandidate]
 }
 
 /// Reduces HTML to plain text and a few metadata fields without third-party parsers.
@@ -36,14 +29,15 @@ enum HTMLReducer {
     static func reduce(_ page: FetchedPage) -> ReducedPage {
         let html = page.html
         let metas = metaTags(in: html)
+        let products = jsonLDProducts(in: html)
         return ReducedPage(
             url: page.url,
             title: firstMatch(of: /(?is)<title[^>]*>(.*?)<\/title>/, in: html).map(plainText(fromFragment:)),
             ogTitle: metas["og:title"],
-            ogImage: metas["og:image"] ?? metas["og:image:url"] ?? metas["og:image:secure_url"],
-            twitterImage: metas["twitter:image"] ?? metas["twitter:image:src"],
-            products: jsonLDProducts(in: html),
-            text: trimmed(visibleText(of: html))
+            products: products,
+            text: trimmed(visibleText(of: html)),
+            imageCandidates: ImageCandidateFinder.candidates(in: html, pageURL: page.url, metas: metas,
+                                                             productImages: products.flatMap(\.images))
         )
     }
 
@@ -54,16 +48,22 @@ enum HTMLReducer {
 
     // MARK: - Metadata
 
+    /// Attributes of one HTML tag, lowercased names, entities decoded.
+    static func attributes(of tag: String) -> [String: String] {
+        var attributes: [String: String] = [:]
+        for attribute in tag.matches(of: /(?i)([a-z:_-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/) {
+            let value = attribute.output.3 ?? attribute.output.4 ?? attribute.output.5 ?? ""
+            let name = attribute.output.1.lowercased()
+            if attributes[name] == nil { attributes[name] = decodeEntities(String(value)) }
+        }
+        return attributes
+    }
+
     /// property/name → content for every <meta> tag, in either attribute order.
     private static func metaTags(in html: String) -> [String: String] {
         var result: [String: String] = [:]
         for match in html.matches(of: /(?i)<meta\b[^>]*>/) {
-            let tag = String(match.output)
-            var attributes: [String: String] = [:]
-            for attribute in tag.matches(of: /(?i)([a-z:_-]+)\s*=\s*("([^"]*)"|'([^']*)')/) {
-                let value = attribute.output.3 ?? attribute.output.4 ?? ""
-                attributes[attribute.output.1.lowercased()] = decodeEntities(String(value))
-            }
+            let attributes = attributes(of: String(match.output))
             if let key = (attributes["property"] ?? attributes["name"])?.lowercased(),
                let content = attributes["content"], !content.isEmpty, result[key] == nil {
                 result[key] = content
@@ -95,16 +95,18 @@ enum HTMLReducer {
         products.append(ReducedPage.Product(
             name: object["name"] as? String,
             brand: (object["brand"] as? String) ?? ((object["brand"] as? [String: Any])?["name"] as? String),
-            image: firstImage(object["image"]),
+            images: allImages(object["image"]),
             description: (object["description"] as? String).map(plainText(fromFragment:))
         ))
     }
 
-    private static func firstImage(_ value: Any?) -> String? {
-        if let string = value as? String { return string }
-        if let array = value as? [Any] { return array.lazy.compactMap(firstImage).first }
-        if let object = value as? [String: Any] { return (object["url"] as? String) ?? (object["contentUrl"] as? String) }
-        return nil
+    private static func allImages(_ value: Any?) -> [String] {
+        if let string = value as? String { return [string] }
+        if let array = value as? [Any] { return array.flatMap(allImages) }
+        if let object = value as? [String: Any] {
+            return [(object["url"] as? String) ?? (object["contentUrl"] as? String)].compactMap { $0 }
+        }
+        return []
     }
 
     // MARK: - Text

@@ -130,7 +130,10 @@ struct AILookupSettingsView: View {
                 continue
             }
             switch AIKeychain.setKey(value, for: service) {
-            case .saved: messages.append("\(service.rawValue) key saved.")
+            case .saved:
+                messages.append("\(service.rawValue) key saved.")
+                // A new Brave key may include image search even if the old one didn't.
+                if service == .brave { ImageSearchAvailability.reset() }
             case .unchanged: break
             case .keptExistingBecauseEmpty:
                 if AIKeychain.hasKey(for: service) {

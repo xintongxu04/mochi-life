@@ -14,7 +14,26 @@ protocol ChatCompletionClient: Sendable {
 /// Downloads a web page or image.
 protocol WebFetcher: Sendable {
     func fetchPage(_ url: URL) async throws -> FetchedPage
-    func fetchImage(_ url: URL) async throws -> Data
+    /// Downloads an image and returns it shrunk to the app's thumbnail size and format. Throws
+    /// if it isn't a supported image or can't be decoded.
+    func fetchThumbnail(_ candidate: ImageCandidate) async throws -> Data
+}
+
+/// Searches for images. Brave's image search may not be included in every plan; an
+/// `ImageSearchUnavailable` error means the key doesn't allow it.
+protocol ImageSearchClient: Sendable {
+    func searchImages(_ query: String, count: Int) async throws -> [ImageCandidate]
+}
+
+struct ImageSearchUnavailable: Error {}
+
+/// Remembers that the Brave key doesn't allow image search, so the fallback is skipped quietly.
+/// Cleared when a Brave key is saved.
+enum ImageSearchAvailability {
+    private static let key = "braveImageSearch.unavailable"
+    static var isKnownUnavailable: Bool { UserDefaults.standard.bool(forKey: key) }
+    static func markUnavailable() { UserDefaults.standard.set(true, forKey: key) }
+    static func reset() { UserDefaults.standard.removeObject(forKey: key) }
 }
 
 struct ChatMessage: Codable, Sendable, Equatable {
@@ -159,6 +178,63 @@ enum DeepSeekModelConfig {
     static let requestTimeout: TimeInterval = 45
 }
 
+/// Brave image search: GET https://api.search.brave.com/res/v1/images/search. Uses each result's
+/// Brave-hosted thumbnail (thumbnail.src, about 500 px wide), which loads reliably, with the
+/// original image's page as Referer.
+struct BraveImageSearchClient: ImageSearchClient {
+    let apiKey: String
+
+    private struct Response: Decodable {
+        struct Result: Decodable {
+            struct Thumbnail: Decodable { var src: String? }
+            struct Properties: Decodable { var url: String? }
+            var source: String?
+            var url: String?
+            var thumbnail: Thumbnail?
+            var properties: Properties?
+        }
+        var results: [Result]?
+    }
+
+    func searchImages(_ query: String, count: Int) async throws -> [ImageCandidate] {
+        var components = URLComponents(string: "https://api.search.brave.com/res/v1/images/search")!
+        components.queryItems = [
+            URLQueryItem(name: "q", value: String(query.prefix(400))),
+            URLQueryItem(name: "count", value: String(count)),
+            URLQueryItem(name: "safesearch", value: "strict"),
+        ]
+        var request = URLRequest(url: components.url!)
+        request.setValue(apiKey, forHTTPHeaderField: "X-Subscription-Token")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        do {
+            let session = HTTPCheck.apiSession(timeout: 15)
+            defer { session.finishTasksAndInvalidate() }
+            let (data, response) = try await session.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            AILog.logger.info("brave_image_search http_status=\(status)")
+            // The web search key works (it's checked first), so a refusal here means the plan
+            // doesn't include image search.
+            if [401, 402, 403, 422].contains(status) { throw ImageSearchUnavailable() }
+            try HTTPCheck.validate(response, service: .brave, purpose: "brave_image_search")
+            let results = (try JSONDecoder().decode(Response.self, from: data)).results ?? []
+            AILog.logger.info("brave_image_search results=\(results.count)")
+            return results.compactMap { result in
+                let page = (result.source ?? result.url).flatMap(URL.init(string:))
+                guard let src = result.thumbnail?.src ?? result.properties?.url,
+                      let url = ImageCandidateFinder.resolve(src, against: page ?? URL(string: "https://search.brave.com")!)
+                else { return nil }
+                return ImageCandidate(url: url, referer: page, source: .imageSearch)
+            }
+        } catch is DecodingError {
+            throw LookupFailure.unreadableAnswer
+        } catch let error as ImageSearchUnavailable {
+            throw error
+        } catch {
+            throw HTTPCheck.translate(error)
+        }
+    }
+}
+
 /// DeepSeek chat completions (OpenAI format) with JSON output, temperature 0, streaming off and
 /// thinking turned off (thinking mode ignores temperature and is slower).
 struct DeepSeekClient: ChatCompletionClient {
@@ -249,17 +325,38 @@ struct URLSessionWebFetcher: WebFetcher {
         return FetchedPage(url: response.url ?? url, html: html)
     }
 
-    func fetchImage(_ url: URL) async throws -> Data {
-        let (data, response) = try await download(url, timeout: 10, cap: 5 * 1024 * 1024, purpose: "image_fetch")
-        guard response.mimeType?.lowercased().hasPrefix("image/") == true else { throw LookupFailure.blockedOrEmptyPage }
-        return data
+    /// Image types accepted for product photos (all decodable by ImageIO).
+    static let imageTypes: Set<String> = [
+        "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/webp", "image/avif",
+        "image/heic", "image/heif", "image/gif",
+    ]
+    static let imageAccept = "image/avif,image/webp,image/heic,image/jpeg,image/png,image/gif;q=0.9,image/*;q=0.8"
+
+    func fetchThumbnail(_ candidate: ImageCandidate) async throws -> Data {
+        let (data, response) = try await download(
+            candidate.url, timeout: 10, cap: 5 * 1024 * 1024, purpose: "image_fetch",
+            accept: Self.imageAccept, referer: candidate.referer
+        )
+        let type = response.mimeType?.lowercased() ?? "none"
+        AILog.logger.info("image_fetch source=\(candidate.source.rawValue, privacy: .public) host=\(candidate.url.host() ?? "-", privacy: .public) content_type=\(type, privacy: .public) bytes=\(data.count)")
+        guard Self.imageTypes.contains(type) else {
+            AILog.logger.info("image_fetch rejected unsupported content_type")
+            throw LookupFailure.blockedOrEmptyPage
+        }
+        let jpeg = await Task.detached(priority: .userInitiated) { FoodThumbnailStore.thumbnailJPEG(from: data) }.value
+        AILog.logger.info("image_decode ok=\(jpeg != nil)")
+        guard let jpeg else { throw LookupFailure.blockedOrEmptyPage }
+        return jpeg
     }
 
-    private func download(_ url: URL, timeout: TimeInterval, cap: Int, purpose: String) async throws -> (Data, HTTPURLResponse) {
+    private func download(_ url: URL, timeout: TimeInterval, cap: Int, purpose: String,
+                          accept: String = "text/html,application/xhtml+xml,*/*;q=0.8",
+                          referer: URL? = nil) async throws -> (Data, HTTPURLResponse) {
         guard url.scheme?.lowercased() == "https" else { throw LookupFailure.blockedOrEmptyPage }
         var request = URLRequest(url: url)
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
-        request.setValue("text/html,application/xhtml+xml,image/*;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
+        request.setValue(accept, forHTTPHeaderField: "Accept")
+        if let referer { request.setValue(referer.absoluteString, forHTTPHeaderField: "Referer") }
         let session = HTTPCheck.session(timeout: timeout)
         defer { session.finishTasksAndInvalidate() }
         do {

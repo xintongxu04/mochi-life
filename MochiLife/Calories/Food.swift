@@ -157,6 +157,31 @@ struct GuaranteedAnalysisRow: Codable, Hashable {
     }
 }
 
+extension GuaranteedAnalysisRow {
+    static let standardNutrients = ["Crude protein", "Crude fat", "Crude fiber", "Moisture"]
+
+    var isStandard: Bool { Self.standardNutrients.contains(nutrient) }
+
+    /// The percentage of a standard row, e.g. 13 for "13% min".
+    var percentValue: Double? {
+        amount.firstMatch(of: /^([\d.]+)%/).flatMap { Double($0.output.1) }
+    }
+
+    /// The row as one label line, the inverse of `parse`: "Taurine (min) 0.2%".
+    var labelLine: String {
+        guard !amount.isEmpty else { return nutrient }
+        var value = amount
+        var limit: String?
+        var dryMatter = false
+        if value.hasSuffix(" (dry matter)") { dryMatter = true; value = String(value.dropLast(" (dry matter)".count)) }
+        if value.hasSuffix(" min") || value.hasSuffix(" max") {
+            limit = String(value.suffix(3))
+            value = String(value.dropLast(4))
+        }
+        return "\(nutrient)\(limit.map { " (\($0))" } ?? "")\(dryMatter ? " DM" : "") \(value)"
+    }
+}
+
 /// Matches foods by normalized brand + line + product name.
 enum FoodMatching {
     static func key(brand: String?, line: String?, name: String) -> String {

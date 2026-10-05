@@ -30,7 +30,8 @@ final class AILookupSession {
         let service = FoodLookupService(
             search: BraveSearchClient(apiKey: braveKey),
             chat: DeepSeekClient(apiKey: deepSeekKey),
-            fetcher: URLSessionWebFetcher()
+            fetcher: URLSessionWebFetcher(),
+            imageSearch: BraveImageSearchClient(apiKey: braveKey)
         )
         phase = .running(.searching)
         task = Task {
@@ -81,7 +82,9 @@ struct AddWithAIView: View {
                 case let .running(stage):
                     progressView(stage)
                 case let .review(draft):
-                    FoodReviewView(draft: draft, onSaved: { dismiss() })
+                    FoodEditorView(mode: .review(draft)) { saved in
+                        if saved { dismiss() }
+                    }
                 case .notFound:
                     notFoundView
                 case let .failed(failure):
@@ -105,7 +108,12 @@ struct AddWithAIView: View {
                 AILookupSettingsView()
             }
             .sheet(isPresented: $isAddingManually) {
-                FoodFormView(food: nil, initialName: trimmedQuery)
+                NavigationStack {
+                    FoodEditorView(mode: .create(name: trimmedQuery)) { saved in
+                        isAddingManually = false
+                        if saved { dismiss() }
+                    }
+                }
             }
             .fullScreenCover(isPresented: $isTakingPhoto) {
                 CameraPicker { image in
