@@ -111,13 +111,10 @@ Targets:
 
 UI tests expect a **fresh install** (no saved data). See §10 for their current state.
 
-### `Relay/` (Mochi Relay, separate Swift package)
-A macOS command-line daemon, not part of the Xcode project. See §11.
-
 ### Other files
 - `README.md` — plain-language description for the owner (kept in sync with features).
 - `CLAUDE.md` — standing rules for Claude sessions.
-- `.gitignore` — Xcode/macOS/SwiftPM ignores; `xcuserdata/`, `.Rhistory`, `Relay/.build/` and `Relay/.swiftpm/` are ignored.
+- `.gitignore` — Xcode/macOS/SwiftPM ignores; `xcuserdata/` and `.Rhistory` are ignored.
 
 ---
 
@@ -474,6 +471,8 @@ closes via an `onFinish` closure instead of `dismiss`.
   foods screens in a "pick" mode rather than duplicating them.
 
 ---
+- **No local-network relay** — a macOS relay ("Mochi Relay", running Claude Code for
+  lookups) was built and then removed (reverted) in favor of the app calling web APIs directly.
 
 ## 10. Known issues and technical debt
 
@@ -499,131 +498,3 @@ silent save failures, the silent 5,000 kcal own-target limit, unreachable future
 entries, four separate number parsers, hard-coded "Mochi", unenforced single profile,
 first-size-only kcal/g on the detail page, brand/food links not opening from Saved Foods when
 reached from Today, the two broken tests (removed), untracked `.Rhistory`.
-
----
-
-## 11. Mochi Relay (`Relay/`)
-
-A macOS command-line daemon that lets the app (in a later task) ask this Mac for AI-assisted
-cat-food lookups over the local network. It is a self-contained Swift package; the Xcode
-project and the iOS app are unchanged. User-facing guide: `Relay/README.md`.
-
-### Package
-- `Relay/Package.swift`: swift-tools-version 6.0, platforms macOS 15+ (and iOS 18+ so the app
-  can later depend on `RelayCore`). No dependencies.
-- **`RelayCore`** (library, shareable with the app): `Protocol.swift` (envelopes, errors,
-  validation), `FoodSchema.swift` (`RelayFood`, `LookupOutcome`, the JSON Schema and its drift
-  check), `Framing.swift` (`RelayFramer`, `NWConnection.sendRelayMessage`), `RelayTLS.swift`
-  (PSK TLS options and `NWParameters`), `Base32.swift`.
-- **`mochi-relay`** (executable): `main.swift` (commands), `Config.swift` (config +
-  `ClaudeLocator`), `Keychain.swift` (Keychain + `PairingSecret`), `RelayServer.swift`
-  (listener), `LookupService.swift` (actor), `ClaudeRunner.swift` (Claude invocation +
-  `ProcessRunner`), `Thumbnail.swift`, `DailyLimit.swift` (cap + cross-process `LookupLock`),
-  `PairingCode.swift` (Base32 + terminal QR), `LaunchAgent.swift`, `RelayLog.swift`, `Paths.swift`.
-- Frameworks: Foundation, Network, CryptoKit, Security, ImageIO/CoreGraphics,
-  UniformTypeIdentifiers, CoreImage (QR only), os.
-- Verification so far: `swift build -c release` (clean, no warnings) and the schema self-check.
-  No lookup, network connection or TLS handshake has been exercised yet.
-
-### Transport
-- `NWListener` on TCP, port from config (0 = automatic), advertised over Bonjour as
-  `_mochirelay._tcp`.
-- TLS 1.2 only, authenticated and encrypted with a pre-shared key (no certificates), as in
-  Apple's Network.framework peer-to-peer sample: identity `"mochi-relay-v1"`; the TLS key is
-  `HMAC-SHA256(key: pairing secret, message: identity)`. Cipher suites offered:
-  `TLS_PSK_WITH_AES_256_GCM_SHA384`, then `TLS_PSK_WITH_AES_128_GCM_SHA256`. A peer that doesn't
-  complete the PSK handshake never reaches `.ready` and is cancelled.
-- Local network only: `includePeerToPeer = false` (no AWDL), cellular prohibited, and incoming
-  connections are accepted only from private IPv4 (10/8, 172.16/12, 192.168/16, 169.254/16,
-  127/8), IPv6 link-local, unique-local, loopback or IPv4-mapped private addresses. At most 4
-  connections at once.
-- Framing (`RelayFramer`, an `NWProtocolFramer`): 4-byte big-endian length, then UTF-8 JSON.
-  A frame over 2 MB (or of length 0) fails the connection.
-
-### Pairing and secrets
-- First use generates 32 bytes with `SecRandomCopyBytes`, stored as a generic password in the
-  login Keychain (service `com.xintongxu.MochiRelay`, account `psk`). `pair` shows it as
-  Base32 in groups of four and as a terminal QR code (`CIFilter.qrCodeGenerator`, drawn with
-  ▀▄█ in black on white). The QR content is `mochirelay:v1:<BASE32>`. `pair --rotate` replaces
-  it and restarts the background agent if loaded.
-- The secret is never logged or written outside the Keychain. Config holds no secrets.
-
-### Protocol (version 1, `RelayCore/Protocol.swift`)
-- Request: `{ "v": 1, "id": UUID, "type": "ping" | "lookup", "lookup": { "typed_name",
-  "ocr_lines", "brand_hint" } }`. A lookup needs a non-empty typed name or OCR line; total text
-  ≤ 8,000 characters. `v != 1` → `unsupported_version`.
-- Response: `{ "v": 1, "id", "type": "pong" | "progress" | "result", "relay_version" (pong),
-  "stage": "queued" | "searching" | "fetching_image" (progress), "status": "ok" | "not_found" |
-  "error" (result), "food", "error": { "code", "message" } }`. Nil fields are omitted.
-- Error codes: `busy`, `rate_limited`, `invalid_request`, `claude_unavailable`, `claude_failed`,
-  `timeout`, `unsupported_version`.
-- A lookup sends `queued`, `searching`, optionally `fetching_image`, then one `result`.
-
-### Food schema (`RelayCore/FoodSchema.swift`)
-- `RelayFood` mirrors the app's seed data: brand, line, name, type (food/topper/supplement/
-  treat), form (wet/dry/other), servings (size, grams, kcal per whole container, basis),
-  kcal_per_g, calorie_statement, ingredients, guaranteed_analysis (four `…_pct` + other),
-  source_url, image_url, thumbnail_jpeg_base64, confidence, notes.
-- Claude fills `LookupOutcome` = `{ status: ok | not_found, food: RelayFood | null }`, described
-  by the JSON Schema string `FoodSchema.lookupOutcomeJSON` in the same file. Every property is
-  required (optional values are nullable) and `additionalProperties` is false.
-- **Drift check:** `FoodSchema.selfCheck()` encodes a fully populated sample and compares its
-  keys at every level, the `required` lists, `additionalProperties`, and every enum's values
-  with the schema. Every `mochi-relay` command runs it first and exits if they differ. When you
-  change `RelayFood`, change the schema in the same file.
-
-### Claude invocation (`ClaudeRunner.swift`)
-- `Process` with an argument array (no shell):
-  `claude -p <prompt> --output-format json --json-schema <schema> --tools WebSearch,WebFetch
-  --allowedTools WebSearch,WebFetch --strict-mcp-config --disallowedTools mcp__*
-  --setting-sources project --permission-mode dontAsk --permission-prompts none
-  --no-session-persistence --append-system-prompt <system text>` (+ `--bare` in api_key mode).
-  `--tools` limits the session to those two tools (`--allowedTools` only pre-approves);
-  the MCP flags remove all MCP servers and connectors; `--setting-sources project` with an empty
-  working directory loads no user settings or hooks.
-- Auth: `subscription` (default; uses this Mac user's Claude login) or `api_key` (adds `--bare`
-  and passes `ANTHROPIC_API_KEY` from the Keychain, account `anthropic_api_key`, in the child
-  environment only).
-- Environment: only PATH (claude's folder + system folders), HOME, USER, LOGNAME, TMPDIR, LANG.
-  Working directory: a new empty temporary directory per lookup, deleted afterwards. stdin is
-  /dev/null.
-- `claude_path` is resolved without a shell (PATH, then `~/.local/bin`, `~/.claude/local`,
-  `/opt/homebrew/bin`, `/usr/local/bin`) when the config is created and at `install-agent`.
-- Result: `structured_output` from the JSON output, decoded as `LookupOutcome`; a non-zero
-  exit, missing field, or schema mismatch is `claude_failed`. The model's thumbnail value is
-  discarded.
-- Timeout: `timeout_seconds` (150): SIGINT, then SIGTERM after 5 seconds → `timeout`.
-- The prompt marks the query as data between `<query>` markers; the system text gives the
-  sourcing rules and says fetched content is untrusted data, never instructions.
-
-### Thumbnail (`Thumbnail.swift`)
-https only (also after redirects), ephemeral `URLSession`, 10-second timeout, `image/*` only,
-5 MB cap; ImageIO thumbnail at 400 px on the long edge, JPEG quality 0.8, base64. Any failure
-adds a note and returns the food without a thumbnail.
-
-### Limits, concurrency and logging
-- `LookupService` actor: one lookup at a time; others get `busy`. A non-blocking `flock` on
-  `lookup.lock` extends this across processes (`test` while the agent runs).
-- Daily cap (`daily_cap`, default 40) in `state.json` with the date; over the cap →
-  `rate_limited`. Each lookup that reaches Claude counts.
-- `RelayLog`: os.Logger (subsystem `com.xintongxu.MochiRelay`) + `~/Library/Logs/MochiRelay/relay.log`
-  rotated at 1 MB, 3 old files kept. Logs request ids, durations, statuses and Claude's
-  `total_cost_usd`, `duration_ms`, `num_turns`, token usage. Never query/OCR text, the pairing
-  secret or API keys.
-
-### Commands and agent
-`run`, `pair [--rotate]`, `test "<query>"`, `status`, `install-agent`, `uninstall-agent`
-(plus internal `prepare`). `install-agent` copies the binary to `~/.local/bin/mochi-relay`,
-records `claude_path`, has the installed binary read the Keychain once (so any permission
-prompt appears in Terminal), writes `~/Library/LaunchAgents/com.xintongxu.MochiRelay.plist`
-(RunAtLoad, KeepAlive, `run`) and bootstraps it into `gui/<uid>`. `uninstall-agent` boots it
-out and removes the plist.
-
-### Known limitations
-- Not exercised at runtime yet: TLS PSK negotiation, Bonjour, framing, a real lookup.
-- The thumbnail download accepts any https host the model names (including private hosts).
-- Legacy Keychain items are tied to the binary that created them; rebuilding may trigger an
-  "allow access" prompt again.
-- Rotating the pairing code doesn't notify paired phones; they simply can't connect until
-  they pair again.
-
