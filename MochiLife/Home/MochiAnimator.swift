@@ -1,14 +1,18 @@
 import Observation
 import UIKit
 
-/// Drives Mochi's sprite. `.sitting` loops while idle; every 20–40 seconds of visible idle time
-/// she stretches once. `play(_:loops:)` runs a one-shot (eating, playing…) for whole 16-frame
-/// loops and then returns to sitting; a new one-shot replaces the current one.
+/// Drives Mochi's sprite at 8 fps (one loop = 16 frames = 2 s).
 ///
-/// The clock is `MochiSpriteView`'s task, which calls `advance()` 8 times a second only while the
-/// sprite is visible and the app is active, so nothing runs in the background.
+/// **Autonomous schedule:** a sitting segment of 3–6 loops (6–12 s), then an activity — playing
+/// for 4–6 loops (chance 0.6) or stretching for 1–2 loops (0.4), never the same activity three
+/// times in a row — then a new sitting segment, and so on. Eating is never picked on its own.
+/// Scheduled changes happen only at loop boundaries (frame 16 → frame 01 of the next state).
 ///
-/// Memory: only the sitting frames and the current state's frames are kept decoded (2 × 16).
+/// **User one-shots:** `play(_:loops:)` (Play button, a logged food) cuts in immediately, runs
+/// whole loops, then the schedule resumes with a sitting segment. Playing again restarts it.
+///
+/// The clock is `MochiSpriteView`'s task, which calls `advance()` only while the sprite is visible
+/// and the app is active. Memory: only sitting's frames and the current state's are kept decoded.
 @Observable
 @MainActor
 final class MochiAnimator {
@@ -16,73 +20,93 @@ final class MochiAnimator {
     private(set) var frameIndex = 0
     /// Set by the view from the Reduce Motion setting.
     var reduceMotion = false {
-        didSet { if reduceMotion != oldValue { returnToSitting() } }
+        didSet { if reduceMotion != oldValue { startSittingSegment() } }
     }
 
-    /// Frames left in the current one-shot; nil while idle.
-    private var remainingFrames: Int?
-    /// Idle ticks until the next stretch.
-    private var ticksUntilStretch = 0
+    static let sittingLoops = 3...6
+    static let playingLoops = 4...6
+    static let stretchingLoops = 1...2
+    static let playingWeight = 0.6
+
+    /// Whole loops left in the current segment (including the one playing).
+    @ObservationIgnored private var loopsRemaining = 0
+    /// The last two autonomous activities, to avoid a third in a row.
+    @ObservationIgnored private var recentActivities: [MochiState] = []
     @ObservationIgnored private var frames: [MochiState: [UIImage]] = [:]
     @ObservationIgnored private var reducedMotionReturn: Task<Void, Never>?
 
     init() {
-        armIdleStretch()
+        startSittingSegment()
     }
 
-    /// Plays `state` for `loops` full loops, then returns to sitting. Under Reduce Motion, shows
-    /// that state's frame 08 for about 1.5 seconds instead.
+    /// Plays `state` now for `loops` full loops, then resumes the schedule with sitting. Under
+    /// Reduce Motion, shows that state's frame 08 for about 1.5 seconds instead.
     func play(_ state: MochiState, loops: Int) {
         reducedMotionReturn?.cancel()
         setState(state)
         if reduceMotion {
             frameIndex = MochiState.representativeFrame
-            remainingFrames = nil
             reducedMotionReturn = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(1.5))
                 guard !Task.isCancelled else { return }
-                self?.returnToSitting()
+                self?.startSittingSegment()
             }
         } else {
             frameIndex = 0
-            remainingFrames = max(1, loops) * state.frameCount
+            loopsRemaining = max(1, loops)
         }
     }
 
     /// One frame step (1/8 s). Called by the sprite view's clock only while it's visible.
     func advance() {
         guard !reduceMotion else { return }
-        if let remaining = remainingFrames {
-            if remaining <= 1 {
-                returnToSitting()
-                return
-            }
-            remainingFrames = remaining - 1
-            frameIndex = (frameIndex + 1) % state.frameCount
+        guard frameIndex + 1 >= state.frameCount else {
+            frameIndex += 1
             return
         }
-        frameIndex = (frameIndex + 1) % state.frameCount
-        ticksUntilStretch -= 1
-        if ticksUntilStretch <= 0 {
-            play(.stretching, loops: 1)
+        // Loop boundary.
+        frameIndex = 0
+        loopsRemaining -= 1
+        guard loopsRemaining <= 0 else { return }
+        if state == .sitting {
+            startActivity(Self.nextActivity(after: recentActivities, random: Double.random(in: 0..<1)))
+        } else {
+            startSittingSegment()
         }
     }
 
     /// The frame to draw now.
     var currentImage: UIImage? {
         let index = reduceMotion && state == .sitting ? 0 : frameIndex
-        return images(for: state)[safe: index]
+        let images = images(for: state)
+        return images.indices.contains(index) ? images[index] : nil
+    }
+
+    /// The next autonomous activity: playing with probability 0.6, else stretching, but never a
+    /// third of the same in a row.
+    static func nextActivity(after recent: [MochiState], random: Double) -> MochiState {
+        var pick: MochiState = random < playingWeight ? .playing : .stretching
+        if recent.count >= 2, recent.suffix(2).allSatisfy({ $0 == pick }) {
+            pick = pick == .playing ? .stretching : .playing
+        }
+        return pick
     }
 
     // MARK: - Private
 
-    private func returnToSitting() {
+    private func startActivity(_ activity: MochiState) {
+        recentActivities = Array((recentActivities + [activity]).suffix(2))
+        setState(activity)
+        frameIndex = 0
+        loopsRemaining = Int.random(in: activity == .playing ? Self.playingLoops : Self.stretchingLoops)
+    }
+
+    private func startSittingSegment() {
         reducedMotionReturn?.cancel()
         reducedMotionReturn = nil
-        remainingFrames = nil
         setState(.sitting)
         frameIndex = 0
-        armIdleStretch()
+        loopsRemaining = Int.random(in: Self.sittingLoops)
     }
 
     private func setState(_ newState: MochiState) {
@@ -93,10 +117,6 @@ final class MochiAnimator {
         }
     }
 
-    private func armIdleStretch() {
-        ticksUntilStretch = Int.random(in: 20...40) * Int(MochiState.sitting.fps)
-    }
-
     private func images(for state: MochiState) -> [UIImage] {
         if let cached = frames[state] { return cached }
         let loaded = (0..<state.frameCount).compactMap { index in
@@ -104,11 +124,5 @@ final class MochiAnimator {
         }
         frames[state] = loaded
         return loaded
-    }
-}
-
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
     }
 }

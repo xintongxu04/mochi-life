@@ -12,12 +12,19 @@ tabs). Messages in the app use the name from her profile (**Mochi** unless you c
 
 ### Mochi and her ring of actions
 
-- Mochi sits at the top of the Calories screen and scrolls with it. Every 20–40
-  seconds she stretches. After you log a food, she eats from her bowl (the
-  screen scrolls back to her).
-- **Tap Mochi** to open a ring of five buttons around her:
+- Mochi floats over the Calories screen like a little desktop pet, with a soft
+  shadow under her paws. She starts in the bottom-right corner.
+  - **Drag her** anywhere (she stays where you drop her, and she's remembered
+    next time). If you drop her partly off screen, she springs back in.
+  - The list underneath still scrolls normally around her.
+  - She hides on other screens and while Log Food is open.
+- She lives her own life: she sits for 6–12 seconds, then plays with her ball or
+  stretches, then sits again.
+- After you log a food, she eats from her bowl for about 12 seconds.
+- **Tap Mochi** to open a ring of five glass buttons around her:
   - **Eat** opens Log Food (the same as the Log Food button).
-  - **Play** makes her play with her ball.
+  - **Play** makes her play with her ball for about 20 seconds (tap again to
+    keep going).
   - **Settings** opens Settings.
   - **Weight** opens Weight.
   - **Profile** opens her profile.

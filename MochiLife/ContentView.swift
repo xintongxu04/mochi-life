@@ -15,7 +15,7 @@ extension EnvironmentValues {
     @Entry var openScreen = OpenScreenAction()
 }
 
-/// The app's single screen: Calories, with Mochi at the top. Weight, Mochi's profile and
+/// The app's single screen: Calories, with Mochi floating above it. Weight, Mochi's profile and
 /// Settings are pushed from the ring of actions around her, drawn over everything.
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -32,6 +32,7 @@ struct ContentView: View {
             .overlay {
                 if home.isMenuOpen {
                     RadialActionMenu(home: home)
+                        .transition(.opacity)
                 }
             }
             .sensoryFeedback(.impact(weight: .light), trigger: home.isMenuOpen) { _, isOpen in isOpen }
@@ -55,6 +56,7 @@ struct ContentView: View {
                 home.isMenuOpen = false
                 openedBackup = RestoreSource(url: url)
             }
+            .onChange(of: openedBackup != nil) { _, isOpen in home.isRestoring = isOpen }
             .sheet(item: $openedBackup) { source in
                 RestoreFlowView(url: source.url)
             }

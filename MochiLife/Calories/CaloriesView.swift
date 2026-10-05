@@ -64,6 +64,12 @@ struct DayLogView: View {
     var body: some View {
         @Bindable var home = home
         DayEntriesList(day: day, isFuture: isFuture, dayControls: dayControls, onSwipe: move(by:))
+            // Mochi floats above the list (not in it), only while nothing covers this screen.
+            .overlay {
+                if !home.isSpriteHidden {
+                    FloatingMochiView(home: home)
+                }
+            }
             .navigationTitle(title)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
@@ -195,48 +201,8 @@ private struct DayEntriesList<Controls: View>: View {
         }
     }
 
-    private var spriteRowID: String { "mochiSprite" }
-
     private func list(target: CalorieTarget) -> some View {
-        ScrollViewReader { proxy in
-            dayList(target: target)
-                .onChange(of: home.scrollToSpriteRequest) {
-                    withAnimation { proxy.scrollTo(spriteRowID, anchor: .top) }
-                }
-                .onScrollGeometryChange(for: Bool.self) { geometry in
-                    geometry.contentOffset.y + geometry.contentInsets.top > 8
-                } action: { _, isScrolledAway in
-                    home.isSpriteScrolledAway = isScrolledAway
-                }
-        }
-    }
-
-    /// Mochi, centred at the top of the content (scrolls with it). Tapping her opens the ring.
-    private var spriteSection: some View {
-        Section {
-            HStack {
-                Spacer(minLength: 0)
-                Button {
-                    home.spriteTapped()
-                } label: {
-                    MochiSpriteView(animator: home.animator)
-                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { home.spriteFrame = $0 }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Mochi")
-                .accessibilityHint("Opens actions")
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 8)
-            .id(spriteRowID)
-        }
-        .listRowBackground(Color.clear)
-    }
-
-    private func dayList(target: CalorieTarget) -> some View {
         List {
-            spriteSection
-
             Section {
                 VStack(spacing: 12) {
                     dayControls
@@ -292,6 +258,7 @@ private struct DayEntriesList<Controls: View>: View {
                 CalorieChartView(target: target)
             }
         }
+        .onChange(of: entryBeingEdited != nil) { _, isEditing in home.isEditingEntry = isEditing }
         .sheet(item: $entryBeingEdited) { entry in
             NavigationStack {
                 LogEntryForm(mode: .edit(entry), onFinish: { entryBeingEdited = nil })

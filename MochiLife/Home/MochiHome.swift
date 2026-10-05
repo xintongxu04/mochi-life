@@ -9,7 +9,8 @@ enum AppScreen: Hashable {
 }
 
 /// State of the single-screen shell: the navigation path, Mochi's animator, the radial menu,
-/// the Log Food sheet, and the "Mochi eats" signal. Shared through the environment.
+/// the Log Food sheet, what hides floating Mochi, and the "Mochi eats" signal. Shared through
+/// the environment.
 @Observable
 @MainActor
 final class MochiHome {
@@ -18,12 +19,17 @@ final class MochiHome {
     var isMenuOpen = false
     /// The Log Food sheet; opened by the toolbar button and the ring's Eat button alike.
     var isLoggingFood = false
+    /// A log entry's edit sheet is open on the Calories screen.
+    var isEditingEntry = false
+    /// A backup restore sheet is open.
+    var isRestoring = false
     /// Mochi's sprite in global coordinates, for placing the ring.
     var spriteFrame: CGRect = .zero
-    /// True when the list is scrolled so the sprite may be partly off screen.
-    var isSpriteScrolledAway = false
-    /// Changes to ask the Calories list to scroll Mochi into view.
-    private(set) var scrollToSpriteRequest = 0
+    /// Floating Mochi shows only on the Calories screen with nothing presented over it.
+    var isSpriteHidden: Bool { isLoggingFood || isEditingEntry || isRestoring }
+
+    static let playLoops = 10
+    static let eatingLoops = 6
     /// A food was logged; Mochi eats once the Calories screen is showing again.
     private var pendingEating = false
 
@@ -43,21 +49,14 @@ final class MochiHome {
         path = NavigationPath()
     }
 
-    /// Tapping Mochi: opens the ring (scrolling her into view first if needed), or closes it.
+    /// Tapping Mochi opens or closes the ring. It never interrupts her current animation.
     func spriteTapped() {
-        if isMenuOpen {
-            isMenuOpen = false
-            return
-        }
-        if isSpriteScrolledAway {
-            scrollToSpriteRequest += 1
-            Task {
-                try? await Task.sleep(for: .milliseconds(350))
-                isMenuOpen = true
-            }
-        } else {
-            isMenuOpen = true
-        }
+        withAnimation(.easeOut(duration: 0.2)) { isMenuOpen.toggle() }
+    }
+
+    /// The Play button: 10 loops (about 20 s); tapping again restarts them.
+    func playWithBall() {
+        animator.play(.playing, loops: Self.playLoops)
     }
 
     // MARK: - Eating
@@ -68,15 +67,14 @@ final class MochiHome {
         pendingEating = true
     }
 
-    /// Plays the eating animation if a food was logged and the Calories screen is showing with
-    /// no sheet over it, after the sheet has had time to slide away.
+    /// Plays the eating animation (6 loops, about 12 s) if a food was logged and the Calories
+    /// screen is showing with nothing over it, after the sheet has had time to slide away.
     func playEatingIfPending() {
-        guard pendingEating, !isLoggingFood, path.isEmpty else { return }
+        guard pendingEating, !isSpriteHidden, path.isEmpty else { return }
         pendingEating = false
         Task {
             try? await Task.sleep(for: .milliseconds(450))
-            scrollToSpriteRequest += 1
-            animator.play(.eating, loops: 2)
+            animator.play(.eating, loops: Self.eatingLoops)
         }
     }
 }

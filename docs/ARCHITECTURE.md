@@ -57,10 +57,11 @@ Targets:
 | File | Purpose |
 |---|---|
 | `MochiState.swift` | `MochiState` (sitting, eating, playing, stretching; 16 frames, 8 fps), frame asset names. |
-| `MochiAnimator.swift` | `@Observable @MainActor` animator: idle sitting loop, random 20–40 s stretch, one-shots, Reduce Motion, two-state frame cache. |
-| `MochiSpriteView.swift` | Draws the current frame at 176 × 168 pt; the 8 fps clock task runs only while visible and active. |
-| `MochiHome.swift` | `AppScreen`, `MochiHome` (navigation path, animator, menu, Log Food sheet, sprite frame, scroll requests, eating signal), `FoodLoggedAction`. |
-| `RadialActionMenu.swift` | The five-button ring, its safe-area layout, scrim, animation and actions. |
+| `MochiAnimator.swift` | `@Observable @MainActor` animator: autonomous schedule (sitting segments, random playing/stretching), user one-shots, Reduce Motion, two-state frame cache. |
+| `MochiSpriteView.swift` | Draws the current frame at 132 × 126 pt with a ground shadow; the 8 fps clock task runs only while visible and active. |
+| `FloatingMochiView.swift` | Mochi floating over the Calories screen: drag (8 pt) vs tap, safe-area clamping with spring-back, saved position (fractions). |
+| `MochiHome.swift` | `AppScreen`, `MochiHome` (navigation path, animator, menu, Log Food sheet, what hides Mochi, sprite frame, Play and eating timings, eating signal), `FoodLoggedAction`. |
+| `RadialActionMenu.swift` | The five Liquid Glass buttons, their safe-area layout, glass morph from Mochi's centre, tap catcher and actions. |
 | `SettingsView.swift` | Settings: weight unit, AI lookup keys (`AILookupSettingsSections`), Back Up and Restore. |
 
 **`Shared/`**
@@ -427,8 +428,9 @@ MochiLifeApp
    └─ CaloriesView: NavigationStack(path: MochiHome.path) → DayLogView
         — title "Today" / "Yesterday" / "Tomorrow" / date
           Days: back to any earlier day; forward up to the last future day with entries
-          DayEntriesList (List in ScrollViewReader): Mochi's sprite (tap → ring) + day arrows +
-            CalorieProgressView (or PlannedCaloriesView on future days), entries, CalorieChartView
+          DayEntriesList (List): day arrows + CalorieProgressView (or PlannedCaloriesView on
+            future days), entries, CalorieChartView
+          overlay: FloatingMochiView (only her rect is hit-testable; hidden while a sheet is up)
           navigationDestination(for: AppScreen):
             .weight → WeightView — title "Weight"; List: chart + entries; safeAreaInset(top):
                       kg/lb picker; toolbar + → sheet AddWeightView (own NavigationStack)
@@ -1194,14 +1196,14 @@ eaten-versus-target progress and the calories chart. Preview rows never count.
 ## 15. Single-screen shell and Mochi (`Home/`)
 
 There is no tab bar. The app is one `NavigationStack(path: MochiHome.path)` whose root is the
-Calories screen (`DayLogView`). Mochi's animated sprite is the first section of its list, so she
-scrolls with the content. Tapping her opens a ring of five actions. No SwiftData or backup changes.
+Calories screen (`DayLogView`). Mochi floats above it as a draggable "desktop pet"; tapping her
+opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 
 ### Where the former tabs went
 | Was | Now |
 |---|---|
 | Weight tab (`WeightView`) | Ring → **Weight** pushes `WeightView` (unchanged except the title "Weight" and no own `NavigationStack`). |
-| Calories tab | The root screen, unchanged below Mochi. |
+| Calories tab | The root screen. |
 | Mochi tab (`MochiView`) | Ring → **Profile** pushes `MochiView` (unchanged except no own `NavigationStack`). |
 | Back Up and Restore (was on the Mochi tab) | **Settings**. Opening a `.mochibackup` still starts a restore from anywhere. |
 | AI lookup keys (AI Lookup screen from Add with AI) | **Settings** (same sections, `AILookupSettingsSections`, Keychain unchanged), and still from Add with AI. |
@@ -1213,52 +1215,91 @@ scrolls with the content. Tapping her opens a ring of five actions. No SwiftData
   They are copied byte-for-byte from the owner's asset folder (not trimmed, re-padded,
   recolored or re-encoded) into `Assets.xcassets/Mochi/` (folder with `provides-namespace`), one
   image set each, PNG in the **@2x slot only**. Names are referenced as `Mochi/mochi_<state>_<NN>`.
-- **Canvas:** 352 × 336 px (176 × 168 pt), transparent, soft alpha edges. The feet sit on a fixed
-  baseline (y = 320 px), at the same scale in every state.
-- Every frame is drawn in the same 176 × 168 pt rectangle (`.resizable()` at exactly that
-  aspect, `.interpolation(.high)`), so she never jumps between states.
+- **Canvas:** 352 × 336 px, transparent, soft alpha edges. The feet sit on a fixed baseline
+  (y = 320 px), at the same scale in every state.
+- **Display:** 132 × 126 pt (the same 352:336 aspect). Every frame is drawn in that identical
+  rectangle (`.resizable()`, `.interpolation(.high)`), so she never jumps between states.
+- **Ground shadow:** a soft blurred ellipse (half her width, 9 pt tall) centred on the baseline,
+  black at 18% opacity in light mode and 55% in dark mode.
 - No mirroring: eating and stretching face left by design. Eating frames include the bowl, and
   playing frames include the ball.
 
+### Floating overlay (`FloatingMochiView`)
+- **Placement:** an `.overlay` on the Calories root view inside the `NavigationStack`, not in
+  the list, so it changes no layout.
+- **Hit testing:** a `GeometryReader` with no background, so only her own 132 × 126 rectangle
+  (`contentShape(Rectangle())`, moved with `.offset`) takes touches. The list underneath scrolls
+  normally everywhere else.
+- **Gestures:**
+  `DragGesture(minimumDistance: 8, coordinateSpace: .global).exclusively(before: TapGesture())`.
+  - **Drag:** once the finger moves 8 pt it's a drag, and she follows 1:1 in both axes.
+  - **Tap:** if the finger lifts before moving 8 pt, the drag fails and the tap fires, toggling
+    the ring.
+  - **Feedback:** starting a drag closes the ring, scales her to 1.06, adds a soft shadow and a
+    light haptic. Her animation keeps running while dragged.
+- **Bounds:** the overlay's safe area (below the navigation bar, so clear of the Log Food button,
+  and above the home indicator), inset 8 pt. She stays exactly where she's dropped (no
+  edge-snapping). Dropped outside the bounds, she springs back to the nearest point inside.
+- **Persistence:** her top-left corner is stored as fractions 0…1 of the allowed range in
+  `@AppStorage("mochi.position.x"/".y")` (−1 = never moved). On launch and on size changes it's
+  mapped back and clamped. The default is bottom-trailing, 16 pt from the edges.
+- **Visibility:** she shows only on the Calories root with nothing presented over it.
+  - Pushed screens (Weight, Profile, Settings, Saved Foods…) cover the root, so she's hidden and
+    her clock stops (`onDisappear`).
+  - She's also removed while the Log Food sheet, an entry's edit sheet or a restore sheet is up
+    (`MochiHome.isSpriteHidden`).
+- **Known effect:** the bar's height changes as the large title collapses, so a position in the
+  middle of the screen can shift by a few points while scrolling. Positions at the bottom stay
+  put.
+
 ### `MochiState`, `MochiAnimator`, `MochiSpriteView`
-- `MochiState`: 16 frames at 8 fps for every state.
-- `MochiAnimator` (`@Observable @MainActor`) publishes `state` and `frameIndex`.
-  - **Idle:** sitting loops. After 20–40 random seconds of *running* idle time, it plays
-    stretching once, returns to sitting and re-arms.
-  - **One-shots:** `play(_:loops:)` runs whole 16-frame loops, then returns to sitting and
-    re-arms the idle stretch. A new `play` replaces the current one-shot.
-  - **Memory:** only sitting's frames and the active state's are kept decoded
-    (`preparingForDisplay()`). Other states' frames are dropped when the state changes.
+- `MochiState`: 16 frames at 8 fps for every state, so one loop lasts 2 s.
+- `MochiAnimator` (`@Observable @MainActor`) publishes `state` and `frameIndex`. It runs an
+  **autonomous schedule:**
+  1. Sitting for 3–6 loops (6–12 s).
+  2. Then a random activity: playing for 4–6 loops (weight 0.6) or stretching for 1–2 loops
+     (weight 0.4). The same activity is never picked three times in a row
+     (`nextActivity(after:random:)`).
+  3. Then a new sitting segment, and so on.
+  
+  Eating is never picked on its own. Scheduled changes happen only at loop boundaries (frame 16
+  → frame 01).
+- **User one-shots** (`play(_:loops:)`) cut in immediately and run whole loops, then the schedule
+  resumes with a sitting segment.
+  - **Play:** 10 loops (~20 s); tapping Play again restarts them.
+  - **Food logged:** eating for 6 loops (~12 s).
+  - Opening the ring never interrupts the current animation.
+- **Memory:** only sitting's frames and the active state's are kept decoded
+  (`preparingForDisplay()`). Others are dropped when the state changes.
 - `MochiSpriteView`: the clock is a `.task` loop (8 per second) keyed on "visible and app
-  active". It stops when the row scrolls off, the app goes to the background, or Reduce Motion is
-  on. There is no free-running `Timer`.
-- **Reduce Motion:** a still `mochi_sitting_01`, with no idle stretch. A one-shot shows that
-  state's frame 08 for 1.5 s, then returns to sitting.
+  active". There is no free-running `Timer`.
+- **Reduce Motion:** a still `mochi_sitting_01`, with no schedule. A one-shot shows that state's
+  frame 08 for 1.5 s, then returns to sitting.
 
 ### Radial action menu (`RadialActionMenu`)
-- **Buttons:** five circular buttons (56 pt, accent fill, SF Symbol, caption2 label below),
-  clockwise from the top:
+- **Buttons:** five 56 pt circles with `.glassEffect(.regular.interactive(), in: .circle)`. No
+  tint; the SF Symbol is in `.primary`. Each caption (caption2) sits in a small glass capsule
+  below its button, so it stays legible over anything. The order, clockwise from the top:
   - Eat (`fork.knife`), at −90°
   - Play (`tennisball.fill`), at −18°
   - Settings (`gearshape.fill`), at 54°
   - Weight (`scalemass.fill`), at 126°
   - Profile (`pawprint.fill`), at 198°
-- **Placement:** radius 118 pt, centred on the sprite's centre. The sprite reports its global
-  frame with `onGeometryChange`. The ring is drawn in an overlay on `ContentView`, above the
-  navigation bar and the list, so it's never clipped.
-- **Fitting on screen:** if a button or caption would leave the safe area (plus an 8 pt margin),
-  the ring's centre shifts. If it still doesn't fit, the radius shrinks in 4 pt steps down to
-  72 pt.
-- **Opening:** if the list is scrolled (the sprite may be partly hidden), tapping Mochi first
-  scrolls her into view (`ScrollViewReader`), then opens the ring.
-- **Closing:** a dimmed scrim (35% black) sits behind the buttons. Tapping it (which covers
-  Mochi) closes the ring. VoiceOver's escape gesture also closes it; the ring is a modal
-  accessibility container.
-- **Animation:** a spring scale and opacity from the centre, a plain fade under Reduce Motion,
-  and a light haptic on open.
+- **Animation:** all glass shapes share one `GlassEffectContainer` and a namespace with
+  `glassEffectID`s. Opening morphs a small glass "seed" at Mochi's centre into the buttons and
+  captions (`.matchedGeometry` glass transition, spring); closing morphs them back. Under Reduce
+  Motion there is no seed, and they fade.
+- **Placement:** drawn in an overlay on `ContentView`, above the navigation bar, centred on
+  Mochi's current frame. If a button or caption would leave the safe area (+8 pt), the ring's
+  **centre** moves the minimum distance needed; Mochi doesn't move. Only on a screen too small
+  even then does the radius shrink (4 pt steps, down to 72 pt).
+- **Closing:** there's no dimming. While the ring is open, an invisible full-screen tap catcher
+  (with an even-odd hole over Mochi, so she stays tappable and draggable) closes it on a tap
+  outside. Tapping Mochi again or starting a drag also closes it, and so does VoiceOver's escape
+  gesture (the ring is a modal accessibility container). There's a light haptic on open.
 - **Actions** (the ring closes first):
   - **Eat** → `MochiHome.openLogFood()`, the same path as the toolbar button.
-  - **Play** → `animator.play(.playing, loops: 2)`.
+  - **Play** → `MochiHome.playWithBall()`.
   - **Settings**, **Weight**, **Profile** → push the `AppScreen`.
 - One flat level: no submenus or "More".
 
@@ -1273,10 +1314,11 @@ explicit signal, not store observation, so these never trigger it:
 - carried-forward days (created in the same save; the signal fires once)
 - restores
 
-`MochiHome` remembers it. When the Log Food sheet has closed and the Calories screen is showing
-(no pushed screen), it waits 0.45 s, scrolls Mochi into view and plays `.eating` for 2 loops.
+`MochiHome` remembers it. When the Calories root is showing with nothing over it, it waits 0.45 s
+and plays eating for 6 loops.
 
 ### Accessibility
-- Sprite: a button labelled "Mochi", hint "Opens actions".
-- Ring buttons: labelled with their names.
+- Mochi: one element labelled "Mochi", hint "Opens actions", with the button trait. Its default
+  action toggles the ring.
+- Ring buttons: labelled with their names (captions are hidden from VoiceOver as duplicates).
 - The open ring is a modal container that closes with the escape gesture.
