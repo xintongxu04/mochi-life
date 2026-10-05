@@ -77,7 +77,7 @@ struct ProfileFormView: View {
                 }
                 Section {
                 } footer: {
-                    Text("Latest weight comes from the Weight tab.")
+                    Text("Latest weight comes from the Weight screen.")
                 }
             }
             .navigationTitle("Edit Profile")

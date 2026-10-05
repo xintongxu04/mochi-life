@@ -115,23 +115,23 @@ enum MissingCalorieDetail: Hashable {
 
     func message(catName: String) -> String {
         switch self {
-        case .weight: "Add \(catName)'s weight on the Weight tab."
-        case .birthday: "Add \(catName)'s birthday on the \(catName) tab."
-        case .spayStatus: "Set whether \(catName) is spayed or neutered on the \(catName) tab."
+        case .weight: "Add \(catName)'s weight on the Weight screen."
+        case .birthday: "Add \(catName)'s birthday in \(catName)'s profile."
+        case .spayStatus: "Set whether \(catName) is spayed or neutered in \(catName)'s profile."
         }
     }
 
     func buttonTitle(catName: String) -> String {
         switch self {
         case .weight: "Go to Weight"
-        case .birthday, .spayStatus: "Go to \(catName)"
+        case .birthday, .spayStatus: "Go to Profile"
         }
     }
 
-    var tab: AppTab {
+    var screen: AppScreen {
         switch self {
         case .weight: .weight
-        case .birthday, .spayStatus: .mochi
+        case .birthday, .spayStatus: .profile
         }
     }
 }
@@ -160,7 +160,7 @@ struct CalorieTargetReader<Content: View>: View {
 struct MissingCalorieDetailsView: View {
     let missing: [MissingCalorieDetail]
 
-    @Environment(\.openTab) private var openTab
+    @Environment(\.openScreen) private var openScreen
     @Environment(\.catName) private var catName
 
     var body: some View {
@@ -173,7 +173,7 @@ struct MissingCalorieDetailsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button(detail.buttonTitle(catName: catName)) { openTab(detail.tab) }
+                    Button(detail.buttonTitle(catName: catName)) { openScreen(detail.screen) }
                         .buttonStyle(.bordered)
                         .font(.subheadline)
                 }

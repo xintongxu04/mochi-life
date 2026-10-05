@@ -17,7 +17,7 @@ something described here must update this file in the same commit (see `CLAUDE.m
 | IDE / SDK | Xcode 27.0 (27A266a), iOS 27.0 SDK; project `objectVersion = 77` |
 | Minimum iOS | `IPHONEOS_DEPLOYMENT_TARGET = 27.0` (app and UI test targets) |
 | Devices | iPhone only (`TARGETED_DEVICE_FAMILY = 1`); Mac Catalyst, "Designed for iPhone" on Mac and visionOS all off |
-| UI | SwiftUI (`TabView` with `Tab`, `NavigationStack`, `Form`/`List`, `.searchable`, `ContentUnavailableView`) |
+| UI | SwiftUI (one root `NavigationStack(path:)`, no tab bar, `Form`/`List`, `.searchable`, `ContentUnavailableView`) |
 | Persistence | SwiftData with versioned schemas: `ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: MochiLifeMigrationPlan.self)` created in `MochiLifeApp.init()`; views use the environment `modelContext` (main context). All saves go through `Persistence.save(_:)`. `UserDefaults` / `@AppStorage` for small settings. |
 | Charts | Swift Charts (`Charts`): `LineMark`, `PointMark`, `BarMark`, `RuleMark` |
 | Other Apple frameworks | VisionKit (`DataScannerViewController`, live text), FoundationModels (on-device match judge, optional), Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
@@ -49,9 +49,19 @@ Targets:
 
 | File | Purpose |
 |---|---|
-| `MochiLifeApp.swift` | App entry point; creates the `ModelContainer` from `SchemaV2` and `MochiLifeMigrationPlan`. |
-| `ContentView.swift` | Root `TabView` (Weight, Calories, cat's name), `AppTab` enum, `openTab` action, provides `catName`, and runs `LaunchMaintenance` in `.task`. |
-| `Assets.xcassets` | Accent color and an empty app icon slot (no icon image yet). |
+| `MochiLifeApp.swift` | App entry point; creates the `ModelContainer` from `SchemaV4` and `MochiLifeMigrationPlan`. |
+| `ContentView.swift` | The single-screen shell: `CaloriesView` with the `RadialActionMenu` overlay above everything; owns `MochiHome`; provides `catName`, `openScreen` (`OpenScreenAction`), `foodLogged`; runs `LaunchMaintenance`, schedule catch-up triggers, and backup opening. |
+| `Assets.xcassets` | Accent color, an empty app icon slot, and the `Mochi` folder (namespace) of 64 sprite frames (§15). |
+
+**`Home/`** (the single-screen shell and Mochi, §15)
+| File | Purpose |
+|---|---|
+| `MochiState.swift` | `MochiState` (sitting, eating, playing, stretching; 16 frames, 8 fps), frame asset names. |
+| `MochiAnimator.swift` | `@Observable @MainActor` animator: idle sitting loop, random 20–40 s stretch, one-shots, Reduce Motion, two-state frame cache. |
+| `MochiSpriteView.swift` | Draws the current frame at 176 × 168 pt; the 8 fps clock task runs only while visible and active. |
+| `MochiHome.swift` | `AppScreen`, `MochiHome` (navigation path, animator, menu, Log Food sheet, sprite frame, scroll requests, eating signal), `FoodLoggedAction`. |
+| `RadialActionMenu.swift` | The five-button ring, its safe-area layout, scrim, animation and actions. |
+| `SettingsView.swift` | Settings: weight unit, AI lookup keys (`AILookupSettingsSections`), Back Up and Restore. |
 
 **`Shared/`**
 | File | Purpose |
@@ -70,14 +80,14 @@ Targets:
 |---|---|
 | `WeightEntry.swift` | `@Model` for one weight reading, stored in kilograms. |
 | `WeightUnit.swift` | kg/lb enum: display conversion and formatting. |
-| `WeightView.swift` | Weight tab: kg/lb picker, chart, list of entries (swipe to delete), add button. |
+| `WeightView.swift` | Weight screen (pushed from the ring): kg/lb picker, chart, list of entries (swipe to delete), add button. |
 | `AddWeightView.swift` | Sheet for adding a weight (date + value in the selected unit). |
 | `WeightChartView.swift` | Weight line chart and the "Up/Down … since …" summary line. |
 
 **`Calories/`**
 | File | Purpose |
 |---|---|
-| `CaloriesView.swift` | Calories tab: `NavigationStack` → `DayLogView` (day navigation, total vs target, entries, chart); private `DayEntriesList`, `CalorieProgressView`, `LogEntryRow`. |
+| `CaloriesView.swift` | The app root: `NavigationStack(path:)` → `DayLogView` (Mochi's sprite, day navigation, total vs target, entries, chart) with `AppScreen` destinations; private `DayEntriesList`, `CalorieProgressView`, `LogEntryRow`. |
 | `CalorieTarget.swift` | Daily calorie target logic (own target or Merck-based estimate), `CalorieEstimate`, `MissingCalorieDetail`, `CalorieTargetReader` view, `MissingCalorieDetailsView`. |
 | `CalorieTargetSettingsView.swift` | Settings screen: own daily target, "Gains weight easily" switch, explanation of the estimate. |
 | `CalorieChartView.swift` | Bar chart of daily calorie totals (7 or 30 days) with a dashed target line. |
@@ -125,7 +135,7 @@ Targets:
 | `CalorieVerifier.swift` | Pure checks: `CalorieVerifier` (evidence, units, ranges, consistency, conversions), `StatedFacts`, `VerifiedReading`, `SourceMerger` (multi-source rules), `SourceIdentity` (same-product check). |
 | `FoodLookupService.swift` | The pipeline actor (reading, rendered fallback, focused pass, other sources, diagnostics); `Prompts` (DeepSeek system messages); draft building with provenance notes; `FactLabel` (status words). |
 | `AILookupCredentials.swift` | `AIKeychain` (keys), `AILookupLimit` (50/day), `AIKeyTester`. |
-| `AILookupSettingsView.swift` | "AI Lookup" settings: keys, Test Keys, today's count, what is sent where. |
+| `AILookupSettingsView.swift` | `AILookupSettingsSections` (keys, Test Keys, today's count, what is sent where), shown in Settings and in the "AI Lookup" screen (`AILookupSettingsView`) opened from Add with AI. |
 | `PackageTextReader.swift` | Vision text recognition of a package photo, on device. |
 | `AddWithAIView.swift` | `AILookupSession` (state, Task, cancel) and the input / progress / not-found / failure screens. |
 | `ImageCandidateFinder.swift` | `ImageCandidate` and product-photo discovery in page HTML. |
@@ -135,11 +145,11 @@ Targets:
 | File | Purpose |
 |---|---|
 | `CatProfile.swift` | `@Model`s `CatProfile`, `Vaccination`, `MedicalRecord`; `CatProfile.current(in:)` (fetch-or-create, single profile); `catName` environment value; enums `BirthdayPrecision`, `CatSex`, `YesNoUnsure`, `MedicalRecordKind`; `CatAge` age text. |
-| `MochiView.swift` | Mochi tab: photo, details, latest weight, vaccinations, medical history; `CatPhoto` view. |
+| `MochiView.swift` | Mochi's profile (pushed from the ring): photo, details, latest weight, vaccinations, medical history; `CatPhoto` view. |
 | `ProfileFormView.swift` | Edit Mochi's basic facts, photo from library or camera. |
 | `VaccinationFormView.swift` | Add/edit a vaccination. |
 | `MedicalRecordFormView.swift` | Add/edit a medical history entry. |
-| `BackupRestoreView.swift` | "Back Up and Restore" screen and `RestoreFlowView` (summary, confirmation, safety backup, restore). |
+| `BackupRestoreView.swift` | "Back Up and Restore" screen (opened from Settings) and `RestoreFlowView` (summary, confirmation, safety backup, restore). |
 | `CameraPicker.swift` | `UIImagePickerController` wrapper for taking a photo (hidden when no camera, e.g. the simulator). |
 
 **`Resources/`**
@@ -331,7 +341,7 @@ so a profile always exists; views read it with `@Query` + `profiles.current` (ol
 ### Settings outside SwiftData (`UserDefaults`)
 | Key | Type | Used by |
 |---|---|---|
-| `weightUnit` | `WeightUnit` raw value (`"kg"`/`"lb"`), default kg | `WeightView`, `MochiView`, `CalorieTargetSettingsView` |
+| `weightUnit` | `WeightUnit` raw value (`"kg"`/`"lb"`), default kg | `WeightView`, `SettingsView`, `MochiView`, `CalorieTargetSettingsView` |
 | `calorieTarget.own` | `Double`, `0` = none | `CalorieTarget.ownTargetKey` |
 | `calorieTarget.gainsWeightEasily` | `Bool` | `CalorieTarget.gainsWeightEasilyKey` |
 | `foodLibraryVersion.<library>` | `Int` | Last imported `data_version` (`FoodLibraryLoader`) |
@@ -411,57 +421,54 @@ Food log entries are snapshots and are never changed by an update.
 
 ```
 MochiLifeApp
-└─ WindowGroup → ContentView  (TabView, selection: AppTab, default .weight;
-                               .task → LaunchMaintenance.run; provides catName;
-                               .onOpenURL(.mochibackup) → sheet RestoreFlowView)
-   ├─ Tab "Weight" (scalemass)   → WeightView
-   │    NavigationStack — title "Mochi Life"
-   │      List: WeightChartView section (if entries) + entries
-   │      safeAreaInset(top): kg/lb segmented picker
-   │      sheet: AddWeightView (own NavigationStack)
-   │
-   ├─ Tab "Calories" (fork.knife) → CaloriesView
-   │    NavigationStack → DayLogView — title "Today" / "Yesterday" / "Tomorrow" / date
-   │      Days: back to any earlier day; forward up to the last future day with entries
-   │      DayEntriesList (List): day arrows + CalorieProgressView (or PlannedCaloriesView
-   │        on future days), entries, CalorieChartView
-   │      toolbar leading: NavigationLink(value: CaloriesScreen.savedFoods) → SavedFoodsView (browse)
-   │                       NavigationLink(value: .schedules) → FeedingSchedulesView
-   │                         (sheets: SavedFoodsView(.schedule) → ScheduleEditorView(.create); ScheduleEditorView(.edit))
-   │                       NavigationLink(value: .dailyCalorieSettings) → CalorieTargetSettingsView
-   │      registers .navigationDestination(for: CaloriesScreen) and .savedFoodsDestinations(mode: .browse)
-   │      toolbar trailing: "Log Food" (filled capsule, .borderedProminent) → sheet LogFoodFlowView(day:)
-   │      sheet(item:): edit entry → NavigationStack → LogEntryForm(.edit)
-   │      confirmationDialog: delete with carried days
-   │
-   │    SavedFoodsView (browse) pushed in the Calories stack; destinations come from
-   │    savedFoodsDestinations at the stack root:
-   │      BrandSelection → BrandFoodsView → LineSelection → LineFoodsView
-   │      Food → FoodDetailView
-   │        sheet: NavigationStack → FoodEditorView(.edit) ; sheet: NavigationStack → LogEntryForm(.logFood, startingFrom: portion)
-   │      sheet: NavigationStack → FoodEditorView(.create)
-   │      sheet: AddWithAIView (own NavigationStack): input → progress → FoodEditorView(.review),
-   │        or not found / failure; pushes AILookupSettingsView; sheet FoodEditorView(.create)
-   │        (manual, name prefilled); fullScreenCover CameraPicker
-   │
-   │    LogFoodFlowView (sheet): NavigationStack(path: [LogRoute]) → home (search + camera,
-   │      Recent, Frequent, live results, Quick Entry, Browse) + .savedFoodsDestinations(.pick)
-   │      environment isPickingFood = true, logDay = viewed day
-   │      LogRoute.portion → LogEntryForm(.logFood) ; .candidates → candidate list ;
-   │      .quickEntry → LogEntryForm(.quickEntry) ; .browse → SavedFoodsView(.pick) ;
-   │      .web → AILookupSession + FoodEditorView(.review) → .portion
-   │      fullScreenCover PackageCaptureView ; sheet FoodEditorView(.create) (manual add)
-   │
-   └─ Tab <cat's name, default "Mochi"> (pawprint) → MochiView
-        NavigationStack — title = profile name (default "Mochi")
-          List: photo + age, Details, Vaccinations, Medical History
-          NavigationLink → BackupRestoreView (fileImporter; sheet RestoreFlowView; ShareLink)
-          toolbar "Edit": sheet → ProfileFormView (own NavigationStack)
-            fullScreenCover: CameraPicker
-          sheets: VaccinationFormView, MedicalRecordFormView (add and edit)
+└─ WindowGroup → ContentView  (no tab bar; owns MochiHome; overlay RadialActionMenu when open;
+                               .task → LaunchMaintenance.run; provides catName, openScreen,
+                               foodLogged; .onOpenURL(.mochibackup) → sheet RestoreFlowView)
+   └─ CaloriesView: NavigationStack(path: MochiHome.path) → DayLogView
+        — title "Today" / "Yesterday" / "Tomorrow" / date
+          Days: back to any earlier day; forward up to the last future day with entries
+          DayEntriesList (List in ScrollViewReader): Mochi's sprite (tap → ring) + day arrows +
+            CalorieProgressView (or PlannedCaloriesView on future days), entries, CalorieChartView
+          navigationDestination(for: AppScreen):
+            .weight → WeightView — title "Weight"; List: chart + entries; safeAreaInset(top):
+                      kg/lb picker; toolbar + → sheet AddWeightView (own NavigationStack)
+            .profile → MochiView — title = profile name; List: photo + age, Details,
+                      Vaccinations, Medical History; toolbar "Edit" → sheet ProfileFormView
+                      (fullScreenCover CameraPicker); sheets VaccinationFormView,
+                      MedicalRecordFormView (add and edit)
+            .settings → SettingsView — Units (kg/lb), AI lookup keys, NavigationLink →
+                      BackupRestoreView (fileImporter; sheet RestoreFlowView; ShareLink)
+          RadialActionMenu (over everything): Eat → Log Food sheet; Play; Settings, Weight,
+            Profile → push AppScreen
+             toolbar leading: NavigationLink(value: CaloriesScreen.savedFoods) → SavedFoodsView (browse)
+                              NavigationLink(value: .schedules) → FeedingSchedulesView
+                                (sheets: SavedFoodsView(.schedule) → ScheduleEditorView(.create); ScheduleEditorView(.edit))
+                              NavigationLink(value: .dailyCalorieSettings) → CalorieTargetSettingsView
+             registers .navigationDestination(for: CaloriesScreen) and .savedFoodsDestinations(mode: .browse)
+             toolbar trailing: "Log Food" (filled capsule) → MochiHome.openLogFood() → sheet LogFoodFlowView(day:)
+             sheet(item:): edit entry → NavigationStack → LogEntryForm(.edit)
+             confirmationDialog: delete with carried days
+       
+           SavedFoodsView (browse) pushed in the Calories stack; destinations come from
+           savedFoodsDestinations at the stack root:
+             BrandSelection → BrandFoodsView → LineSelection → LineFoodsView
+             Food → FoodDetailView
+               sheet: NavigationStack → FoodEditorView(.edit) ; sheet: NavigationStack → LogEntryForm(.logFood, startingFrom: portion)
+             sheet: NavigationStack → FoodEditorView(.create)
+             sheet: AddWithAIView (own NavigationStack): input → progress → FoodEditorView(.review),
+               or not found / failure; pushes AILookupSettingsView; sheet FoodEditorView(.create)
+               (manual, name prefilled); fullScreenCover CameraPicker
+       
+           LogFoodFlowView (sheet): NavigationStack(path: [LogRoute]) → home (search + camera,
+             Recent, Frequent, live results, Quick Entry, Browse) + .savedFoodsDestinations(.pick)
+             environment isPickingFood = true, logDay = viewed day
+             LogRoute.portion → LogEntryForm(.logFood) ; .candidates → candidate list ;
+             .quickEntry → LogEntryForm(.quickEntry) ; .browse → SavedFoodsView(.pick) ;
+             .web → AILookupSession + FoodEditorView(.review) → .portion
+             fullScreenCover PackageCaptureView ; sheet FoodEditorView(.create) (manual add)
 ```
 
-Value-based navigation uses small `Hashable` values (`CaloriesScreen`, `BrandSelection`,
+Value-based navigation uses small `Hashable` values (`AppScreen`, `CaloriesScreen`, `BrandSelection`,
 `LineSelection`, `QuickEntrySelection`) and `Food` itself. **Convention:** register
 `navigationDestination`s at the root of each `NavigationStack` (as
 `savedFoodsDestinations(mode:)` does) and push with value-based `NavigationLink(value:)`.
@@ -482,11 +489,15 @@ closes via an `onFinish` closure instead of `dismiss`.
   fine at this data size.
 - **`@State`** — local UI state and form fields. Forms copy model values into `@State` in
   `init` and write them back only on Save (Cancel leaves the model untouched).
-- **`@Observable`** — only `AILookupSession` (`@MainActor`), which owns the lookup `Task`.
+- **`@Observable`** — `AILookupSession` (`@MainActor`, owns the lookup `Task`), `LogFlowModel`,
+  and the shell: `MochiHome` and `MochiAnimator` (§15), shared with `.environment(home)`.
 - **`@AppStorage`** — the settings listed in §3 (`weightUnit`, `calorieTarget.*`). The
   library-import flag uses `UserDefaults` directly.
 - **Environment values** (declared with `@Entry`):
-  - `openTab` (`OpenTabAction`, `ContentView.swift`) — switches tabs, for "Go to Weight/Mochi".
+  - `openScreen` (`OpenScreenAction`, `ContentView.swift`) — pushes an `AppScreen`, for "Go to
+    Weight" / "Go to Profile" in the calorie estimate.
+  - `foodLogged` (`FoodLoggedAction`, `MochiHome.swift`) — called by `LogEntryForm` after saving a
+    new entry, so Mochi eats.
   - `isPickingFood` (`Bool`, `SavedFoodsView.swift`) — set by `LogFoodFlowView`; disables delete.
   - `logDay` (`Date?`, `LogEntryForm.swift`) — the day being viewed; new entries default to it.
   - `catName` (`String`, `CatProfile.swift`) — the profile's display name, set by `ContentView`;
@@ -506,7 +517,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 |---|---|---|
 | Weight log (kg/lb, list, delete, persisted unit) | `Weight/*` | Date only (no time); no editing an entry, only delete and re-add. |
 | Weight chart + change line | `WeightChartView.swift` | Change compares first vs latest entry only. |
-| Tab bar | `ContentView.swift` | — |
+| Single-screen shell, Mochi sprite and radial menu | `Home/*`, `ContentView.swift`, `CaloriesView.swift` | Frames are @2x only, so 3× screens scale them up (high-quality interpolation). |
 | Saved foods: browse brand → line → product, search | `SavedFoodsView.swift`, `FoodSearch.swift` | Search is substring per word (no fuzzy matching). |
 | Tiki Cat library (99 foods) + thumbnails | `FoodLibraryLoader.swift`, `FoodThumbnail.swift`, `Resources/*` | Updates arrive only with a new app build carrying a higher `data_version`. New products have no photo until added to the map. |
 | Food detail page | `FoodDetailView.swift` | Shows kcal/g per size (or one "Per gram" row for foods without sizes). |
@@ -572,7 +583,9 @@ closes via an `onFinish` closure instead of `dismiss`.
   buttons or nested groups. Every action stays directly visible as its own button with its icon
   and label. If a bar can't fit everything, plain icon buttons move to the other side, still
   individually; if it still doesn't fit, that's raised with the owner rather than collapsing
-  anything.
+  anything. **One deliberate exception, by the owner's design:** the ring of actions around Mochi
+  (§15) is the app's navigation (Eat, Play, Settings, Weight, Profile), one flat level. Every other
+  control stays visible.
 
 ---
 
@@ -608,7 +621,7 @@ closes via an `onFinish` closure instead of `dismiss`.
   mid-year so age is never off by a whole year.
 - **Going over the calorie target is shown calmly** — indigo instead of the accent color, plus
   "N kcal over"; no warnings.
-- **Calories tab opens on Today** with Saved Foods one tap away; logging reuses the saved
+- **The app opens on Calories (Today)**, with Mochi at the top and Saved Foods one tap away; logging reuses the saved
   foods screens in a "pick" mode rather than duplicating them.
 
 ---
@@ -939,7 +952,7 @@ photo, and a first note with confidence and form.
 ## 12. Backup and restore (`Shared/Backup/`, `Profile/BackupRestoreView.swift`)
 
 Purpose: move data between devices (simulator → iPhone) and survive reinstalls of a
-free-provisioned build. Reached from the Mochi tab ("Back Up and Restore"); opening a
+free-provisioned build. Reached from Settings ("Back Up and Restore", via the ring around Mochi); opening a
 `.mochibackup` from Files, AirDrop or the share sheet starts a restore (`ContentView.onOpenURL`).
 
 ### Format
@@ -1019,8 +1032,9 @@ filled pill.
 
 It shows on every day, in both the large and the collapsed title. It logs to the day being viewed
 (at the current time) via the `logDay` environment value. Nothing is pinned at the bottom, so the
-list and chart run to the tab bar. *(Until 2026-10-05 it was pinned above the tab bar with
-`safeAreaInset(edge: .bottom)` and covered content.)* The secondary actions (Saved Foods,
+list and chart run to the bottom of the screen. *(Until 2026-10-05 it was pinned above the then
+tab bar with `safeAreaInset(edge: .bottom)` and covered content.)* The ring's **Eat** button calls
+the same `MochiHome.openLogFood()`. The secondary actions (Saved Foods,
 Schedules (§14), Daily Calories) stay as individual icon buttons in `.topBarLeading`, in that
 order.
 
@@ -1174,3 +1188,95 @@ automatically, one entry per chosen day, without logging it by hand.
 ### Totals
 Materialized entries are ordinary `FoodLogEntry` rows, so they count in the day total, the
 eaten-versus-target progress and the calories chart. Preview rows never count.
+
+---
+
+## 15. Single-screen shell and Mochi (`Home/`)
+
+There is no tab bar. The app is one `NavigationStack(path: MochiHome.path)` whose root is the
+Calories screen (`DayLogView`). Mochi's animated sprite is the first section of its list, so she
+scrolls with the content. Tapping her opens a ring of five actions. No SwiftData or backup changes.
+
+### Where the former tabs went
+| Was | Now |
+|---|---|
+| Weight tab (`WeightView`) | Ring → **Weight** pushes `WeightView` (unchanged except the title "Weight" and no own `NavigationStack`). |
+| Calories tab | The root screen, unchanged below Mochi. |
+| Mochi tab (`MochiView`) | Ring → **Profile** pushes `MochiView` (unchanged except no own `NavigationStack`). |
+| Back Up and Restore (was on the Mochi tab) | **Settings**. Opening a `.mochibackup` still starts a restore from anywhere. |
+| AI lookup keys (AI Lookup screen from Add with AI) | **Settings** (same sections, `AILookupSettingsSections`, Keychain unchanged), and still from Add with AI. |
+| kg/lb (Weight screen) | **Settings**, and still at the top of the Weight screen (same `weightUnit` setting). |
+| "Go to Weight / Go to Mochi" (calorie estimate) | "Go to Weight / Go to Profile", which push the screen (`openScreen`). |
+
+### Sprite assets and frame spec
+- **Frames:** 64 PNGs, `mochi_<state>_<NN>` (sitting, eating, playing, stretching; NN 01–16).
+  They are copied byte-for-byte from the owner's asset folder (not trimmed, re-padded,
+  recolored or re-encoded) into `Assets.xcassets/Mochi/` (folder with `provides-namespace`), one
+  image set each, PNG in the **@2x slot only**. Names are referenced as `Mochi/mochi_<state>_<NN>`.
+- **Canvas:** 352 × 336 px (176 × 168 pt), transparent, soft alpha edges. The feet sit on a fixed
+  baseline (y = 320 px), at the same scale in every state.
+- Every frame is drawn in the same 176 × 168 pt rectangle (`.resizable()` at exactly that
+  aspect, `.interpolation(.high)`), so she never jumps between states.
+- No mirroring: eating and stretching face left by design. Eating frames include the bowl, and
+  playing frames include the ball.
+
+### `MochiState`, `MochiAnimator`, `MochiSpriteView`
+- `MochiState`: 16 frames at 8 fps for every state.
+- `MochiAnimator` (`@Observable @MainActor`) publishes `state` and `frameIndex`.
+  - **Idle:** sitting loops. After 20–40 random seconds of *running* idle time, it plays
+    stretching once, returns to sitting and re-arms.
+  - **One-shots:** `play(_:loops:)` runs whole 16-frame loops, then returns to sitting and
+    re-arms the idle stretch. A new `play` replaces the current one-shot.
+  - **Memory:** only sitting's frames and the active state's are kept decoded
+    (`preparingForDisplay()`). Other states' frames are dropped when the state changes.
+- `MochiSpriteView`: the clock is a `.task` loop (8 per second) keyed on "visible and app
+  active". It stops when the row scrolls off, the app goes to the background, or Reduce Motion is
+  on. There is no free-running `Timer`.
+- **Reduce Motion:** a still `mochi_sitting_01`, with no idle stretch. A one-shot shows that
+  state's frame 08 for 1.5 s, then returns to sitting.
+
+### Radial action menu (`RadialActionMenu`)
+- **Buttons:** five circular buttons (56 pt, accent fill, SF Symbol, caption2 label below),
+  clockwise from the top:
+  - Eat (`fork.knife`), at −90°
+  - Play (`tennisball.fill`), at −18°
+  - Settings (`gearshape.fill`), at 54°
+  - Weight (`scalemass.fill`), at 126°
+  - Profile (`pawprint.fill`), at 198°
+- **Placement:** radius 118 pt, centred on the sprite's centre. The sprite reports its global
+  frame with `onGeometryChange`. The ring is drawn in an overlay on `ContentView`, above the
+  navigation bar and the list, so it's never clipped.
+- **Fitting on screen:** if a button or caption would leave the safe area (plus an 8 pt margin),
+  the ring's centre shifts. If it still doesn't fit, the radius shrinks in 4 pt steps down to
+  72 pt.
+- **Opening:** if the list is scrolled (the sprite may be partly hidden), tapping Mochi first
+  scrolls her into view (`ScrollViewReader`), then opens the ring.
+- **Closing:** a dimmed scrim (35% black) sits behind the buttons. Tapping it (which covers
+  Mochi) closes the ring. VoiceOver's escape gesture also closes it; the ring is a modal
+  accessibility container.
+- **Animation:** a spring scale and opacity from the centre, a plain fade under Reduce Motion,
+  and a light haptic on open.
+- **Actions** (the ring closes first):
+  - **Eat** → `MochiHome.openLogFood()`, the same path as the toolbar button.
+  - **Play** → `animator.play(.playing, loops: 2)`.
+  - **Settings**, **Weight**, **Profile** → push the `AppScreen`.
+- One flat level: no submenus or "More".
+
+### Eating trigger
+`LogEntryForm.finish()` calls `foodLogged()` after a successful save of a **new** entry. That
+covers `.logFood`, `.logSnapshot` and `.quickEntry`, so every path through Log Food (library
+match, Recent/Frequent, camera, web/AI add, browse) and "Log This" on a food's page. It is an
+explicit signal, not store observation, so these never trigger it:
+- edits
+- deletes
+- scheduled-feeding entries
+- carried-forward days (created in the same save; the signal fires once)
+- restores
+
+`MochiHome` remembers it. When the Log Food sheet has closed and the Calories screen is showing
+(no pushed screen), it waits 0.45 s, scrolls Mochi into view and plays `.eating` for 2 loops.
+
+### Accessibility
+- Sprite: a button labelled "Mochi", hint "Opens actions".
+- Ring buttons: labelled with their names.
+- The open ring is a modal container that closes with the escape gesture.

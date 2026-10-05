@@ -1,7 +1,20 @@
 import SwiftUI
 
 /// "AI Lookup" settings: the two API keys, a key test, today's count, and what is sent where.
+/// The same sections appear in Settings.
 struct AILookupSettingsView: View {
+    var body: some View {
+        Form {
+            AILookupSettingsSections()
+        }
+        .navigationTitle("AI Lookup")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// The AI lookup key fields and related sections, for use inside a Form. Keys are stored only
+/// in the Keychain (`AIKeychain`).
+struct AILookupSettingsSections: View {
     @State private var braveKey = AIKeychain.key(for: .brave) ?? ""
     @State private var deepSeekKey = AIKeychain.key(for: .deepSeek) ?? ""
     @State private var showsKeys = false
@@ -14,14 +27,14 @@ struct AILookupSettingsView: View {
     @State private var hasSavedDeepSeek = AIKeychain.hasKey(for: .deepSeek)
 
     var body: some View {
-        Form {
+        Group {
             Section {
                 keyField("Brave Search API key", text: $braveKey)
                 keyField("DeepSeek API key", text: $deepSeekKey)
                 Toggle("Show keys", isOn: $showsKeys)
                 Button("Save Keys", action: saveKeys)
             } header: {
-                Text("API keys")
+                Text("AI lookup keys")
             } footer: {
                 Text(savedMessage ?? "Keys are stored only in this iPhone's Keychain. An empty box never erases a saved key.")
             }
@@ -72,8 +85,6 @@ struct AILookupSettingsView: View {
             }
             .font(.subheadline)
         }
-        .navigationTitle("AI Lookup")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     @State private var isTesting = false

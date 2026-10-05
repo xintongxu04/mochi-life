@@ -23,6 +23,8 @@ struct LogEntryForm: View {
     let onFinish: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    /// Tells the shell a new entry was saved, so Mochi eats.
+    @Environment(\.foodLogged) private var foodLogged
     /// The day being viewed when logging started; new entries default to it.
     @Environment(\.logDay) private var logDay
     @State private var hasSetDefaultDate = false
@@ -322,7 +324,11 @@ struct LogEntryForm: View {
     }
 
     private func finish() {
-        if Persistence.save(modelContext) { onFinish() }
+        guard Persistence.save(modelContext) else { return }
+        // Only new entries logged here; never edits (or schedules, carried days or restores,
+        // which don't come through this form).
+        if case .edit = mode {} else { foodLogged() }
+        onFinish()
     }
 }
 

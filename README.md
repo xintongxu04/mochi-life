@@ -7,15 +7,35 @@ history. Nothing in the app is veterinary advice.
 
 ## What it can do today
 
-The app has three tabs at the bottom: **Weight**, **Calories**, and a third tab
-named after your cat (**Mochi** unless you change her name on her profile). Messages
-in the app use the name from the profile too.
+The app is one screen: **Calories**, with an animated Mochi at the top (there are no
+tabs). Messages in the app use the name from her profile (**Mochi** unless you change it).
 
-### Weight
+### Mochi and her ring of actions
+
+- Mochi sits at the top of the Calories screen and scrolls with it. Every 20–40
+  seconds she stretches. After you log a food, she eats from her bowl (the
+  screen scrolls back to her).
+- **Tap Mochi** to open a ring of five buttons around her:
+  - **Eat** opens Log Food (the same as the Log Food button).
+  - **Play** makes her play with her ball.
+  - **Settings** opens Settings.
+  - **Weight** opens Weight.
+  - **Profile** opens her profile.
+
+  Tap outside the ring, or Mochi again, to close it.
+- **Settings** has:
+  - the kg / lb unit
+  - the Brave Search and DeepSeek API keys, with Test Keys
+  - Back Up and Restore
+- With Reduce Motion on, Mochi is a still picture, and actions show a single
+  frame for a moment.
+
+### Weight (from the ring around Mochi)
 
 - Log Mochi's weight with a date (today by default), up to two decimal places.
 - See every entry in a list, newest first, and swipe left to delete one.
-- Switch between kilograms and pounds with the kg / lb control at the top.
+- Switch between kilograms and pounds with the kg / lb control at the top (also
+  in Settings).
   Weights are always saved in kilograms, so switching back and forth never
   changes the numbers.
 - See a line chart of Mochi's weight over time, with a dot for each entry and
@@ -25,7 +45,7 @@ in the app use the name from the profile too.
 
 ### Calories: food log
 
-The Calories tab opens on **Today**.
+The app opens on the Calories screen for **Today**.
 
 - See the total calories Mochi has eaten that day at the top, and below it each
   entry, newest first, with the food's photo, name, amount (like "1/2 of a
@@ -68,7 +88,7 @@ The Calories tab opens on **Today**.
   deleting one asks whether to remove the later days too, and changing or
   deleting the entry the can was opened with asks whether to update, remove
   or keep the following days.
-- **Schedules** (the calendar button at the top of the Calories tab): for food
+- **Schedules** (the calendar button at the top of the Calories screen): for food
   Mochi gets on a routine, like morning kibble. Pick a food from your saved
   foods, choose the amount (by can, pouch or grams, or type your own calories),
   an optional label, which days (every day, or chosen weekdays), a start date
@@ -103,13 +123,13 @@ The Calories tab opens on **Today**.
   Veterinary Manual method: resting energy = 70 × (weight in kg) to the power
   0.75, times a factor (kitten under 1 year 2.5; adult spayed or neutered 1.2;
   adult not spayed or neutered 1.4; adult who gains weight easily 1.0),
-  rounded to the nearest 5 kcal. It uses her latest weight from the Weight tab
-  and her birthday and spay status from the Mochi tab.
+  rounded to the nearest 5 kcal. It uses her latest weight from the Weight screen
+  and her birthday and spay status from her profile.
 - If her weight, birthday or (for adults) spay status is missing or "not
   sure", the app doesn't guess. It says what to fill in, with a button that
   goes there.
-- The settings screen (the sliders button at the top left of the Calories
-  tab) has a "Gains weight easily" switch, a place to type your own daily
+- The daily calories screen (the sliders button at the top left of the Calories
+  screen) has a "Gains weight easily" switch, a place to type your own daily
   target from your vet (a whole number from 50 to 1,000 kcal; tap "Save Target"
   to use it, and it then replaces the estimate everywhere), and a
   plain explanation of how the estimate was worked out. The estimate is a
@@ -193,7 +213,7 @@ The Calories tab opens on **Today**.
   photo.
 - Delete any food by swiping left. Its saved photo is deleted with it.
 
-### Mochi (her profile)
+### Mochi's profile (from the ring around Mochi)
 
 - Basic facts at the top, all optional, changed with the **Edit** button:
   - a photo in a circle, chosen from your photo library or taken with the
@@ -203,7 +223,7 @@ The Calories tab opens on **Today**.
     The birthday can be marked as rough, or entered as just a year.
   - breed, color and markings, sex, and spayed or neutered (yes, no or not sure)
   - microchip number and a notes box
-- Her latest weight, taken from the Weight tab (shown here, changed there).
+- Her latest weight, taken from the Weight screen (shown here, changed there).
 - Vaccinations: vaccine name, date given, optional next-due date and notes,
   newest first. Entries whose next-due date has passed say "Overdue", and ones
   due within the next 30 days say "Due soon". Tap to edit, swipe to delete.
@@ -214,7 +234,7 @@ The Calories tab opens on **Today**.
 If saving ever fails, the app tells you and lets you try again or discard the
 change, instead of failing silently.
 
-- **Back Up and Restore** (on the Mochi tab): save all your data — weights, foods
+- **Back Up and Restore** (in Settings): save all your data — weights, foods
   you added or edited, the food log, feeding schedules, Mochi's profile and photo, vaccinations,
   medical history, your settings and saved food photos — to one
   `.mochibackup` file you can AirDrop or save to Files or iCloud Drive. Restoring
@@ -237,7 +257,8 @@ product page's text to DeepSeek.
 3. In the bar at the top centre of Xcode, click the device name and choose
    **iPhone 18 Pro**.
 4. Click the **▶ Play** button at the top left, or press **Command + R**.
-5. Wait for the iPhone window to appear. The app opens on the Weight tab.
+5. Wait for the iPhone window to appear. The app opens on the Calories screen,
+   with Mochi at the top.
 
 To stop the app, click the **■ Stop** button next to Play.
 

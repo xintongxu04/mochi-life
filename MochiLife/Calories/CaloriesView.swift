@@ -1,18 +1,29 @@
 import SwiftData
 import SwiftUI
 
-/// Screens opened from the Calories tab's toolbar.
+/// Screens opened from the Calories screen's toolbar.
 enum CaloriesScreen: Hashable {
     case savedFoods
     case dailyCalorieSettings
     case schedules
 }
 
-/// The Calories tab. Opens on what the cat has eaten today, with saved foods one tap away.
+/// The app's root: one navigation stack on the Calories screen (what the cat has eaten today,
+/// with Mochi at the top). Weight, profile and Settings are pushed onto the same stack.
 struct CaloriesView: View {
+    @Environment(MochiHome.self) private var home
+
     var body: some View {
-        NavigationStack {
+        @Bindable var home = home
+        NavigationStack(path: $home.path) {
             DayLogView()
+                .navigationDestination(for: AppScreen.self) { screen in
+                    switch screen {
+                    case .weight: WeightView()
+                    case .profile: MochiView()
+                    case .settings: SettingsView()
+                    }
+                }
         }
     }
 }
@@ -22,7 +33,7 @@ struct CaloriesView: View {
 /// entries (such as the rest of an opened can).
 struct DayLogView: View {
     @State private var day = Calendar.current.startOfDay(for: .now)
-    @State private var isLogging = false
+    @Environment(MochiHome.self) private var home
     /// The entry with the latest date, to know how far forward days can be shown.
     @Query private var latestEntries: [FoodLogEntry]
 
@@ -51,6 +62,7 @@ struct DayLogView: View {
     }
 
     var body: some View {
+        @Bindable var home = home
         DayEntriesList(day: day, isFuture: isFuture, dayControls: dayControls, onSwipe: move(by:))
             .navigationTitle(title)
             .toolbar {
@@ -68,7 +80,7 @@ struct DayLogView: View {
                 // The one primary action: a filled pill, outermost on the right, on every day.
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        isLogging = true
+                        home.openLogFood()
                     } label: {
                         ViewThatFits(in: .horizontal) {
                             Label("Log Food", systemImage: "plus.circle.fill")
@@ -90,8 +102,15 @@ struct DayLogView: View {
                     .accessibilityIdentifier("logFoodButton")
                 }
             }
-            .sheet(isPresented: $isLogging) {
+            .sheet(isPresented: $home.isLoggingFood) {
                 LogFoodFlowView(day: day)
+            }
+            // Mochi eats after a food is logged, once this screen is showing again.
+            .onChange(of: home.isLoggingFood) { _, isLogging in
+                if !isLogging { home.playEatingIfPending() }
+            }
+            .onChange(of: home.path.count) { _, count in
+                if count == 0 { home.playEatingIfPending() }
             }
             // Registered here, at the root of the Calories stack, so links inside saved foods
             // (brand, line, food) are found when saved foods is opened from this screen.
@@ -141,6 +160,7 @@ private struct DayEntriesList<Controls: View>: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.catName) private var catName
+    @Environment(MochiHome.self) private var home
     @Query private var entries: [FoodLogEntry]
     /// For future days: schedules shown as previews (never saved, never counted).
     @Query(filter: #Predicate<FeedingSchedule> { !$0.isPaused }, sort: [SortDescriptor(\FeedingSchedule.createdAt)])
@@ -175,8 +195,48 @@ private struct DayEntriesList<Controls: View>: View {
         }
     }
 
+    private var spriteRowID: String { "mochiSprite" }
+
     private func list(target: CalorieTarget) -> some View {
+        ScrollViewReader { proxy in
+            dayList(target: target)
+                .onChange(of: home.scrollToSpriteRequest) {
+                    withAnimation { proxy.scrollTo(spriteRowID, anchor: .top) }
+                }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top > 8
+                } action: { _, isScrolledAway in
+                    home.isSpriteScrolledAway = isScrolledAway
+                }
+        }
+    }
+
+    /// Mochi, centred at the top of the content (scrolls with it). Tapping her opens the ring.
+    private var spriteSection: some View {
+        Section {
+            HStack {
+                Spacer(minLength: 0)
+                Button {
+                    home.spriteTapped()
+                } label: {
+                    MochiSpriteView(animator: home.animator)
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { home.spriteFrame = $0 }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Mochi")
+                .accessibilityHint("Opens actions")
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 8)
+            .id(spriteRowID)
+        }
+        .listRowBackground(Color.clear)
+    }
+
+    private func dayList(target: CalorieTarget) -> some View {
         List {
+            spriteSection
+
             Section {
                 VStack(spacing: 12) {
                     dayControls

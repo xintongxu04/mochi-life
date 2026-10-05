@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// The Mochi tab: her basic facts, vaccinations and medical history.
+/// Mochi's profile: her basic facts, vaccinations and medical history. Pushed from the ring
+/// around Mochi. (Backup and restore moved to Settings.)
 struct MochiView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [CatProfile]
@@ -20,19 +21,11 @@ struct MochiView: View {
     private var profile: CatProfile? { profiles.current }
 
     var body: some View {
-        NavigationStack {
             List {
                 header
                 detailsSection
                 vaccinationsSection
                 medicalHistorySection
-                Section {
-                    NavigationLink {
-                        BackupRestoreView()
-                    } label: {
-                        Label("Back Up and Restore", systemImage: "externaldrive")
-                    }
-                }
             }
             .navigationTitle(profile?.displayName ?? CatProfile.defaultName)
             .toolbar {
@@ -53,7 +46,6 @@ struct MochiView: View {
             .sheet(item: $medicalRecordBeingEdited) { record in
                 MedicalRecordFormView(record: record)
             }
-        }
     }
 
     private var header: some View {

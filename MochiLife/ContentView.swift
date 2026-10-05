@@ -1,68 +1,63 @@
 import SwiftData
 import SwiftUI
 
-enum AppTab: Hashable {
-    case weight
-    case calories
-    case mochi
-}
+/// Opens a screen on the main navigation stack, for buttons like "Go to Weight".
+struct OpenScreenAction {
+    fileprivate weak var home: MochiHome?
 
-/// Switches to another tab, for buttons like "Go to Weight".
-struct OpenTabAction {
-    fileprivate var selection: Binding<AppTab>?
-
-    func callAsFunction(_ tab: AppTab) {
-        selection?.wrappedValue = tab
+    @MainActor
+    func callAsFunction(_ screen: AppScreen) {
+        home?.push(screen)
     }
 }
 
 extension EnvironmentValues {
-    @Entry var openTab = OpenTabAction()
+    @Entry var openScreen = OpenScreenAction()
 }
 
+/// The app's single screen: Calories, with Mochi at the top. Weight, Mochi's profile and
+/// Settings are pushed from the ring of actions around her, drawn over everything.
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [CatProfile]
-    @State private var selectedTab = AppTab.weight
+    @State private var home = MochiHome()
     /// A backup file opened from Files, AirDrop or the share sheet.
     @State private var openedBackup: RestoreSource?
 
     private var catName: String { profiles.current?.displayName ?? CatProfile.defaultName }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab("Weight", systemImage: "scalemass", value: .weight) {
-                WeightView()
+        CaloriesView()
+            .overlay {
+                if home.isMenuOpen {
+                    RadialActionMenu(home: home)
+                }
             }
-            Tab("Calories", systemImage: "fork.knife", value: .calories) {
-                CaloriesView()
+            .sensoryFeedback(.impact(weight: .light), trigger: home.isMenuOpen) { _, isOpen in isOpen }
+            .environment(home)
+            .environment(\.openScreen, OpenScreenAction(home: home))
+            .environment(\.foodLogged, FoodLoggedAction(home: home))
+            .environment(\.catName, catName)
+            .task { LaunchMaintenance.run(in: modelContext) }
+            // Scheduled feedings catch up whenever the app comes back and when the day or clock changes.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { ScheduleMaterializer(context: modelContext).materialize() }
             }
-            Tab(catName, systemImage: "pawprint", value: .mochi) {
-                MochiView()
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in
+                ScheduleMaterializer(context: modelContext).materialize()
             }
-        }
-        .environment(\.openTab, OpenTabAction(selection: $selectedTab))
-        .environment(\.catName, catName)
-        .task { LaunchMaintenance.run(in: modelContext) }
-        // Scheduled feedings catch up whenever the app comes back and when the day or clock changes.
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { ScheduleMaterializer(context: modelContext).materialize() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in
-            ScheduleMaterializer(context: modelContext).materialize()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
-            ScheduleMaterializer(context: modelContext).materialize()
-        }
-        .onOpenURL { url in
-            guard url.pathExtension.lowercased() == BackupFormat.fileExtension else { return }
-            selectedTab = .mochi
-            openedBackup = RestoreSource(url: url)
-        }
-        .sheet(item: $openedBackup) { source in
-            RestoreFlowView(url: source.url)
-        }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+                ScheduleMaterializer(context: modelContext).materialize()
+            }
+            .onOpenURL { url in
+                guard url.pathExtension.lowercased() == BackupFormat.fileExtension else { return }
+                home.isMenuOpen = false
+                openedBackup = RestoreSource(url: url)
+            }
+            .sheet(item: $openedBackup) { source in
+                RestoreFlowView(url: source.url)
+            }
     }
 }
 

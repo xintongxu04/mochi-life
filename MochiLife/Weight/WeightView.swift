@@ -1,6 +1,7 @@
 import SwiftData
 import SwiftUI
 
+/// Mochi's weights and chart, pushed from the ring around Mochi.
 struct WeightView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [
@@ -13,7 +14,6 @@ struct WeightView: View {
     @Environment(\.catName) private var catName
 
     var body: some View {
-        NavigationStack {
             List {
                 if !entries.isEmpty {
                     Section {
@@ -53,7 +53,7 @@ struct WeightView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
-            .navigationTitle("Mochi Life")
+            .navigationTitle("Weight")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Add Weight", systemImage: "plus") {
@@ -64,7 +64,6 @@ struct WeightView: View {
             .sheet(isPresented: $isAddingEntry) {
                 AddWeightView(unit: unit)
             }
-        }
     }
 
     private func deleteEntries(at offsets: IndexSet) {
