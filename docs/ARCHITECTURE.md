@@ -20,7 +20,7 @@ something described here must update this file in the same commit (see `CLAUDE.m
 | UI | SwiftUI (`TabView` with `Tab`, `NavigationStack`, `Form`/`List`, `.searchable`, `ContentUnavailableView`) |
 | Persistence | SwiftData with versioned schemas: `ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: MochiLifeMigrationPlan.self)` created in `MochiLifeApp.init()`; views use the environment `modelContext` (main context). All saves go through `Persistence.save(_:)`. `UserDefaults` / `@AppStorage` for small settings. |
 | Charts | Swift Charts (`Charts`): `LineMark`, `PointMark`, `BarMark`, `RuleMark` |
-| Other Apple frameworks | Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
+| Other Apple frameworks | VisionKit (`DataScannerViewController`, live text), FoundationModels (on-device match judge, optional), Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
 | Network services | Optional, owner-supplied keys: Brave Search Web Search API and DeepSeek chat completions (§11). No other networking. |
 | Third-party dependencies | None. No Swift packages, CocoaPods or Carthage. |
 | Info.plist | Generated (`GENERATE_INFOPLIST_FILE = YES`) and merged with `MochiLife/Info.plist` (`INFOPLIST_FILE`; excluded from the synchronized group's resources by an exception set), which declares the backup file type (`UTExportedTypeDeclarations`, `CFBundleDocumentTypes`, `LSSupportsOpeningDocumentsInPlace = NO`). Other keys set via build settings: display name "Mochi Life", `NSCameraUsageDescription` ("Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded."), generated launch screen and scene manifest. |
@@ -90,7 +90,15 @@ Targets:
 | `FoodDetailView.swift` | One food's page: photo, sizes and calories, portion picker, "Log This", ingredients, analysis, notes, source. |
 | `FoodEditorView.swift` | **The one form for saved foods** — create (by hand), review (AI result) and edit: photo, identity, sizes, kcal/g (per gram or per 100 g), calorie statement, ingredients, guaranteed analysis, notes, source; inline validation; duplicate check on review. |
 | `PhotoCandidatePickerView.swift` | "Find online": grid of up to 8 photo candidates, loaded lazily with cancellation. |
-| `LogEntryForm.swift` | Log a food, quick entry, or edit an entry; carry-forward switch and dialogs. Also `LogFoodSheet` (the "+" flow). |
+| `LogEntryForm.swift` | Log a food, quick entry, or edit an entry; carry-forward switch and dialogs; "Not this one" for automatic matches; defaults to the viewed day (`logDay` environment value). |
+
+**`Calories/LogFlow/`** (the Log Food flow, §13)
+| File | Purpose |
+|---|---|
+| `FoodMatcher.swift` | Pure, synchronous library matcher: normalization, IDF-weighted token scoring with fuzzy matches, classification, thresholds, size detection. |
+| `MatchJudge.swift` | Optional on-device Apple Intelligence judge (Foundation Models, guided generation) with a 5-second timeout; `MatchJudgement`; `LogFlowLog`. |
+| `PackageCaptureView.swift` | Live text scanning (VisionKit `DataScannerViewController`) with a shutter, photo capture fallback, and PhotosPicker. |
+| `LogFoodFlow.swift` | `LogRoute`, `LogFlowModel` (index, text and camera decisions), `LogFoodFlowView` (the sheet), home (search, Recent, Frequent), candidate list, web fallback. |
 | `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions, number formatting, `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
 | `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
@@ -140,6 +148,7 @@ UI tests expect a **fresh install** (no saved data). See §10 for their current 
 ### `MochiLifeTests/`
 | File | Purpose |
 |---|---|
+| `FoodMatcherTests.swift` | FoodMatcher against the bundled seed data: exact name, line + recipe, shreds-vs-pâté ambiguity, one-letter OCR error, unrelated brand, size detection. |
 | `BackupRoundTripTests.swift` | One of every backed-up record, export → file → read/validate → restore into a second in-memory container → export again; compares every field and the photo files. |
 
 ### Other files
@@ -374,7 +383,7 @@ MochiLifeApp
    │      toolbar leading: NavigationLink(value: CaloriesScreen.savedFoods) → SavedFoodsView (browse)
    │                       NavigationLink(value: .dailyCalorieSettings) → CalorieTargetSettingsView
    │      registers .navigationDestination(for: CaloriesScreen) and .savedFoodsDestinations(mode: .browse)
-   │      toolbar trailing "+": sheet → LogFoodSheet
+   │      safeAreaInset(bottom): "Log Food" (.borderedProminent, large) → sheet LogFoodFlowView(day:)
    │      sheet(item:): edit entry → NavigationStack → LogEntryForm(.edit)
    │      confirmationDialog: delete with carried days
    │
@@ -388,11 +397,13 @@ MochiLifeApp
    │        or not found / failure; pushes AILookupSettingsView; sheet FoodEditorView(.create)
    │        (manual, name prefilled); fullScreenCover CameraPicker
    │
-   │    LogFoodSheet (sheet): NavigationStack → SavedFoodsView(mode: .pick)
-   │      + .savedFoodsDestinations(mode: .pick)
-   │      environment isPickingFood = true (swipe-to-delete disabled)
-   │      QuickEntrySelection → LogEntryForm(.quickEntry)
-   │      Food → LogEntryForm(.logFood)
+   │    LogFoodFlowView (sheet): NavigationStack(path: [LogRoute]) → home (search + camera,
+   │      Recent, Frequent, live results, Quick Entry, Browse) + .savedFoodsDestinations(.pick)
+   │      environment isPickingFood = true, logDay = viewed day
+   │      LogRoute.portion → LogEntryForm(.logFood) ; .candidates → candidate list ;
+   │      .quickEntry → LogEntryForm(.quickEntry) ; .browse → SavedFoodsView(.pick) ;
+   │      .web → AILookupSession + FoodEditorView(.review) → .portion
+   │      fullScreenCover PackageCaptureView ; sheet FoodEditorView(.create) (manual add)
    │
    └─ Tab <cat's name, default "Mochi"> (pawprint) → MochiView
         NavigationStack — title = profile name (default "Mochi")
@@ -429,7 +440,8 @@ closes via an `onFinish` closure instead of `dismiss`.
   library-import flag uses `UserDefaults` directly.
 - **Environment values** (declared with `@Entry`):
   - `openTab` (`OpenTabAction`, `ContentView.swift`) — switches tabs, for "Go to Weight/Mochi".
-  - `isPickingFood` (`Bool`, `SavedFoodsView.swift`) — set by `LogFoodSheet`; disables delete.
+  - `isPickingFood` (`Bool`, `SavedFoodsView.swift`) — set by `LogFoodFlowView`; disables delete.
+  - `logDay` (`Date?`, `LogEntryForm.swift`) — the day being viewed; new entries default to it.
   - `catName` (`String`, `CatProfile.swift`) — the profile's display name, set by `ContentView`;
     used in every user-facing sentence that names the cat.
   - Standard `modelContext` and `dismiss`.
@@ -561,6 +573,8 @@ closes via an `onFinish` closure instead of `dismiss`.
 
 ## 10. Known issues and technical debt
 
+- **Unit tests:** `BackupRoundTripTests` and `FoodMatcherTests` (run and passing on 2026-10-05).
+  Live scanning, the model judge and the Log Food screens have no automated tests.
 - **The UI test target is not confirmed green.** Last run (2026-10-04, stopped by the owner
   before a rerun): `WeightLoggingUITests` passed; both `SavedFoodsUITests` tests failed when
   tapping a brand in Saved Foods opened from Today — the navigation bug fixed afterwards
@@ -780,4 +794,76 @@ and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cance
 ### Rule
 Every new persisted field must be added to the backup DTOs, the mapping, and
 `BackupRoundTripTests`; a new file layout needs a new `formatVersion` and an upgrade step.
+
+---
+
+## 13. Log Food flow (`Calories/LogFlow/`)
+
+### Entry
+The Calories day view has one primary action: a centered "Log Food" button pinned above the tab
+bar with `safeAreaInset(edge: .bottom)` (`.borderedProminent`, `.large`, ≥ 44 pt, bar material
+behind it; the list is inset so its last row isn't hidden). It shows on every day and logs to the
+day being viewed (at the current time) via the `logDay` environment value. Saved Foods and Daily
+Calories stay as secondary toolbar items; the old "+" was removed. There are no feeding schedules.
+
+The sheet (`LogFoodFlowView`, its own `NavigationStack(path:)`) shows a focused search field with a
+camera button; **Recent** (up to 8 distinct foods, newest first) and **Frequent** (top 5 by count
+in the last 30 days) from the food log, each opening the portion picker prefilled with the last
+size and portion; live library results while typing; and Quick Entry / Browse Saved Foods. Log
+entries don't link to foods, so they're matched to saved foods by product ID or photo key, else
+by `FoodMatching.key`; quick entries, carried entries and deleted foods are skipped.
+
+### FoodMatcher
+Pure and synchronous over an in-memory index (`Sendable`; built and run off the main actor;
+rebuilt when saved foods change). Tokens come from brand, line and product name: case-folded,
+diacritics removed, "&" → "and", punctuation removed, whitespace collapsed, stop words (cat, food,
+net, wt, oz, can, pouch, …) and bare numbers dropped. Size labels are kept separately and used only
+to preselect a size (`sizeIndex(in:sizes:)` reads "2.8 oz", "85 g", …, within 3 %).
+Score per food = Σ(query weight × IDF of matched token) / √(query mass × food mass), with
+IDF = ln((N+1)/(df+0.5)); query words found in no food count with the maximum IDF (strong evidence
+of another product); words at Damerau-Levenshtein distance 1 (longer word ≥ 5 letters) match at
+0.8; order is ignored. Thresholds (`FoodMatcher.Thresholds`, tuned on the bundled data):
+confident = score ≥ 0.60 and lead ≥ 0.12; plausible ≥ 0.35 (below → none; otherwise ambiguous);
+narrow = confident with lead < 0.20; ambiguous choices = candidates within 0.20 of the top (2–3);
+up to 8 candidates kept.
+
+### Text path
+Live results = matcher ranking, then substring matches (`FoodSearch`) for partly typed words. On
+submit with nothing to show (classification none, no results) the web fallback starts; otherwise a
+"Not listed? Search the web" row is always under the results.
+
+### Camera path and capture strategy
+`PackageCaptureView`: VisionKit `DataScannerViewController` (text, accurate, multiple items,
+highlighting) when `isSupported && isAvailable`, with a shutter that freezes the currently
+recognized items (their text and on-screen height) and stops scanning; scanning also stops when the
+view is dismantled. Otherwise a photo (`CameraPicker`); PhotosPicker is always offered (the
+simulator path). Photos are read with `VNRecognizeTextRequest` (accurate, language correction) via
+`PackageTextReader.recognizedLines`, which also returns each line's height. Images stay in memory
+and are never stored or uploaded. Lines are weighted 0.4 + 0.6 × (height / tallest) before
+matching; the four tallest lines form the web query. Matching is cancelled when the sheet closes.
+
+### Apple Intelligence judge (`MatchJudge`)
+Checked against the iOS 27 SDK (2026-10-05): `SystemLanguageModel.default.availability`
+(`.available` / `.unavailable(.deviceNotEligible | .appleIntelligenceNotEnabled | .modelNotReady)`),
+`LanguageModelSession(model: .default, instructions:)`, `respond(to:generating:options:)` with a
+`@Generable` `MatchJudgement { selectedIndex: Int?, runnerUpIndices: [Int], certainty: high |
+medium | low }`, greedy sampling, 120 tokens. Used only on the camera path when the matcher says
+ambiguous or narrow-confident and there are ≥ 2 candidates. The model sees only the recognized text
+and the candidates' brand, line and product names; indices are validated against the shortlist, so
+it can't add a food. 5-second timeout; on timeout, error or unavailability the deterministic
+ranking is used. Decision: a selected index with high/medium certainty → confident (open it, with
+"Not this one" → other candidates and web search); low certainty or no selection → show 2–3
+candidates; matcher none → web fallback.
+
+### Web fallback and commit
+Reuses `AILookupSession` / `FoodLookupService` and `FoodEditorView(.review)`; its `onSavedFood`
+continues straight to the portion picker for the new food (origin aiLookup). Missing keys, the daily
+cap or "not found" offer Quick Entry (prefilled) and adding the food by hand (`FoodEditorView
+(.create)` prefilled, also continuing to the portion). The portion step is `LogEntryForm` (portion
+picker, own calories, date and time, carry-forward); saving dismisses the whole sheet.
+
+### Logging
+`LogFlowLog` (category `logFlow`): path (recent, text, camera), matcher classification, whether the
+model was used, its latency and certainty, and whether the web fallback ran. Never recognized text
+or queries.
 

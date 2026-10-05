@@ -36,10 +36,22 @@ The Calories tab opens on **Today**.
   have entries (like the rest of an opened can) to edit or delete them there.
   Those days show their calories as "planned"; they aren't counted as eaten, in
   the progress bar or in the chart until the day arrives.
-- Tap **+** to log something: find the food by browsing brand, line and
-  product, or by searching. Then choose the size and portion (or grams), check
-  the worked-out calories (or type your own number), and set the date and time
-  (now by default, so you can also log something you forgot earlier).
+- Tap the big **Log Food** button at the bottom (it's there on every day, and
+  logs to the day you're looking at). The Log Food screen shows your **Recent**
+  and **Frequent** foods (tap one to log it again with the same portion), and a
+  search box that finds your saved foods as you type, even with a typo.
+- Or tap the **camera** button next to the search box and point it at the front
+  of the package (or choose a photo). The app reads the label on the iPhone and
+  finds the food: if it's sure, it opens it straight away (with "Not this one?"
+  if it guessed wrong); if two or three are close, it asks which; on iPhones
+  with Apple Intelligence, the on-device model helps decide. Photos are never
+  stored or uploaded.
+- If the food isn't saved yet, **Search the web** looks it up with Add with AI,
+  lets you check the details, saves it, and carries straight on to logging it.
+  **Quick Entry** and **Browse Saved Foods** are there too.
+- Then choose the size and portion (or grams; a size printed on the package is
+  picked for you), check the worked-out calories (or type your own number), and
+  set the date and time.
 - **Opened cans and pouches:** when you log less than a whole can or pouch,
   a switch ("Use the rest on the following days", on by default) adds the rest
   to the following days in the same portion, one entry per day, with the last
