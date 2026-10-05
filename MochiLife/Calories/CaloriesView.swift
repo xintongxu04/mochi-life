@@ -1,7 +1,13 @@
 import SwiftData
 import SwiftUI
 
-/// The Calories tab. Opens on what Mochi has eaten today, with saved foods one tap away.
+/// Screens opened from the Calories tab's toolbar.
+enum CaloriesScreen: Hashable {
+    case savedFoods
+    case dailyCalorieSettings
+}
+
+/// The Calories tab. Opens on what the cat has eaten today, with saved foods one tap away.
 struct CaloriesView: View {
     var body: some View {
         NavigationStack {
@@ -11,33 +17,47 @@ struct CaloriesView: View {
 }
 
 /// One day's food log: the total, then each entry. Arrows (or a swipe on the total) move
-/// between days.
+/// between days: back to any earlier day, and forward up to the last future day that has
+/// entries (such as the rest of an opened can).
 struct DayLogView: View {
     @State private var day = Calendar.current.startOfDay(for: .now)
     @State private var isLogging = false
+    /// The entry with the latest date, to know how far forward days can be shown.
+    @Query private var latestEntries: [FoodLogEntry]
+
+    init() {
+        var latest = FetchDescriptor<FoodLogEntry>(sortBy: [SortDescriptor(\.loggedAt, order: .reverse)])
+        latest.fetchLimit = 1
+        _latestEntries = Query(latest)
+    }
 
     private var calendar: Calendar { .current }
+    private var today: Date { calendar.startOfDay(for: .now) }
     private var isToday: Bool { calendar.isDateInToday(day) }
+    private var isFuture: Bool { day > today }
+
+    /// Today, or the last future day with entries if that's later.
+    private var lastDay: Date {
+        guard let latest = latestEntries.first?.loggedAt else { return today }
+        return max(today, calendar.startOfDay(for: latest))
+    }
 
     private var title: String {
         if isToday { return "Today" }
         if calendar.isDateInYesterday(day) { return "Yesterday" }
+        if calendar.isDateInTomorrow(day) { return "Tomorrow" }
         return day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 
     var body: some View {
-        DayEntriesList(day: day, dayControls: dayControls, onSwipe: move(by:))
+        DayEntriesList(day: day, isFuture: isFuture, dayControls: dayControls, onSwipe: move(by:))
             .navigationTitle(title)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
-                    NavigationLink {
-                        SavedFoodsView()
-                    } label: {
+                    NavigationLink(value: CaloriesScreen.savedFoods) {
                         Label("Saved Foods", systemImage: "books.vertical")
                     }
-                    NavigationLink {
-                        CalorieTargetSettingsView()
-                    } label: {
+                    NavigationLink(value: CaloriesScreen.dailyCalorieSettings) {
                         Label("Daily Calories", systemImage: "slider.horizontal.3")
                     }
                 }
@@ -50,6 +70,15 @@ struct DayLogView: View {
             .sheet(isPresented: $isLogging) {
                 LogFoodSheet()
             }
+            // Registered here, at the root of the Calories stack, so links inside saved foods
+            // (brand, line, food) are found when saved foods is opened from this screen.
+            .navigationDestination(for: CaloriesScreen.self) { screen in
+                switch screen {
+                case .savedFoods: SavedFoodsView()
+                case .dailyCalorieSettings: CalorieTargetSettingsView()
+                }
+            }
+            .savedFoodsDestinations(mode: .browse)
     }
 
     private var dayControls: some View {
@@ -64,7 +93,7 @@ struct DayLogView: View {
                 Spacer()
             }
             Button("Next Day", systemImage: "chevron.right") { move(by: 1) }
-                .disabled(isToday)
+                .disabled(day >= lastDay)
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
@@ -72,7 +101,7 @@ struct DayLogView: View {
 
     private func move(by days: Int) {
         guard let newDay = calendar.date(byAdding: .day, value: days, to: day),
-              newDay <= .now
+              newDay <= lastDay
         else { return }
         day = newDay
     }
@@ -80,18 +109,22 @@ struct DayLogView: View {
 
 private struct DayEntriesList<Controls: View>: View {
     let day: Date
+    /// Future days show their entries as planned, not eaten.
+    let isFuture: Bool
     let dayControls: Controls
     /// Called with -1 to show the day before, or 1 for the day after.
     let onSwipe: (Int) -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.catName) private var catName
     @Query private var entries: [FoodLogEntry]
     @State private var entryBeingEdited: FoodLogEntry?
     /// An entry with carried days after it, waiting for the owner to say what to remove.
     @State private var entryBeingDeleted: FoodLogEntry?
 
-    init(day: Date, dayControls: Controls, onSwipe: @escaping (Int) -> Void) {
+    init(day: Date, isFuture: Bool, dayControls: Controls, onSwipe: @escaping (Int) -> Void) {
         self.day = day
+        self.isFuture = isFuture
         self.dayControls = dayControls
         self.onSwipe = onSwipe
         let start = day
@@ -115,7 +148,11 @@ private struct DayEntriesList<Controls: View>: View {
             Section {
                 VStack(spacing: 12) {
                     dayControls
-                    CalorieProgressView(eaten: total, target: target)
+                    if isFuture {
+                        PlannedCaloriesView(planned: total)
+                    } else {
+                        CalorieProgressView(eaten: total, target: target)
+                    }
                 }
                 .padding(.vertical, 4)
                 .contentShape(.rect)
@@ -127,7 +164,7 @@ private struct DayEntriesList<Controls: View>: View {
                     ContentUnavailableView(
                         "Nothing logged",
                         systemImage: "fork.knife",
-                        description: Text("Tap + to log something Mochi ate.")
+                        description: Text("Tap + to log something \(catName) ate.")
                     )
                 } else {
                     ForEach(entries) { entry in
@@ -165,11 +202,11 @@ private struct DayEntriesList<Controls: View>: View {
             Button(entry.isCarriedForward ? "Remove This and Later Days" : "Remove All", role: .destructive) {
                 entry.laterCarriedEntries(in: modelContext).forEach(modelContext.delete)
                 modelContext.delete(entry)
-                try? modelContext.save()
+                Persistence.save(modelContext)
             }
             Button(entry.isCarriedForward ? "Remove Only This Day" : "Remove Only This Entry") {
                 modelContext.delete(entry)
-                try? modelContext.save()
+                Persistence.save(modelContext)
             }
             Button("Cancel", role: .cancel) {}
         }
@@ -187,7 +224,7 @@ private struct DayEntriesList<Controls: View>: View {
     private func delete(_ entry: FoodLogEntry) {
         if entry.laterCarriedEntries(in: modelContext).isEmpty {
             modelContext.delete(entry)
-            try? modelContext.save()
+            Persistence.save(modelContext)
         } else {
             entryBeingDeleted = entry
         }
@@ -200,6 +237,24 @@ private struct DayEntriesList<Controls: View>: View {
                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
                 onSwipe(value.translation.width > 0 ? -1 : 1)
             }
+    }
+}
+
+/// A future day's entries (such as the rest of an opened can) aren't eaten yet, so they're
+/// shown as planned and kept out of totals, progress and the chart until the day arrives.
+private struct PlannedCaloriesView: View {
+    let planned: Double
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(Portion.formatKilocalories(planned)) kcal")
+                .font(.largeTitle.bold())
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("dayTotal")
+            Text("planned")
+                .foregroundStyle(.secondary)
+        }
     }
 }
 

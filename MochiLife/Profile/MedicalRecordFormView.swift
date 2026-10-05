@@ -74,7 +74,6 @@ struct MedicalRecordFormView: View {
         record.kind = kind
         record.clinic = optional(clinic)
         record.notes = optional(notes)
-        try? modelContext.save()
-        dismiss()
+        if Persistence.save(modelContext) { dismiss() }
     }
 }

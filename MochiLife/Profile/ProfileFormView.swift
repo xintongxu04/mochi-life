@@ -28,7 +28,7 @@ struct ProfileFormView: View {
         self.profile = profile
         guard let profile else { return }
         _photoData = State(initialValue: profile.photoData)
-        _name = State(initialValue: profile.name ?? "")
+        _name = State(initialValue: profile.name ?? CatProfile.defaultName)
         if let date = profile.birthday {
             _hasBirthday = State(initialValue: true)
             _birthday = State(initialValue: date)
@@ -161,11 +161,7 @@ struct ProfileFormView: View {
     }
 
     private func save() {
-        let profile = profile ?? {
-            let new = CatProfile()
-            modelContext.insert(new)
-            return new
-        }()
+        let profile = profile ?? CatProfile.current(in: modelContext)
         profile.photoData = photoData
         profile.name = optional(name)
         if hasBirthday {
@@ -185,8 +181,7 @@ struct ProfileFormView: View {
         profile.spayedOrNeutered = spayedOrNeutered
         profile.microchipNumber = optional(microchipNumber)
         profile.notes = optional(notes)
-        try? modelContext.save()
-        dismiss()
+        if Persistence.save(modelContext) { dismiss() }
     }
 }
 

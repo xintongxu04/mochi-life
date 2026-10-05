@@ -49,7 +49,7 @@ struct FoodFormView: View {
     }
 
     private var kilocaloriesPerGram: Double? {
-        guard let value = Self.parseCalories(caloriesText) else { return nil }
+        guard let value = NumberInput.foodCalories.value(caloriesText) else { return nil }
         switch basis {
         case .perGram: return value
         case .per100Grams: return value / 100
@@ -71,7 +71,7 @@ struct FoodFormView: View {
 
     /// Explains what's wrong with the calories typed for a size, or nil if they look right.
     private func sizeCaloriesProblem(at index: Int) -> String? {
-        guard let kilocalories = Self.parseCalories(sizeCaloriesTexts[index]) else {
+        guard let kilocalories = NumberInput.kilocalories.value(sizeCaloriesTexts[index]) else {
             return "Enter a number like 116 for each size."
         }
         let size = sizes[index]
@@ -181,6 +181,9 @@ struct FoodFormView: View {
     private func save() {
         guard canSave else { return }
         if let food {
+            if food.seedID != nil || food.libraryIdentifier != nil {
+                food.isUserModified = true
+            }
             food.name = trimmedName
             food.brand = optional(brand)
             food.line = optional(line)
@@ -194,7 +197,7 @@ struct FoodFormView: View {
                 var updatedSizes = food.sizes
                 for index in updatedSizes.indices
                 where sizeCaloriesTexts[index] != originalSizeCaloriesTexts[index] {
-                    guard let kilocalories = Self.parseCalories(sizeCaloriesTexts[index]) else { continue }
+                    guard let kilocalories = NumberInput.kilocalories.value(sizeCaloriesTexts[index]) else { continue }
                     updatedSizes[index].kilocalories = kilocalories
                     updatedSizes[index].kilocaloriesPerGram = kilocalories / updatedSizes[index].grams
                     updatedSizes[index].isCalculated = false
@@ -210,20 +213,6 @@ struct FoodFormView: View {
                 line: optional(line)
             ))
         }
-        try? modelContext.save()
-        dismiss()
-    }
-
-    /// Parses a typed number such as "3", "3.5" or "385,25". Returns nil unless it is
-    /// a positive number with at most three decimal places.
-    static func parseCalories(_ text: String) -> Double? {
-        let normalized = text
-            .trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: ",", with: ".")
-        guard normalized.wholeMatch(of: /\d{1,5}(\.\d{1,3})?/) != nil,
-              let value = Double(normalized),
-              value > 0
-        else { return nil }
-        return value
+        if Persistence.save(modelContext) { dismiss() }
     }
 }

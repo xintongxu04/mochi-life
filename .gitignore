@@ -35,3 +35,6 @@ fastlane/test_output
 # Secrets
 *.env
 .env*
+
+# R
+.Rhistory

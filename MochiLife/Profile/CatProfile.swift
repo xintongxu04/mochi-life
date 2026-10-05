@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 /// Mochi's basic facts. There is only ever one profile; every field is optional.
 @Model
@@ -14,12 +15,40 @@ final class CatProfile {
     var spayedOrNeuteredRawValue: String?
     var microchipNumber: String?
     var notes: String?
+    /// Nil for the profile created before this was recorded (it is the oldest).
+    var createdAt: Date?
 
-    init() {}
+    init(createdAt: Date = .now) {
+        self.createdAt = createdAt
+    }
 
     static let defaultName = "Mochi"
 
-    var displayName: String { name ?? Self.defaultName }
+    /// The cat's name, or "Mochi" when none is set.
+    var displayName: String {
+        guard let name, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return Self.defaultName }
+        return name
+    }
+
+    /// The single profile: fetches it, creating one if there is none. If more than one exists,
+    /// keeps the oldest and deletes the others (nothing is merged).
+    @MainActor
+    static func current(in context: ModelContext) -> CatProfile {
+        let profiles = (try? context.fetch(FetchDescriptor<CatProfile>())) ?? []
+        guard let oldest = profiles.sortedOldestFirst().first else {
+            let profile = CatProfile()
+            context.insert(profile)
+            Persistence.save(context)
+            return profile
+        }
+        let extras = profiles.filter { $0 !== oldest }
+        if !extras.isEmpty {
+            extras.forEach(context.delete)
+            Persistence.logger.notice("Removed \(extras.count) extra cat profile(s)")
+            Persistence.save(context)
+        }
+        return oldest
+    }
 
     var birthdayPrecision: BirthdayPrecision {
         get { BirthdayPrecision(rawValue: birthdayPrecisionRawValue) ?? .exact }
@@ -35,6 +64,21 @@ final class CatProfile {
         get { spayedOrNeuteredRawValue.flatMap(YesNoUnsure.init(rawValue:)) }
         set { spayedOrNeuteredRawValue = newValue?.rawValue }
     }
+}
+
+extension EnvironmentValues {
+    /// The cat's name for user-facing text, or "Mochi" when none is set. Provided by ContentView.
+    @Entry var catName = CatProfile.defaultName
+}
+
+extension Array where Element == CatProfile {
+    /// Oldest first; profiles without a creation date count as oldest.
+    func sortedOldestFirst() -> [CatProfile] {
+        sorted { ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast) }
+    }
+
+    /// The profile in use, from a `@Query` of all profiles.
+    var current: CatProfile? { sortedOldestFirst().first }
 }
 
 enum BirthdayPrecision: String, CaseIterable, Identifiable {

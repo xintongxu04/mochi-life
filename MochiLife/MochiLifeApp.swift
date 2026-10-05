@@ -8,12 +8,12 @@ struct MochiLifeApp: App {
     init() {
         do {
             modelContainer = try ModelContainer(
-                for: WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self
+                for: Schema(versionedSchema: SchemaV2.self),
+                migrationPlan: MochiLifeMigrationPlan.self
             )
         } catch {
             fatalError("Couldn't open Mochi Life's saved data: \(error)")
         }
-        FoodLibraryLoader.loadBundledLibrariesIfNeeded(into: modelContainer.mainContext)
     }
 
     var body: some Scene {

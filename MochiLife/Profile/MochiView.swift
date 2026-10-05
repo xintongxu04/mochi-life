@@ -17,7 +17,7 @@ struct MochiView: View {
     @State private var isAddingMedicalRecord = false
     @State private var medicalRecordBeingEdited: MedicalRecord?
 
-    private var profile: CatProfile? { profiles.first }
+    private var profile: CatProfile? { profiles.current }
 
     var body: some View {
         NavigationStack {
@@ -116,7 +116,7 @@ struct MochiView: View {
             }
             .onDelete { offsets in
                 for index in offsets { modelContext.delete(vaccinations[index]) }
-                try? modelContext.save()
+                Persistence.save(modelContext)
             }
             if vaccinations.isEmpty {
                 Text("No vaccinations yet")
@@ -138,7 +138,7 @@ struct MochiView: View {
             }
             .onDelete { offsets in
                 for index in offsets { modelContext.delete(medicalRecords[index]) }
-                try? modelContext.save()
+                Persistence.save(modelContext)
             }
             if medicalRecords.isEmpty {
                 Text("Nothing here yet")

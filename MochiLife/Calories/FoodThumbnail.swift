@@ -9,9 +9,11 @@ struct FoodThumbnail: View {
     let size: CGFloat
 
     init(food: Food, size: CGFloat) {
-        self.init(libraryIdentifier: food.libraryIdentifier, size: size)
+        self.init(libraryIdentifier: food.seedID ?? food.libraryIdentifier, size: size)
     }
 
+    /// - Parameter libraryIdentifier: A seed ID, or an older "<library>/<name>" identifier
+    ///   (log entries saved before seed IDs existed keep that form).
     init(libraryIdentifier: String?, size: CGFloat) {
         self.libraryIdentifier = libraryIdentifier
         self.size = size
@@ -38,8 +40,8 @@ struct FoodThumbnail: View {
     }
 }
 
-/// Looks up bundled product photos. Photos are listed in a small file that maps each library
-/// food to its picture, so a food keeps its photo even if it's renamed.
+/// Looks up bundled product photos. A small file maps each product's seed ID (and its older
+/// "<library>/<name>" identifier) to its picture, so a food keeps its photo even if renamed.
 enum FoodThumbnails {
     private static let bundledLists = ["tiki-cat-thumbnails"]
 

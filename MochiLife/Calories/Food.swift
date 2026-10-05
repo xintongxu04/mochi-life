@@ -20,8 +20,13 @@ final class Food {
     var guaranteedAnalysis: [GuaranteedAnalysisRow] = []
     var notes: [String] = []
     var sourceURL: URL?
-    /// Identifies foods loaded from a bundled food library, so they're only ever loaded once.
+    /// Identifies foods loaded from a bundled food library ("<library>/<original name>" for
+    /// foods imported before seed IDs existed). Log entries copy it to find the thumbnail.
     var libraryIdentifier: String?
+    /// The bundled food file's stable product id. Nil for foods the owner created.
+    @Attribute(.unique) var seedID: String?
+    /// True once the owner edits a seeded food, so seed updates leave it alone.
+    var isUserModified: Bool = false
 
     init(
         name: String,
@@ -36,6 +41,7 @@ final class Food {
         notes: [String] = [],
         sourceURL: URL? = nil,
         libraryIdentifier: String? = nil,
+        seedID: String? = nil,
         createdAt: Date = .now
     ) {
         self.name = name
@@ -50,6 +56,7 @@ final class Food {
         self.notes = notes
         self.sourceURL = sourceURL
         self.libraryIdentifier = libraryIdentifier
+        self.seedID = seedID
         self.createdAt = createdAt
     }
 

@@ -38,7 +38,7 @@ struct FoodDetailView: View {
                     HStack {
                         VStack(alignment: .leading) {
                             Text(size.name)
-                            Text("\(size.grams.formatted(.number.precision(.fractionLength(0...1)))) g")
+                            Text("\(size.grams.formatted(.number.precision(.fractionLength(0...1)))) g · \(size.kilocaloriesPerGram.formatted(.number.precision(.fractionLength(2...3)))) kcal/g")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -57,7 +57,9 @@ struct FoodDetailView: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("sizeCalories")
                 }
-                LabeledContent("Per gram", value: food.formattedKilocaloriesPerGram)
+                if food.sizes.isEmpty {
+                    LabeledContent("Per gram", value: food.formattedKilocaloriesPerGram)
+                }
                 if let statement = food.calorieStatement {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("As written by the brand")

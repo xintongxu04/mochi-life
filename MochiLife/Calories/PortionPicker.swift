@@ -59,17 +59,17 @@ struct PortionPicker: View {
     }
 
     private var containers: Double? {
-        quickFraction ?? Portion.parseAmount(amountText)
+        quickFraction ?? NumberInput.containers.value(amountText)
     }
 
     private var exactContainers: Fraction? {
         if let quickFraction {
             return Portion.quickFractions.first { $0.value == quickFraction }?.fraction
         }
-        return Fraction(decimalText: amountText)
+        return NumberInput.containers.fraction(amountText)
     }
 
-    private var grams: Double? { Portion.parseAmount(gramsText) }
+    private var grams: Double? { NumberInput.grams.value(gramsText) }
 
     private var calculatedKilocalories: Double? {
         switch measure {
@@ -89,7 +89,7 @@ struct PortionPicker: View {
             exactContainers: measure == .containers ? exactContainers : nil,
             grams: measure == .grams ? grams : nil,
             calculatedKilocalories: calculatedKilocalories,
-            customKilocalories: isCustomCalories ? Portion.parseAmount(caloriesText) : nil
+            customKilocalories: isCustomCalories ? NumberInput.kilocalories.value(caloriesText) : nil
         )
     }
 

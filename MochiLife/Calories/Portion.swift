@@ -29,18 +29,6 @@ struct Portion: Equatable {
         ("2/3", 2.0 / 3, Fraction(2, 3)), ("3/4", 3.0 / 4, Fraction(3, 4)), ("1 whole", 1, .one),
     ]
 
-    /// Parses a typed positive number such as "1.5" or "0,75", with up to three decimal places.
-    static func parseAmount(_ text: String) -> Double? {
-        let normalized = text
-            .trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: ",", with: ".")
-        guard normalized.wholeMatch(of: /\d{0,5}(\.\d{1,3})?/) != nil,
-              let value = Double(normalized),
-              value > 0
-        else { return nil }
-        return value
-    }
-
     static func formatKilocalories(_ value: Double) -> String {
         value.formatted(.number.precision(.fractionLength(0...1)).grouping(.never))
     }

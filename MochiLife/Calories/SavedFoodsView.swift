@@ -32,6 +32,7 @@ struct SavedFoodsView: View {
     var mode: Mode = .browse
 
     @Environment(\.isPickingFood) private var isPickingFood
+    @Environment(\.catName) private var catName
     @Query private var foods: [Food]
     @State private var searchText = ""
     @State private var isAddingFood = false
@@ -103,7 +104,7 @@ struct SavedFoodsView: View {
                 ContentUnavailableView(
                     "No foods yet",
                     systemImage: "fork.knife",
-                    description: Text("Tap + to add a food Mochi eats.")
+                    description: Text("Tap + to add a food \(catName) eats.")
                 )
             } else if isSearching && searchResults.isEmpty {
                 ContentUnavailableView.search(text: searchText)
@@ -115,7 +116,32 @@ struct SavedFoodsView: View {
             prompt: "Search brand, line or food"
         )
         .navigationTitle(isPicking ? "Choose a Food" : "Saved Foods")
-        .navigationDestination(for: BrandSelection.self) { selection in
+        .toolbar {
+            switch mode {
+            case .browse:
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Add Food", systemImage: "plus") {
+                        isAddingFood = true
+                    }
+                }
+            case let .pick(onFinish):
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onFinish)
+                }
+            }
+        }
+        .sheet(isPresented: $isAddingFood) {
+            FoodFormView(food: nil)
+        }
+    }
+}
+
+extension View {
+    /// Registers the screens saved foods navigate to (brand, line, food, quick entry). Apply it
+    /// once at the root of the NavigationStack that shows `SavedFoodsView`, so the links work
+    /// however saved foods was opened.
+    func savedFoodsDestinations(mode: SavedFoodsView.Mode) -> some View {
+        navigationDestination(for: BrandSelection.self) { selection in
             BrandFoodsView(brand: selection.brand)
         }
         .navigationDestination(for: LineSelection.self) { selection in
@@ -133,23 +159,6 @@ struct SavedFoodsView: View {
             if case let .pick(onFinish) = mode {
                 LogEntryForm(mode: .quickEntry, onFinish: onFinish)
             }
-        }
-        .toolbar {
-            switch mode {
-            case .browse:
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Add Food", systemImage: "plus") {
-                        isAddingFood = true
-                    }
-                }
-            case let .pick(onFinish):
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onFinish)
-                }
-            }
-        }
-        .sheet(isPresented: $isAddingFood) {
-            FoodFormView(food: nil)
         }
     }
 }
@@ -259,9 +268,10 @@ private struct FoodRow: View {
     @MainActor
     static func delete(_ foods: [Food]) {
         guard let context = foods.first?.modelContext else { return }
+        FoodLibraryLoader.rememberDeletion(of: foods)
         for food in foods {
             context.delete(food)
         }
-        try? context.save()
+        Persistence.save(context)
     }
 }

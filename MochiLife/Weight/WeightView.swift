@@ -10,6 +10,7 @@ struct WeightView: View {
     private var entries: [WeightEntry]
     @AppStorage("weightUnit") private var unit: WeightUnit = .kilograms
     @State private var isAddingEntry = false
+    @Environment(\.catName) private var catName
 
     var body: some View {
         NavigationStack {
@@ -38,7 +39,7 @@ struct WeightView: View {
                     ContentUnavailableView(
                         "No weights yet",
                         systemImage: "scalemass",
-                        description: Text("Tap + to log Mochi's first weight.")
+                        description: Text("Tap + to log \(catName)'s first weight.")
                     )
                 }
             }
@@ -70,7 +71,7 @@ struct WeightView: View {
         for index in offsets {
             modelContext.delete(entries[index])
         }
-        try? modelContext.save()
+        Persistence.save(modelContext)
     }
 }
 

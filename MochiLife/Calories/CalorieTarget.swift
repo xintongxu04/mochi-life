@@ -113,18 +113,18 @@ enum MissingCalorieDetail: Hashable {
     case birthday
     case spayStatus
 
-    var message: String {
+    func message(catName: String) -> String {
         switch self {
-        case .weight: "Add Mochi's weight on the Weight tab."
-        case .birthday: "Add Mochi's birthday on her profile."
-        case .spayStatus: "Set whether Mochi is spayed or neutered on her profile."
+        case .weight: "Add \(catName)'s weight on the Weight tab."
+        case .birthday: "Add \(catName)'s birthday on the \(catName) tab."
+        case .spayStatus: "Set whether \(catName) is spayed or neutered on the \(catName) tab."
         }
     }
 
-    var buttonTitle: String {
+    func buttonTitle(catName: String) -> String {
         switch self {
         case .weight: "Go to Weight"
-        case .birthday, .spayStatus: "Go to Mochi"
+        case .birthday, .spayStatus: "Go to \(catName)"
         }
     }
 
@@ -150,7 +150,7 @@ struct CalorieTargetReader<Content: View>: View {
         content(CalorieTarget.make(
             ownTarget: ownTarget,
             latestWeight: weights.first,
-            profile: profiles.first,
+            profile: profiles.current,
             gainsWeightEasily: gainsWeightEasily
         ))
     }
@@ -161,18 +161,19 @@ struct MissingCalorieDetailsView: View {
     let missing: [MissingCalorieDetail]
 
     @Environment(\.openTab) private var openTab
+    @Environment(\.catName) private var catName
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("To estimate Mochi's daily calories:")
+            Text("To estimate \(catName)'s daily calories:")
                 .font(.subheadline.weight(.medium))
             ForEach(missing, id: \.self) { detail in
                 HStack {
-                    Text(detail.message)
+                    Text(detail.message(catName: catName))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button(detail.buttonTitle) { openTab(detail.tab) }
+                    Button(detail.buttonTitle(catName: catName)) { openTab(detail.tab) }
                         .buttonStyle(.bordered)
                         .font(.subheadline)
                 }

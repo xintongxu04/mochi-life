@@ -21,7 +21,11 @@ extension EnvironmentValues {
 }
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [CatProfile]
     @State private var selectedTab = AppTab.weight
+
+    private var catName: String { profiles.current?.displayName ?? CatProfile.defaultName }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -31,11 +35,13 @@ struct ContentView: View {
             Tab("Calories", systemImage: "fork.knife", value: .calories) {
                 CaloriesView()
             }
-            Tab("Mochi", systemImage: "pawprint", value: .mochi) {
+            Tab(catName, systemImage: "pawprint", value: .mochi) {
                 MochiView()
             }
         }
         .environment(\.openTab, OpenTabAction(selection: $selectedTab))
+        .environment(\.catName, catName)
+        .task { LaunchMaintenance.run(in: modelContext) }
     }
 }
 

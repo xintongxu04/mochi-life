@@ -16,18 +16,16 @@ struct Fraction: Hashable, Comparable, Codable {
     static let zero = Fraction(0, 1)
     static let one = Fraction(1, 1)
 
-    /// Reads typed amounts like "1.5", ".25" or "0,4" exactly (1.5 is 3/2, not 1.4999…).
-    init?(decimalText text: String) {
-        let normalized = text
-            .trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: ",", with: ".")
-        guard let match = normalized.wholeMatch(of: /(\d{0,5})(?:\.(\d{1,3}))?/) else { return nil }
-        let whole = Int(match.1) ?? 0
-        let decimals = match.2.map(String.init) ?? ""
-        let scale = Int(pow(10, Double(decimals.count)))
-        let value = Fraction(whole * scale + (Int(decimals) ?? 0), scale)
-        guard value > .zero else { return nil }
-        self = value
+    /// The fraction with denominator 12 or less within `tolerance` of `value`, if there is one.
+    static func nearest(to value: Double, maximumDenominator: Int = 12, tolerance: Double = 1e-6) -> Fraction? {
+        guard value.isFinite, value >= 0 else { return nil }
+        for denominator in 1...maximumDenominator {
+            let numerator = (value * Double(denominator)).rounded()
+            if abs(value - numerator / Double(denominator)) <= tolerance {
+                return Fraction(Int(numerator), denominator)
+            }
+        }
+        return nil
     }
 
     var doubleValue: Double { Double(numerator) / Double(denominator) }

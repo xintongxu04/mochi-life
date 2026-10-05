@@ -7,7 +7,9 @@ history. Nothing in the app is veterinary advice.
 
 ## What it can do today
 
-The app has three tabs at the bottom: **Weight**, **Calories** and **Mochi**.
+The app has three tabs at the bottom: **Weight**, **Calories**, and a third tab
+named after your cat (**Mochi** unless you change her name on her profile). Messages
+in the app use the name from the profile too.
 
 ### Weight
 
@@ -30,7 +32,10 @@ The Calories tab opens on **Today**.
   2.8 oz can" or "20 g"), time and calories. With nothing logged, a friendly
   message shows instead.
 - Look at earlier days with the arrows (or by swiping on the total), and tap
-  "Back to Today" to return.
+  "Back to Today" to return. You can also go forward to future days that already
+  have entries (like the rest of an opened can) to edit or delete them there.
+  Those days show their calories as "planned"; they aren't counted as eaten, in
+  the progress bar or in the chart until the day arrives.
 - Tap **+** to log something: find the food by browsing brand, line and
   product, or by searching. Then choose the size and portion (or grams), check
   the worked-out calories (or type your own number), and set the date and time
@@ -76,14 +81,17 @@ The Calories tab opens on **Today**.
   goes there.
 - The settings screen (the sliders button at the top left of the Calories
   tab) has a "Gains weight easily" switch, a place to type your own daily
-  target from your vet (which then replaces the estimate everywhere), and a
+  target from your vet (a whole number from 50 to 1,000 kcal; tap "Save Target"
+  to use it, and it then replaces the estimate everywhere), and a
   plain explanation of how the estimate was worked out. The estimate is a
   starting point, not veterinary advice.
 
 ### Calories: saved foods
 
-- 99 Tiki Cat wet foods come built in. They're added once, the first time the
-  app opens, so reopening it never creates duplicates.
+- 99 Tiki Cat wet foods come built in. When a new version of the app brings
+  updated food details, they're applied automatically when the app opens, without
+  creating duplicates. Foods you've edited or added yourself are never changed,
+  foods you've deleted don't come back, and your food log is never changed.
 - Browse foods by brand, then by line (with how many products are in each),
   then by product. Foods without a brand are grouped under "My foods".
 - Each Tiki Cat food shows a small product photo next to it in lists and search
@@ -95,7 +103,7 @@ The Calories tab opens on **Today**.
 - Open any food to see a larger product photo at the top, then:
   - each size with its calories per can or pouch (a small "calculated" label
     marks figures that were worked out rather than printed by the brand)
-  - calories per gram
+  - calories per gram for each size
   - the calorie statement as the brand writes it
   - the full ingredients
   - a guaranteed analysis table
@@ -126,6 +134,9 @@ The Calories tab opens on **Today**.
 - Medical history: date, what happened, a type (vet visit, illness, injury,
   surgery, medication or other), vet or clinic, and notes, newest first. Tap to
   edit, swipe to delete.
+
+If saving ever fails, the app tells you and lets you try again or discard the
+change, instead of failing silently.
 
 Everything you enter (weights, the kg / lb choice, foods, food log entries and
 Mochi's profile, vaccinations and medical history) stays saved on the phone

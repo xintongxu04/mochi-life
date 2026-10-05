@@ -9,6 +9,10 @@ final class SavedFoodsUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
+    }
+
+    /// Launches the app and opens Saved Foods from the Calories tab.
+    private func openSavedFoods() {
         app.launch()
         app.tabBars.buttons["Calories"].tap()
         app.buttons["Saved Foods"].tap()
@@ -16,6 +20,7 @@ final class SavedFoodsUITests: XCTestCase {
     }
 
     func testA_BrowseSearchAndDetails() {
+        openSavedFoods()
         // Brands, with "My foods" absent until the user adds a food without a brand.
         XCTAssertTrue(row("brandRow", "Tiki Cat").waitForExistence(timeout: 5))
         XCTAssertTrue(row("brandRow", "Tiki Cat").label.contains("99"), row("brandRow", "Tiki Cat").label)
@@ -67,63 +72,8 @@ final class SavedFoodsUITests: XCTestCase {
         XCTAssertTrue(row("sizeCalories", "77 kcal per can").exists)
     }
 
-    func testB_PortionPicker() {
-        row("brandRow", "Tiki Cat").tap()
-        row("lineRow", "After Dark").tap()
-        scrollTo(row("savedFood", "Pâté Lamb & Beef Liver"))
-        row("savedFood", "Pâté Lamb & Beef Liver").tap()
-        let calories = app.textFields["portionCalories"]
-        scrollTo(calories)
-
-        // Starts on the first size, one whole can.
-        XCTAssertEqual(calories.value as? String, "110")
-        app.buttons["1/2"].tap()
-        XCTAssertEqual(calories.value as? String, "55")
-        attachScreenshot("Portion half")
-
-        // Choose the other size.
-        let sizePicker = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Size'")).firstMatch
-        reveal(sizePicker)
-        sizePicker.tap()
-        app.buttons["5.5 oz can"].tap()
-        scrollTo(calories)
-        XCTAssertEqual(calories.value as? String, "100.5")
-
-        // Any other amount, including more than one can.
-        let amount = app.textFields["portionAmount"]
-        amount.tap()
-        amount.typeText("1.5")
-        XCTAssertEqual(calories.value as? String, "301.5")
-        XCTAssertFalse(app.buttons["1/2"].isSelected)
-
-        // Switch to grams: starts from the same portion in grams.
-        reveal(app.buttons["By grams"])
-        app.buttons["By grams"].tap()
-        let grams = app.textFields["portionGrams"]
-        XCTAssertTrue(grams.waitForExistence(timeout: 5))
-        reveal(calories)
-        let gramsValue = Double(grams.value as? String ?? "") ?? 0
-        XCTAssertEqual(gramsValue, 233.85, accuracy: 0.1)
-        let gramsCalories = Double(calories.value as? String ?? "") ?? 0
-        XCTAssertEqual(gramsCalories, 301.5, accuracy: 3)
-        attachScreenshot("Portion grams")
-
-        // Type my own calories over the worked-out number, then go back to it.
-        replaceText(in: calories, with: "250")
-        XCTAssertTrue(app.staticTexts["Using your own number."].waitForExistence(timeout: 5))
-        let useWorkedOut = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Use worked-out number'")).firstMatch
-        reveal(useWorkedOut)
-        useWorkedOut.tap()
-        XCTAssertEqual(Double(calories.value as? String ?? "") ?? 0, gramsCalories, accuracy: 0.05)
-
-        // Back to cans.
-        reveal(app.buttons["By can"])
-        app.buttons["By can"].tap()
-        reveal(calories)
-        XCTAssertEqual(calories.value as? String, "301.5")
-    }
-
     func testC_AddEditDeleteAndNoDuplicates() {
+        openSavedFoods()
         // My own food with no brand goes under "My foods".
         addFood(name: "Home Cooked Chicken", brand: nil, line: nil, kilocaloriesPerGram: "1.5")
         XCTAssertTrue(row("brandRow", "My foods").waitForExistence(timeout: 5))

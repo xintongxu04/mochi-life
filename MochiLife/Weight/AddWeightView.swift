@@ -9,7 +9,7 @@ struct AddWeightView: View {
     @State private var date = Date.now
     @State private var weightText = ""
 
-    private var weight: Double? { WeightUnit.parseWeight(weightText) }
+    private var weight: Double? { NumberInput.weight.value(weightText) }
 
     var body: some View {
         NavigationStack {
@@ -44,7 +44,6 @@ struct AddWeightView: View {
     private func save() {
         guard let weight else { return }
         modelContext.insert(WeightEntry(date: date, kilograms: unit.kilograms(from: weight)))
-        try? modelContext.save()
-        dismiss()
+        if Persistence.save(modelContext) { dismiss() }
     }
 }

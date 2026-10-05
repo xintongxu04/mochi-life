@@ -51,7 +51,7 @@ struct LogEntryForm: View {
 
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
 
-    private var quickCalories: Double? { Portion.parseAmount(caloriesText) }
+    private var quickCalories: Double? { NumberInput.kilocalories.value(caloriesText) }
 
     private var canSave: Bool {
         if portionSource != nil {
@@ -254,8 +254,7 @@ struct LogEntryForm: View {
     }
 
     private func finish() {
-        try? modelContext.save()
-        onFinish()
+        if Persistence.save(modelContext) { onFinish() }
     }
 }
 
@@ -285,6 +284,7 @@ struct LogFoodSheet: View {
     var body: some View {
         NavigationStack {
             SavedFoodsView(mode: .pick(onFinish: { dismiss() }))
+                .savedFoodsDestinations(mode: .pick(onFinish: { dismiss() }))
         }
         .environment(\.isPickingFood, true)
     }

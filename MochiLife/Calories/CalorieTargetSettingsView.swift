@@ -29,20 +29,31 @@ struct CalorieTargetSettingsView: View {
                 Section {
                     HStack {
                         TextField("Your own target", text: $ownTargetText)
-                            .keyboardType(.decimalPad)
+                            .keyboardType(.numberPad)
                             .accessibilityIdentifier("ownTarget")
-                        Text("kcal per day")
+                        Text("\(rangeText) kcal per day")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    Button("Save Target") {
+                        if let typedTarget { ownTarget = typedTarget }
+                    }
+                    .disabled(typedTarget == nil || typedTarget == ownTarget)
                     if ownTarget > 0 {
                         Button("Clear and use the estimate", role: .destructive) {
+                            ownTarget = 0
                             ownTargetText = ""
                         }
                     }
                 } header: {
                     Text("Your own target")
                 } footer: {
-                    Text("For when your vet gives you a number. It replaces the estimate everywhere.")
+                    if !ownTargetText.isEmpty && typedTarget == nil {
+                        Text("Enter a whole number from \(rangeText) kcal.")
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("For when your vet gives you a number. It replaces the estimate everywhere.")
+                    }
                 }
 
                 Section {
@@ -60,13 +71,15 @@ struct CalorieTargetSettingsView: View {
         .onAppear {
             ownTargetText = ownTarget > 0 ? Portion.formatKilocalories(ownTarget) : ""
         }
-        .onChange(of: ownTargetText) {
-            if let value = Portion.parseAmount(ownTargetText), value <= 5000 {
-                ownTarget = value
-            } else if ownTargetText.trimmingCharacters(in: .whitespaces).isEmpty {
-                ownTarget = 0
-            }
-        }
+    }
+
+    /// The typed target, if it's a whole number within the accepted range.
+    private var typedTarget: Double? { NumberInput.dailyTarget.value(ownTargetText) }
+
+    /// "50–1,000"
+    private var rangeText: String {
+        let range = NumberInput.dailyTarget.range
+        return "\(range.lowerBound.formatted())–\(range.upperBound.formatted())"
     }
 
     @ViewBuilder

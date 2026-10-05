@@ -16,6 +16,7 @@ struct CalorieChartView: View {
 
     @Query private var allEntries: [FoodLogEntry]
     @State private var range = Range.week
+    @Environment(\.catName) private var catName
 
     private var calendar: Calendar { .current }
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -46,7 +47,7 @@ struct CalorieChartView: View {
                 ContentUnavailableView(
                     "No calories logged yet",
                     systemImage: "chart.bar",
-                    description: Text("Log what Mochi eats to see each day's total here.")
+                    description: Text("Log what \(catName) eats to see each day's total here.")
                 )
             } else {
                 chart

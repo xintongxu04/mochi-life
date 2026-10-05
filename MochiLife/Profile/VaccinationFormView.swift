@@ -72,7 +72,6 @@ struct VaccinationFormView: View {
         vaccination.dateGiven = dateGiven
         vaccination.nextDue = hasNextDue ? nextDue : nil
         vaccination.notes = trimmedNotes.isEmpty ? nil : trimmedNotes
-        try? modelContext.save()
-        dismiss()
+        if Persistence.save(modelContext) { dismiss() }
     }
 }
