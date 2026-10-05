@@ -1,7 +1,8 @@
 # Mochi Life
 
 An iPhone app for keeping track of my cat Mochi's health. Right now it covers
-Mochi's weight and a library of the foods Mochi eats, with their calories.
+Mochi's weight, a library of the foods Mochi eats with their calories, and a
+daily log of what Mochi eats.
 
 ## What it can do today
 
@@ -19,7 +20,29 @@ The app has two tabs at the bottom: **Weight** and **Calories**.
 - See one line under the chart with the change since the first entry, for
   example "Up 0.90 kg since Jun 23".
 
-### Calories (saved foods)
+### Calories: food log
+
+The Calories tab opens on **Today**.
+
+- See the total calories Mochi has eaten that day at the top, and below it each
+  entry, newest first, with the food's photo, name, amount (like "1/2 of a
+  2.8 oz can" or "20 g"), time and calories. With nothing logged, a friendly
+  message shows instead.
+- Look at earlier days with the arrows (or by swiping on the total), and tap
+  "Back to Today" to return.
+- Tap **+** to log something: find the food by browsing brand, line and
+  product, or by searching. Then choose the size and portion (or grams), check
+  the worked-out calories (or type your own number), and set the date and time
+  (now by default, so you can also log something you forgot earlier).
+- Log a one-off treat with **Quick Entry**: just a name and a calorie number.
+- Tap an entry to change its amount, calories or time, and swipe left to
+  delete it.
+- Each entry keeps its own copy of the food's name and calories from when it
+  was logged, so editing or deleting a saved food later never changes past
+  entries.
+- The **Saved Foods** button at the top left opens the food library below.
+
+### Calories: saved foods
 
 - 99 Tiki Cat wet foods come built in. They're added once, the first time the
   app opens, so reopening it never creates duplicates.
@@ -42,14 +65,14 @@ The app has two tabs at the bottom: **Weight** and **Calories**.
 - Work out calories for a portion on the food's page: choose the size, then
   tap 1/4, 1/3, 1/2, 2/3, 3/4 or 1 whole, or type any other amount (such as
   1.5). You can switch to grams instead, and you can type your own calorie
-  number over the worked-out one.
+  number over the worked-out one. "Log This" logs that portion straight away.
 - Add your own foods with a name, an optional brand and line, and calories
   typed either per gram or per 100 g (the app works out the per-gram figure).
 - Edit or delete any food, including the built-in Tiki Cat ones. The app warns
   you about numbers that are far too high for any cat food.
 
-Everything you enter (weights, the kg / lb choice, and foods) stays saved after
-you close and reopen the app.
+Everything you enter (weights, the kg / lb choice, foods and food log entries)
+stays saved after you close and reopen the app.
 
 ## How to open the app in the iPhone Simulator
 
@@ -78,7 +101,7 @@ own phone. Don't publish them anywhere public.
 
 These are not built yet:
 
-- Logging what Mochi eats each day, using the same size-and-portion picker
-  that food pages already have
-- Daily calorie totals
-- Scheduled meals
+- Scheduled or repeating meals
+- Calorie goals
+- Charts of what Mochi eats
+- Reminders

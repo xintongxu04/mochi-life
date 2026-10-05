@@ -11,6 +11,7 @@ final class SavedFoodsUITests: XCTestCase {
         continueAfterFailure = false
         app.launch()
         app.tabBars.buttons["Calories"].tap()
+        app.buttons["Saved Foods"].tap()
         XCTAssertTrue(app.navigationBars["Saved Foods"].waitForExistence(timeout: 5))
     }
 
@@ -52,6 +53,7 @@ final class SavedFoodsUITests: XCTestCase {
         // Search: brand, line and name together, any order, ignoring capitals and accents.
         app.tabBars.buttons["Calories"].tap()
         app.tabBars.buttons["Calories"].tap()
+        app.buttons["Saved Foods"].tap()
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
@@ -185,6 +187,7 @@ final class SavedFoodsUITests: XCTestCase {
         app.terminate()
         app.launch()
         app.tabBars.buttons["Calories"].tap()
+        app.buttons["Saved Foods"].tap()
         XCTAssertTrue(row("brandRow", "Tiki Cat").waitForExistence(timeout: 5))
         XCTAssertTrue(row("brandRow", "Tiki Cat").label.contains("98"), row("brandRow", "Tiki Cat").label)
         XCTAssertTrue(row("brandRow", "Ziwi").exists)

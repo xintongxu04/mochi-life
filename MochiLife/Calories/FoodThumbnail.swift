@@ -4,12 +4,22 @@ import UIKit
 /// A food's product photo, bundled with the app so it works offline, or a placeholder icon
 /// for foods without one.
 struct FoodThumbnail: View {
-    let food: Food
+    /// The library food the photo belongs to; nil for foods without one.
+    let libraryIdentifier: String?
     let size: CGFloat
+
+    init(food: Food, size: CGFloat) {
+        self.init(libraryIdentifier: food.libraryIdentifier, size: size)
+    }
+
+    init(libraryIdentifier: String?, size: CGFloat) {
+        self.libraryIdentifier = libraryIdentifier
+        self.size = size
+    }
 
     var body: some View {
         Group {
-            if let image = FoodThumbnails.image(for: food) {
+            if let image = FoodThumbnails.image(forLibraryIdentifier: libraryIdentifier) {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
@@ -45,8 +55,8 @@ enum FoodThumbnails {
         return names
     }()
 
-    static func image(for food: Food) -> UIImage? {
-        guard let identifier = food.libraryIdentifier,
+    static func image(forLibraryIdentifier identifier: String?) -> UIImage? {
+        guard let identifier,
               let fileName = fileNames[identifier]
         else { return nil }
         return UIImage(named: fileName)

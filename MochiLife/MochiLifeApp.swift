@@ -7,7 +7,7 @@ struct MochiLifeApp: App {
 
     init() {
         do {
-            modelContainer = try ModelContainer(for: WeightEntry.self, Food.self)
+            modelContainer = try ModelContainer(for: WeightEntry.self, Food.self, FoodLogEntry.self)
         } catch {
             fatalError("Couldn't open Mochi Life's saved data: \(error)")
         }

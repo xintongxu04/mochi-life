@@ -12,8 +12,26 @@ struct LineSelection: Hashable {
     var line: String?
 }
 
+/// Opens the quick entry form when picking a food to log.
+struct QuickEntrySelection: Hashable {}
+
+extension EnvironmentValues {
+    /// True while saved foods are shown for picking a food to log, which turns off deleting.
+    @Entry var isPickingFood = false
+}
+
 /// Saved foods, browsed by brand, then line, then product, with search across all of them.
 struct SavedFoodsView: View {
+    enum Mode {
+        /// Browse, add, edit and delete saved foods.
+        case browse
+        /// Choose a food to log. `onFinish` closes the logging screens.
+        case pick(onFinish: () -> Void)
+    }
+
+    var mode: Mode = .browse
+
+    @Environment(\.isPickingFood) private var isPickingFood
     @Query private var foods: [Food]
     @State private var searchText = ""
     @State private var isAddingFood = false
@@ -36,6 +54,10 @@ struct SavedFoodsView: View {
         foods.filter { FoodSearch.matches($0, query: searchText) }.sortedByName()
     }
 
+    private var isPicking: Bool {
+        if case .pick = mode { true } else { false }
+    }
+
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
@@ -49,7 +71,25 @@ struct SavedFoodsView: View {
                 .onDelete { offsets in
                     FoodRow.delete(offsets.map { searchResults[$0] })
                 }
+                .deleteDisabled(isPickingFood)
             } else {
+                if case .pick = mode {
+                    Section {
+                        NavigationLink(value: QuickEntrySelection()) {
+                            Label {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Quick Entry")
+                                    Text("Just a name and calories, for one-off treats")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            } icon: {
+                                Image(systemName: "bolt")
+                            }
+                        }
+                        .accessibilityIdentifier("quickEntryRow")
+                    }
+                }
                 ForEach(brands, id: \.brand) { brand in
                     NavigationLink(value: BrandSelection(brand: brand.brand)) {
                         LabeledContent(brand.brand ?? Food.noBrandTitle, value: "\(brand.count)")
@@ -74,7 +114,7 @@ struct SavedFoodsView: View {
             placement: .navigationBarDrawer(displayMode: .always),
             prompt: "Search brand, line or food"
         )
-        .navigationTitle("Saved Foods")
+        .navigationTitle(isPicking ? "Choose a Food" : "Saved Foods")
         .navigationDestination(for: BrandSelection.self) { selection in
             BrandFoodsView(brand: selection.brand)
         }
@@ -82,12 +122,29 @@ struct SavedFoodsView: View {
             LineFoodsView(brand: selection.brand, line: selection.line)
         }
         .navigationDestination(for: Food.self) { food in
-            FoodDetailView(food: food)
+            switch mode {
+            case .browse:
+                FoodDetailView(food: food)
+            case let .pick(onFinish):
+                LogEntryForm(mode: .logFood(food, startingFrom: nil), onFinish: onFinish)
+            }
+        }
+        .navigationDestination(for: QuickEntrySelection.self) { _ in
+            if case let .pick(onFinish) = mode {
+                LogEntryForm(mode: .quickEntry, onFinish: onFinish)
+            }
         }
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("Add Food", systemImage: "plus") {
-                    isAddingFood = true
+            switch mode {
+            case .browse:
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Add Food", systemImage: "plus") {
+                        isAddingFood = true
+                    }
+                }
+            case let .pick(onFinish):
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onFinish)
                 }
             }
         }
@@ -152,6 +209,8 @@ struct LineFoodsView: View {
 private struct FoodsList: View {
     let foods: [Food]
 
+    @Environment(\.isPickingFood) private var isPickingFood
+
     private var sortedFoods: [Food] { foods.sortedByName() }
 
     var body: some View {
@@ -162,6 +221,7 @@ private struct FoodsList: View {
             .onDelete { offsets in
                 FoodRow.delete(offsets.map { sortedFoods[$0] })
             }
+            .deleteDisabled(isPickingFood)
         }
         .overlay {
             if foods.isEmpty {

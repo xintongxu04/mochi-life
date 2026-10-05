@@ -42,4 +42,40 @@ struct Portion: Equatable {
     static func formatKilocalories(_ value: Double) -> String {
         value.formatted(.number.precision(.fractionLength(0...1)).grouping(.never))
     }
+
+    static func formatAmount(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...3)).grouping(.never))
+    }
+
+    /// Describes the amount in plain words, like "1/2 of a 2.8 oz can", "1.5 × 5.5 oz can"
+    /// or "20 g".
+    var amountDescription: String? {
+        switch measure {
+        case .containers:
+            guard let size, let containers else { return nil }
+            if abs(containers - 1) < 0.0001 {
+                return "1 whole \(size.name)"
+            }
+            if let quick = Self.quickFractions.first(where: { abs($0.value - containers) < 0.0001 }) {
+                return "\(quick.label) of a \(size.name)"
+            }
+            return "\(Self.formatAmount(containers)) × \(size.name)"
+        case .grams:
+            guard let grams else { return nil }
+            return "\(Self.formatAmount(grams)) g"
+        }
+    }
+}
+
+/// What a `PortionPicker` needs to know about a food: its sizes and calories per gram. Log
+/// entries keep their own copy, so they can still be edited after the food changes.
+struct PortionSource: Codable, Hashable {
+    var sizes: [FoodSize]
+    var kilocaloriesPerGram: Double
+}
+
+extension PortionSource {
+    init(_ food: Food) {
+        self.init(sizes: food.sizes, kilocaloriesPerGram: food.kilocaloriesPerGram)
+    }
 }

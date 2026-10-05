@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// Picks a size and portion of a food and works out its calories. Place it inside a `Form`
-/// or `List`; it adds its own sections. Used on the food detail screen, and meant to be reused
-/// when logging what Mochi eats.
+/// or `List`; it adds its own sections. Used on the food detail screen and when logging what
+/// Mochi eats.
 struct PortionPicker: View {
-    let food: Food
+    let food: PortionSource
     @Binding var portion: Portion
 
     @State private var measure: Portion.Measure
@@ -15,10 +15,37 @@ struct PortionPicker: View {
     @State private var caloriesText = ""
     @State private var isCustomCalories = false
 
-    init(food: Food, portion: Binding<Portion>) {
-        self.food = food
+    init(food: Food, portion: Binding<Portion>, startingFrom initial: Portion? = nil) {
+        self.init(source: PortionSource(food), portion: portion, startingFrom: initial)
+    }
+
+    /// - Parameter initial: An earlier portion to start from, such as when editing a log entry.
+    init(source: PortionSource, portion: Binding<Portion>, startingFrom initial: Portion? = nil) {
+        food = source
         _portion = portion
-        _measure = State(initialValue: food.sizes.isEmpty ? .grams : .containers)
+        _measure = State(initialValue: source.sizes.isEmpty ? .grams : .containers)
+        guard let initial else { return }
+        if !source.sizes.isEmpty {
+            _measure = State(initialValue: initial.measure)
+        }
+        if let size = initial.size, let index = source.sizes.firstIndex(where: { $0.name == size.name }) {
+            _sizeIndex = State(initialValue: index)
+        }
+        if let containers = initial.containers {
+            if let quick = Portion.quickFractions.first(where: { abs($0.value - containers) < 0.0001 }) {
+                _quickFraction = State(initialValue: quick.value)
+            } else {
+                _quickFraction = State(initialValue: nil)
+                _amountText = State(initialValue: Portion.formatAmount(containers))
+            }
+        }
+        if let grams = initial.grams {
+            _gramsText = State(initialValue: Portion.formatAmount(grams))
+        }
+        if let custom = initial.customKilocalories {
+            _isCustomCalories = State(initialValue: true)
+            _caloriesText = State(initialValue: Portion.formatKilocalories(custom))
+        }
     }
 
     private var size: FoodSize? {
@@ -106,7 +133,9 @@ struct PortionPicker: View {
             Text(caloriesExplanation)
                 .accessibilityIdentifier("portionExplanation")
         }
-        .onAppear { caloriesText = calculatedText }
+        .onAppear {
+            if !isCustomCalories { caloriesText = calculatedText }
+        }
         .onChange(of: calculatedText) {
             if !isCustomCalories { caloriesText = calculatedText }
         }

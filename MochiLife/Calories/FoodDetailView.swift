@@ -5,6 +5,7 @@ struct FoodDetailView: View {
 
     @State private var portion = Portion()
     @State private var isEditing = false
+    @State private var isLogging = false
 
     var body: some View {
         Form {
@@ -69,6 +70,16 @@ struct FoodDetailView: View {
 
             PortionPicker(food: food, portion: $portion)
 
+            Section {
+                Button {
+                    isLogging = true
+                } label: {
+                    Label("Log This", systemImage: "plus.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(portion.kilocalories == nil)
+            }
+
             if let ingredients = food.ingredients {
                 Section("Ingredients") {
                     Text(ingredients)
@@ -113,6 +124,12 @@ struct FoodDetailView: View {
         }
         .sheet(isPresented: $isEditing) {
             FoodFormView(food: food)
+        }
+        .sheet(isPresented: $isLogging) {
+            NavigationStack {
+                // Starts from the size and portion already chosen on this screen.
+                LogEntryForm(mode: .logFood(food, startingFrom: portion), onFinish: { isLogging = false })
+            }
         }
     }
 }
