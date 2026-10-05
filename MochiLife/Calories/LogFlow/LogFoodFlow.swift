@@ -486,7 +486,7 @@ private struct LogWebLookupView: View {
                 case let .running(stage):
                     VStack(spacing: 20) {
                         ProgressView().controlSize(.large)
-                        Text(stage.rawValue + "…").font(.headline)
+                        Text(stage.title + "…").font(.headline)
                         Button("Cancel", role: .cancel) {
                             session.cancel()
                             dismiss()
@@ -495,7 +495,9 @@ private struct LogWebLookupView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case let .review(draft):
-                    FoodEditorView(mode: .review(draft), onSavedFood: onFoodSaved) { _ in }
+                    FoodEditorView(mode: .review(draft), onSavedFood: onFoodSaved) { saved in
+                        if !saved { dismiss() }
+                    }
                 case .notFound:
                     alternatives(title: "Not Found", icon: "magnifyingglass",
                                  message: "No matching cat food was found online for “\(query)”.")

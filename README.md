@@ -120,6 +120,31 @@ The Calories tab opens on **Today**.
   by hand with the name filled in. This needs your own Brave Search and DeepSeek API keys
   (entered in AI Lookup settings, stored only in the iPhone's Keychain), and is limited to
   50 lookups a day.
+- **How Add with AI gets calories and package sizes right.** These two are required. Every
+  calorie figure and can, pouch or bag weight must be backed by the exact words on the page, and
+  the app checks those words itself:
+  - It rejects kilojoules, per-cup figures used as per-can figures, and feeding-guide amounts.
+  - It rejects impossible numbers and case totals (like "case of 12") used as one can.
+  - It converts ounces and pounds to grams itself, and flags figures that disagree by more
+    than 8%.
+
+  If calories or sizes are missing, the app finds them automatically, in this order:
+  1. It opens the page in an invisible browser so tabs and "Nutrition" sections load.
+  2. It reads the page again, looking only for what's missing.
+  3. It checks up to three other pages: other pages on the brand's own site, then Chewy, Petco
+     or PetSmart. If none are left, it does one extra web search, which counts toward the
+     daily limit.
+
+  Each figure on the review screen is labeled:
+  - **Verified**: copied from the page and checked.
+  - **Confirmed by 2 sources**: two sites agree within 3%.
+  - **Calculated**: worked out by the app from verified figures.
+  - **Conflicting**: figures disagree; both are shown, and the brand's own figure is preferred.
+
+  The review screen also names the website each figure came from. If no reliable calories can
+  be found, it says so plainly and lets you type them from the package or cancel. Ingredients,
+  guaranteed analysis and the calorie statement are filled in when found, and left out quietly
+  when not.
 - Search by brand, line and product name together. Search updates as you type,
   ignores capital letters and accents, and matches words in any order
   ("tuna pate" finds "Grill Tuna & Prawn Pâté").

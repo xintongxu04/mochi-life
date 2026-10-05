@@ -54,6 +54,7 @@ struct FoodEditorView: View {
     @State private var isConfirmingReset = false
     // Review
     @State private var duplicate: Food?
+    @FocusState private var isPerGramFocused: Bool
 
     enum CalorieBasis: String, CaseIterable, Identifiable {
         case perGram = "per gram"
@@ -74,6 +75,8 @@ struct FoodEditorView: View {
         var gramsText: String
         var caloriesText: String
         var isCalculated: Bool
+        /// From an AI lookup: each figure's status and source, until the owner edits the row.
+        var detail: String?
     }
 
     static let kilocaloriesPerGramRange = 0.2...6.0
@@ -93,11 +96,14 @@ struct FoodEditorView: View {
             _line = State(initialValue: draft.line)
             _name = State(initialValue: draft.name)
             _kind = State(initialValue: draft.kind)
-            _sizes = State(initialValue: draft.sizes.map {
-                EditableSize(label: $0.label, gramsText: text($0.grams, digits: 1),
-                             caloriesText: text($0.kilocalories, digits: 1), isCalculated: $0.isCalculated)
+            _sizes = State(initialValue: draft.sizes.map { size in
+                var detail = "Weight: \(FactLabel.describe(size.grams))"
+                if let kilocalories = size.kilocalories { detail += " · Calories: \(FactLabel.describe(kilocalories))" }
+                return EditableSize(label: size.label, gramsText: text(size.grams.value, digits: 1),
+                                    caloriesText: text(size.kilocalories?.value, digits: 1),
+                                    isCalculated: size.kilocalories?.status == .calculated, detail: detail)
             })
-            _perGramText = State(initialValue: text(draft.kilocaloriesPerGram, digits: 3))
+            _perGramText = State(initialValue: text(draft.kilocaloriesPerGram?.value, digits: 3))
             _calorieStatement = State(initialValue: draft.calorieStatement)
             _ingredients = State(initialValue: draft.ingredients)
             _proteinText = State(initialValue: text(draft.proteinMinPercent))
@@ -268,22 +274,27 @@ struct FoodEditorView: View {
 
     var body: some View {
         Form {
-            photoSection
-            identitySection
-            sizesSection
-            Section("Calorie statement") {
-                TextField("As written on the label", text: $calorieStatement, axis: .vertical)
-            }
-            Section("Ingredients") {
-                TextField("Ingredients", text: $ingredients, axis: .vertical)
-                    .lineLimit(3...12)
-            }
-            analysisSection
-            notesSection
             if case let .review(draft) = mode {
-                Section("Found with AI") {
-                    LabeledContent("Confidence", value: draft.confidence.rawValue.capitalized)
+                // Calories and sizes first; empty best-effort sections are left out.
+                findingsSection(draft)
+                sizesSection
+                identitySection
+                photoSection
+                if !draft.calorieStatement.isEmpty { calorieStatementSection }
+                if !draft.ingredients.isEmpty { ingredientsSection }
+                if draft.proteinMinPercent != nil || draft.fatMinPercent != nil || draft.fiberMaxPercent != nil
+                    || draft.moistureMaxPercent != nil || !draft.otherAnalysis.isEmpty {
+                    analysisSection
                 }
+                notesSection
+            } else {
+                photoSection
+                identitySection
+                sizesSection
+                calorieStatementSection
+                ingredientsSection
+                analysisSection
+                notesSection
             }
         }
         .navigationTitle(title)
@@ -399,6 +410,77 @@ struct FoodEditorView: View {
         }
     }
 
+    private var calorieStatementSection: some View {
+        Section("Calorie statement") {
+            TextField("As written on the label", text: $calorieStatement, axis: .vertical)
+        }
+    }
+
+    private var ingredientsSection: some View {
+        Section("Ingredients") {
+            TextField("Ingredients", text: $ingredients, axis: .vertical)
+                .lineLimit(3...12)
+        }
+    }
+
+    /// What the AI lookup found for calories and sizes, with each figure's status and source.
+    @ViewBuilder
+    private func findingsSection(_ draft: FoodDraft) -> some View {
+        Section {
+            if let perGram = draft.kilocaloriesPerGram {
+                VStack(alignment: .leading, spacing: 4) {
+                    LabeledContent("Calories", value: CalorieVerifier.describePerKilogram(perGram.value))
+                    statusLine(perGram)
+                }
+                if draft.sizes.isEmpty {
+                    Text("No reliable package size was found. You can save now and log by grams, or add a size below.")
+                        .font(.subheadline)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Reliable calories couldn't be found for this food.", systemImage: "exclamationmark.triangle")
+                        .font(.headline)
+                    Text(draft.sizes.isEmpty
+                         ? "No checked calorie figure or package size was found online. Enter them from the package, or cancel."
+                         : "No checked calorie figure was found online. Enter the calories from the package, or cancel.")
+                        .font(.subheadline)
+                    HStack {
+                        Button("Enter Calories") { isPerGramFocused = true }
+                            .buttonStyle(.borderedProminent)
+                        Button("Cancel", role: .cancel) { onFinish(false) }
+                            .buttonStyle(.bordered)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            let sizeConflicts = draft.sizes.flatMap { [$0.grams.conflict, $0.kilocalories?.conflict] }
+                .compactMap { $0 }.filter { $0 != draft.kilocaloriesPerGram?.conflict }
+            ForEach(Array(Set(sizeConflicts)).sorted(), id: \.self) { conflict in
+                Label(conflict, systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+            LabeledContent("Confidence", value: draft.confidence.rawValue.capitalized)
+        } header: {
+            Text("Found with AI")
+        } footer: {
+            Text("Verified: copied from the page and checked. Calculated: worked out by the app from verified figures. Conflicting: figures disagree; both are shown.")
+        }
+    }
+
+    private func statusLine(_ fact: Fact) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(FactLabel.describe(fact).prefix(1).uppercased() + FactLabel.describe(fact).dropFirst())
+                .font(.caption)
+                .foregroundStyle(fact.status == .conflicting ? .orange : .secondary)
+            if let conflict = fact.conflict {
+                Text(conflict)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
     private var identitySection: some View {
         Section {
             TextField("Name", text: $name)
@@ -438,8 +520,14 @@ struct FoodEditorView: View {
                                 .accessibilityLabel("Calories calculated from kcal per kilogram")
                         }
                     }
+                    if let detail = size.detail {
+                        Text(detail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     HStack {
                         TextField("Grams", text: $size.gramsText)
+                            .onChange(of: size.gramsText) { size.detail = nil }
                             .keyboardType(.decimalPad)
                             .accessibilityLabel("Grams in \(size.label)")
                         Text("g").foregroundStyle(.secondary)
@@ -448,7 +536,10 @@ struct FoodEditorView: View {
                             .multilineTextAlignment(.trailing)
                             .accessibilityLabel("Calories in one whole \(size.label)")
                             .accessibilityIdentifier("sizeCaloriesField")
-                            .onChange(of: size.caloriesText) { size.isCalculated = false }
+                            .onChange(of: size.caloriesText) {
+                                size.isCalculated = false
+                                size.detail = nil
+                            }
                         Text("kcal").foregroundStyle(.secondary)
                     }
                 }
@@ -466,6 +557,7 @@ struct FoodEditorView: View {
                 Text(basis == .perGram ? "Per gram" : "Per 100 g")
                 TextField("Calories", text: $perGramText)
                     .keyboardType(.decimalPad)
+                    .focused($isPerGramFocused)
                     .multilineTextAlignment(.trailing)
                     .accessibilityLabel(basis == .perGram ? "Calories per gram" : "Calories per 100 grams")
                 Text(basis == .perGram ? "kcal/g" : "kcal/100 g").foregroundStyle(.secondary)

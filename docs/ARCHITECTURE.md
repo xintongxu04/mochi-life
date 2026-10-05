@@ -107,11 +107,14 @@ Targets:
 **`Calories/AILookup/`** ("Add with AI", §11)
 | File | Purpose |
 |---|---|
-| `AILookupModels.swift` | `AIService`, `SearchResult`, `LookupStage`, `LookupFailure` (user messages), `ExtractedFood` (DeepSeek target shape), `PageChoice`, `FoodDraft`. |
+| `AILookupModels.swift` | `AIService`, `SearchResult`, `LookupStage` (progress titles), `LookupFailure` (user messages), `ExtractedFood` (DeepSeek target shape, with evidence), `FactStatus`, `FactSource`, `Fact`, `PageChoice`, `FoodDraft`. |
 | `AIClients.swift` | Protocols `WebSearchClient`, `ChatCompletionClient`, `WebFetcher`; `BraveSearchClient`, `DeepSeekClient`, `URLSessionWebFetcher`; `HTTPCheck` (status/error mapping); `AILog`. |
 | `CandidateRanker.swift` | Deterministic pre-ranking of search results (brand-host boost, marketplace/review demotion), top 6. |
-| `HTMLReducer.swift` | Title, og/twitter images, JSON-LD Product, visible text, keyword-window trimming, entity decoding. |
-| `FoodLookupService.swift` | The pipeline actor; `Prompts` (DeepSeek system messages); `FoodDerivation` (app-side calorie maths and sanity ranges). |
+| `HTMLReducer.swift` | `ReducedPage` (text, embedded data sections, size hints, diagnostics); title, og/twitter images, JSON-LD Product, visible text with table separators, 120,000-character keyword-window trimming, entity decoding. |
+| `EmbeddedData.swift` | `EmbeddedSection`, `SizeHints`, `EmbeddedData` (JSON-LD, `__NEXT_DATA__`/state blobs, Shopify product JSON, product data-* attributes, flattened to "path: value"), `RX` (fast NSRegularExpression helpers). |
+| `PageRenderer.swift` | `PageRenderer` protocol and `WebKitPageRenderer` (offscreen WKWebView fallback, 12 s ceiling). |
+| `CalorieVerifier.swift` | Pure checks: `CalorieVerifier` (evidence, units, ranges, consistency, conversions), `StatedFacts`, `VerifiedReading`, `SourceMerger` (multi-source rules), `SourceIdentity` (same-product check). |
+| `FoodLookupService.swift` | The pipeline actor (reading, rendered fallback, focused pass, other sources, diagnostics); `Prompts` (DeepSeek system messages); draft building with provenance notes; `FactLabel` (status words). |
 | `AILookupCredentials.swift` | `AIKeychain` (keys), `AILookupLimit` (50/day), `AIKeyTester`. |
 | `AILookupSettingsView.swift` | "AI Lookup" settings: keys, Test Keys, today's count, what is sent where. |
 | `PackageTextReader.swift` | Vision text recognition of a package photo, on device. |
@@ -149,6 +152,7 @@ UI tests expect a **fresh install** (no saved data). See §10 for their current 
 | File | Purpose |
 |---|---|
 | `FoodMatcherTests.swift` | FoodMatcher against the bundled seed data: exact name, line + recipe, shreds-vs-pâté ambiguity, one-letter OCR error, unrelated brand, size detection. |
+| `CalorieVerifierTests.swift` | The verifier only, on fixed texts: evidence present/absent, a value missing from its evidence, kJ vs kcal, per-cup vs per-can, a feeding-guide amount, a multipack total, consistent and inconsistent triples, calculated per-can calories, oz and lb conversion, deduplication, out-of-range kcal/kg. |
 | `BackupRoundTripTests.swift` | One of every backed-up record, export → file → read/validate → restore into a second in-memory container → export again; compares every field and the photo files. |
 
 ### Other files
@@ -463,14 +467,14 @@ closes via an `onFinish` closure instead of `dismiss`.
 | Saved foods: browse brand → line → product, search | `SavedFoodsView.swift`, `FoodSearch.swift` | Search is substring per word (no fuzzy matching). |
 | Tiki Cat library (99 foods) + thumbnails | `FoodLibraryLoader.swift`, `FoodThumbnail.swift`, `Resources/*` | Updates arrive only with a new app build carrying a higher `data_version`. New products have no photo until added to the map. |
 | Food detail page | `FoodDetailView.swift` | Shows kcal/g per size (or one "Per gram" row for foods without sizes). |
-| Add/edit/delete foods | `FoodEditorView.swift`, `SavedFoodsView.swift`, `PhotoCandidatePickerView.swift` | Every field is editable, including sizes (add, delete, reorder), notes, source and photo. kcal/g must be 0.2–6.0. Saving an edit of a seeded food sets `isUserModified`. |
+| Add/edit/delete foods | `FoodEditorView.swift`, `SavedFoodsView.swift`, `PhotoCandidatePickerView.swift` | Every field is editable, including sizes (add, delete, reorder), notes, source and photo. kcal/g must be 0.2–6.0 when typed (the AI verifier accepts only 0.3–6.0). Saving an edit of a seeded food sets `isUserModified`. |
 | Size-and-portion picker | `PortionPicker.swift`, `Portion.swift` | Typed amounts allow up to 3 decimal places. |
 | Food log (Today, days, + flow, quick entry, edit, delete, Log This) | `CaloriesView.swift`, `LogEntryForm.swift`, `FoodLogEntry.swift` | Forward navigation stops at the last future day with entries. Future days show calories as "planned" and are excluded from progress and the chart. Deleting several rows at once only asks about the last one with carried days. |
 | Carry-forward of opened cans | `CarryForward.swift`, `FoodLogEntry.swift`, `LogEntryForm.swift`, `CaloriesView.swift` | Older entries without an exact fraction get one at launch only if it's within 1e-6 of n/d with d ≤ 12. Plans over 90 days aren't offered; over 7 days ask first. |
 | Daily calorie target (estimate or own) | `CalorieTarget.swift`, `CalorieTargetSettingsView.swift` | Past days are compared with today's target (no history of targets). Own target must be a whole number 50–1,000 kcal; Save Target is disabled otherwise. |
 | Calories vs target on Today | `CaloriesView.swift` (`CalorieProgressView`) | — |
 | Daily calories chart (7/30 days) | `CalorieChartView.swift` | Uses the current target for the line. |
-| Add with AI (search, page choice, extraction, review, save) | `Calories/AILookup/*`, `FoodThumbnailStore.swift` | Needs the owner's Brave Search and DeepSeek keys; 50 lookups a day; only pages that serve HTML without scripts can be read; never exercised against the live services yet. |
+| Add with AI (search, page choice, extraction, review, save) | `Calories/AILookup/*`, `FoodThumbnailStore.swift` | Needs the owner's Brave Search and DeepSeek keys; 50 lookups a day; script-built pages are read through the 12-second rendered fallback; the full pipeline hasn't been run against the live services by the developer (only the verifier is unit-tested). |
 | Profile, vaccinations, medical history | `Profile/*` | Exactly one profile (enforced at launch). Camera unavailable in the simulator. The camera permission text (Info.plist) says "Mochi" and can't follow the profile name. No reminders. |
 
 ---
@@ -573,7 +577,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 
 ## 10. Known issues and technical debt
 
-- **Unit tests:** `BackupRoundTripTests` and `FoodMatcherTests` (run and passing on 2026-10-05).
+- **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
   Live scanning, the model judge and the Log Food screens have no automated tests.
 - **The UI test target is not confirmed green.** Last run (2026-10-04, stopped by the owner
   before a rerun): `WeightLoggingUITests` passed; both `SavedFoodsUITests` tests failed when
@@ -627,18 +631,15 @@ Clients are injected as protocols: `WebSearchClient` (`BraveSearchClient`),
 3. **Select** — DeepSeek returns `{ "choice": Int|null, "alternates": [Int], "reason": String }`.
 4. **Fetch** — https only (also after redirects), 15 s, 2 MB cap, desktop Safari User-Agent,
    HTML only; on failure the alternates are tried in order.
-5. **Reduce** — `HTMLReducer`: `<title>`, og:title, og:image, twitter:image, JSON-LD `Product`
-   (name, brand, image, description); script/style/nav/footer/head and tags removed, entities
-   decoded, whitespace collapsed; over 24,000 characters → first 6,000 plus 3,000-character
-   windows around kcal, calorie, metabolizable, ingredients, guaranteed analysis, crude protein.
-6. **Extract** — DeepSeek returns `ExtractedFood` (found, brand, line, name, type, form, sizes
-   [label, ounces, grams, kcal_per_container], kcal_per_kg, calorie_statement, ingredients,
-   guaranteed_analysis, confidence, notes). Decoded with Codable; on a decoding error the error
-   is appended to the conversation and asked once more, then it fails.
-7. **Derive** (`FoodDerivation`, app code) — kcal/g = kcal/kg ÷ 1000; grams from ounces ×
-   28.3495; per-container kcal = kcal/g × grams when not stated, tagged calculated; stated vs
-   calculated differing by > 8 % keeps the stated value and adds a note; kcal/g outside
-   0.2–6.0 and percentages outside 0–100 are dropped with a note.
+5. **Reduce** — `HTMLReducer` (see *Field priorities and reduction*).
+6. **Extract with evidence, pass 1** — DeepSeek returns `ExtractedFood` (see *Evidence
+   contract*), decoded with Codable (every field optional). On a decoding error the error is
+   appended and the request is sent once more; a second failure ends the lookup.
+7. **Verify** — `CalorieVerifier` checks every calorie figure and size (see *Verifier*).
+   If calories or a sized package are still missing: the **rendered fallback**
+   (`WebKitPageRenderer`), then a **focused pass 2** on the rendered page (or on the fetched
+   page if rendering failed). If still missing: **other sources** (see *Multi-source
+   resolution*). Then the draft (status and source lines go into its notes).
 8. **Thumbnail** (`ImageCandidateFinder`, `ProductPhotoFinder`) — candidates in priority order:
    og:image and og:image:secure_url; twitter:image and twitter:image:src; JSON-LD Product
    images (string, array, or ImageObject url); `<link rel="image_src">`; then `<img>` in the
@@ -657,13 +658,152 @@ Clients are injected as protocols: `WebSearchClient` (`BraveSearchClient`),
    sources, host, HTTP status, content type, byte count, decode result — never page content.
    A missing photo never blocks saving.
 Select returning null, `found: false`, or every candidate failing ends in "not found", which
-offers manual entry (`FoodEditorView(.create)` with the name prefilled).
+offers manual entry (`FoodEditorView(.create)` with the name prefilled). A page that is found but
+yields no checked calories still goes to review, which says so plainly (see *Review and save*).
+
+### Field priorities and reduction
+- **Required and must be accurate:** calories (a kcal/g basis) and package sizes with a
+  weight. **Best effort, no warnings, no extra requests:** ingredients, guaranteed analysis,
+  calorie statement and the photo. They come only from the primary page or from a page already
+  fetched for calories (first non-empty value wins). There is no label-photo extraction; the
+  package photo is only read on device for the product *name* to search.
+- **Text budget 120,000 characters.** Longer pages keep the first 12,000 characters plus
+  6,000-character windows around keywords, added by priority until the budget: kcal, calori,
+  metaboli(s/z)able, "ME" (case-sensitive word); then net weight / net wt; then ingredients /
+  guaranteed analysis; then oz, ounce(s), gram(s), size(s). Kept in page order, joined with "…".
+- **Visible text** strips tags only, so hidden tab, accordion and `<details>` content is kept;
+  comments, script, style, noscript, svg, nav, head and iframe are removed; `<template>` and
+  `text/template` / `text/x-template` / `text/html` script contents are kept; table cells are
+  separated by " | ", rows and block ends by line breaks. Regexes use `NSRegularExpression`
+  (`RX`) for speed on pages up to the 2 MB fetch cap.
+- **Embedded data sections** (`EmbeddedData`), each flattened to `path: value` lines (images,
+  reviews and links dropped; strings over 1,500 characters cut), deduplicated and capped at
+  **30,000 characters**, with values inside objects that mention the product name (at least
+  half of its non-generic words) first:
+  - *JSON-LD structured data*: every `ld+json` block (Product, Offer, hasVariant,
+    additionalProperty, weight, nutrition…).
+  - *Next.js page data*: `__NEXT_DATA__`, keeping only keys/values with calorie, weight, size,
+    ingredient, analysis, variant, name… words.
+  - *Shopify product data*: `application/json` scripts whose attributes mention product or that
+    contain `"variants"`, plus `ShopifyAnalytics.meta` / `meta = {…}`.
+  - *Page state data*: other `application/json` scripts and `window.__X__ = {…}` blobs,
+    filtered like Next.js.
+  - *Product data attributes*: `data-*` names containing product, variant, nutrition, weight,
+    size, kcal, calor, ingredient or analysis (JSON values flattened).
+- **Size hints** (`SizeHints`, deterministic): weights with oz/ounce/g/gram/lb/pound/kg and an
+  optional container word (can, pouch, tray, cup, bag, sachet, carton, tub, box), 10 g–25 kg, up
+  to 25; multipack phrases ("case of 12", "pack of 6", "12-pack", "24 ct", "12 x 3 oz") listed
+  separately as counts, up to 10. Sent as pointers only; they are not evidence.
+
+### Rendered-DOM fallback (`WebKitPageRenderer`)
+Runs only when calories or a sized package are still missing after pass 1. An offscreen
+`WKWebView` (1280 × 2400, placed behind the key window so WebKit doesn't throttle it as hidden,
+no user interaction): `WKWebsiteDataStore.nonPersistent()`, JavaScript on, no automatic windows,
+media needs a user action, desktop Safari User-Agent. **12-second ceiling** for everything.
+Waits for `didFinish`, then a quiet network (no new `performance` resource entries for 800 ms, at
+most 3 s); opens every `<details>` and clicks up to 25 controls (buttons, summaries, tabs,
+`aria-expanded`/`aria-controls`, `#` links, data-toggle) whose label (≤ 80 characters) mentions
+nutrition, calori, guaranteed analysis, feeding, size or ingredient — never submit buttons or
+links to other pages; waits 900 ms; reads `body.innerText`, the text of panels still hidden that
+mention kcal/calori/metaboli/guaranteed analysis/ingredient/net w (≤ 30,000 characters), and the
+HTML (≤ 3 MB, for embedded data). Scripts run in an isolated content world. **Blocked:**
+navigation to another site (main frame and frames; `www.` and subdomains of the same site are
+allowed), pop-ups (`targetFrame == nil`, no `createWebView`), downloads (`shouldPerformDownload`,
+or a response WebKit can't show). Torn down afterwards (stopped, delegates cleared, removed).
+Failure or timeout just means the focused pass reads the fetched page instead.
+
+### Evidence contract (`ExtractedFood`, `Prompts.extraction`)
+`energy_density[] {value, unit, evidence}` (each stated calories-per-weight figure, unit as
+written), `container_calories[] {size_label, value, unit, per, evidence}` (per = can, pouch,
+tray, cup, treat…; per-cup figures included and labelled), `sizes[] {label, weight, unit,
+container, pack_count, evidence}` (the weight of one unit; multipack counts in `pack_count`),
+plus `found`, `same_product`, brand, line, name, type, form and the best-effort fields.
+`evidence` is the exact contiguous page text containing the number, ≤ 300 characters. The model
+must not convert, calculate, round or infer. Temperature 0, JSON mode, thinking disabled,
+`max_tokens` 3,000. **Pass 2** (only when calories or sizes are missing) uses the same shape and
+adds a "Focus:" line naming what's missing. For another source the request names the target
+product and asks for `same_product`. The verifier checks evidence against exactly what was
+sent: title, og:title, page text and data sections (not the size hints).
+
+### Verifier (`CalorieVerifier`, pure, unit-tested)
+- **(a) Evidence**: present, ≤ 300 characters, found in the sent text after normalizing
+  (lowercase, accents folded, dashes/quotes/odd spaces unified, thousands separators removed
+  between digits, whitespace collapsed), and the value appears as a number in it.
+- **(b) Units**: kJ rejected (the unit says kJ, or "kJ" follows the number); per-cup figures
+  rejected unless the matched size is itself a cup of wet food (never for dry food, never as
+  per can); feeding-guide amounts rejected (feed/feeding, per day, daily, body weight,
+  weighing…); unknown units rejected.
+- **(c) Ranges**: kcal/kg 300–6,000; kcal/g 0.3–6.0 (also kcal/100 g, kcal/lb and kcal/oz after
+  conversion); one unit 10–1,000 g for wet food, 10 g–20 kg otherwise (dry bags); calories per
+  container must give 0.3–2.5 kcal/g for wet, 2.0–6.0 for dry, 0.3–6.0 otherwise. A dry "cup"
+  size is rejected.
+- **(d) Consistency**: kcal/kg × grams vs a stated per-container figure more than 8% apart →
+  both marked conflicting, the stated container figure kept, both figures noted. Two stated
+  kcal/kg on one page more than 8% apart → the first kept, conflicting, both noted.
+- **(e) Conversions**: oz × 28.3495, lb × 453.592, kg × 1,000, rounded to 0.1 g. A weight equal
+  (within 3%) to N × another weight in the same evidence, where N is a pack count, is a
+  multipack total and is rejected. Sizes within 1% of each other are deduplicated (first kept).
+- **(f) Calculated**: kcal/g from a verified size's grams and calories when no figure per weight
+  was stated; per-container calories from kcal/g × grams when not stated.
+- Container calories attach to a size by label, then by the size weight quoted in the evidence,
+  then by a unique container word (or the only size).
+- **Statuses** (`FactStatus`): *verified* (copied and checked), *calculated* (worked out by the
+  app from verified figures), *conflicting* (disagreement over 8%, one kept, both noted),
+  *unverified* (failed a check: discarded, only its reason code is logged).
+
+### Multi-source resolution
+Runs when, after the primary page (both passes), there is no calorie basis or no size with a
+weight. Candidates are the first search's other results not yet tried: **manufacturer pages
+first** (the host contains a brand word and isn't a marketplace or review site), then **Chewy,
+Petco, PetSmart**, and nothing else. When those run out, **one extra Brave query** ("<brand>
+<line> <name> calorie content kcal/kg") adds candidates of the same kinds. At most **3 extra
+sources** (attempted fetches). Each goes through the same reading (pass 1, then the rendered
+fallback and pass 2 if still missing *after merging with what's known*).
+- **Identity** (`SourceIdentity`): the model's `same_product` isn't false, a brand word appears
+  in its brand/line/name or the host, ≥ 60% of the recipe words (product name minus brand and
+  generic words) match, and the form matches when both are known. A page that fails is skipped.
+- **Merging** (`SourceMerger`) fills only what's missing: a kcal/g basis if none; sizes if none
+  were known; calories per container only for a size matching a known size within 3% (same unit
+  size). Where both have a figure from different hosts: within 3% → "confirmed by" the other
+  host; more than 8% apart → the manufacturer's figure is kept (a verified manufacturer value is
+  never replaced by a retailer value; between two of a kind the first is kept), marked
+  conflicting, with both hosts noted; 3–8% apart → the first is kept.
+- Stops as soon as both requirements are met.
+- **Provenance**: every calorie figure and weight carries host, URL, a manufacturer flag and the
+  reading stage (`static.pass1`, `static.pass2`, `rendered.pass2`). Best-effort fields don't.
+
+### Cap accounting, time and cost
+- A lookup counts **1** toward the 50-a-day cap when it starts. That covers the first search,
+  page choice, every page fetch and render, and every DeepSeek call.
+- The **extra Brave query** counts **1 more** (skipped quietly if the cap is used up), like the
+  Brave image-search fallback.
+- Per lookup at most: 3 Brave calls (search, extra search, image search); 9 DeepSeek calls
+  (1 selection + 2 extraction passes × 4 pages, each of which may retry once on unreadable JSON);
+  4 renders of up to 12 s.
+- Typical: a complete manufacturer page needs 1 selection + 1 extraction, as before but with
+  more input. Input per extraction is up to ~120,000 characters of text plus data sections
+  (roughly 30,000–60,000 tokens, about $0.01–0.02 at peak prices). A lookup that needs
+  everything costs about $0.10–0.15 and can take about a minute.
+
+### Diagnostics (`AILog`, category `aiLookup`)
+Per lookup, tagged with a random 8-character id:
+- For each page read: host, whether rendered, raw HTML bytes, visible text length, reduced text
+  length, each data section's label and length, and the size-hint count.
+- After each extraction stage: which target fields came back empty.
+- Per verification: the calorie-basis status, how many sizes and container calories were kept,
+  and rejection reason codes.
+- The render outcome, duration, clicks and text sizes.
+- Extra-source fetch failures, identity mismatches, and the extra search with its candidate count.
+- The outcome: the status, stage and host of the calorie basis, its confirmations, the size
+  count, and the stage and host of the first size.
+
+Never page content, evidence text or queries.
 
 ### DeepSeek requests (`DeepSeekClient`, `DeepSeekModelConfig`)
 `POST https://api.deepseek.com/chat/completions`, `Authorization: Bearer <key>`, model
 `DeepSeekModelConfig.model`, `temperature: 0`, `response_format: {"type": "json_object"}`,
 `thinking: {"type": "disabled"}` (thinking mode is on by default; it ignores temperature and is
-slower), `stream: false`, `max_tokens` 300 (select) / 2,000 (extract), 45-second request timeout
+slower), `stream: false`, `max_tokens` 300 (select) / 3,000 (extract), 45-second request timeout
 (reported as the usual timeout error). The system messages contain the word "json" and an example
 of the shape, as DeepSeek's JSON mode requires, and say page text and search results are
 untrusted data. Token usage (`usage.prompt_tokens`, `completion_tokens`, `total_tokens`,
@@ -673,7 +813,7 @@ logged and shown as `LookupFailure.modelUnavailable` ("update the app").
 **Model choice** — `DeepSeekModelConfig` (in `AIClients.swift`) is the only place the model is
 named; both calls use it. Checked **2026-10-05** against DeepSeek's Models & Pricing page and the
 chat-completion and list-models API reference (no key was available to call `GET /models`).
-Criteria, in order: (a) JSON output mode, (b) context for ~24,000 characters of page text plus
+Criteria, in order: (a) JSON output mode, (b) context for ~120,000 characters of page text plus data sections plus
 instructions and a 2,000-token reply, (c) lowest latency (speed tier, thinking off), (d) lowest
 price.
 - **Chosen: `deepseek-flash`** (DeepSeek-V4.1-Flash): JSON output, 1M-token context, the
@@ -689,9 +829,25 @@ price.
   lineup** (update `DeepSeekModelConfig` and this section together).
 
 ### Review and save (`FoodEditorView(.review)`)
-The same editor as create/edit (§7), prefilled from the draft, with the confidence shown and a
-non-blocking "No product photo was found" note plus Find online / Library / Camera when the
-automatic photo failed. Validation (inline, Save disabled while invalid): product name; numbers
+The same editor as create/edit (§7), prefilled from the draft, in this order:
+1. **Found with AI**: the calorie basis as kcal/kg with its status and source host(s), every
+   conflict with both figures, confidence, and a one-line legend of the statuses.
+2. **Sizes and calories**: each size row shows "Weight: verified (host) · Calories:
+   calculated…" until edited.
+3. Product, then photo.
+4. Calorie statement, ingredients and guaranteed analysis, **only if the lookup found them**.
+5. Notes.
+
+With no calorie basis, the Found with AI section says plainly that reliable calories couldn't be
+found and offers two buttons:
+- **Enter Calories** focuses the per-gram field.
+- **Cancel** returns to the search, or leaves the Log Food web search.
+
+With a calorie basis but no size, it says the food can be saved and logged by grams. A
+non-blocking "No product photo was found" note plus Find online / Library / Camera appears when
+the automatic photo failed. Status and source lines are also written into the saved food's
+notes ("Calories: 1,050 kcal/kg, verified (example.com)"). There are no separate stored fields for
+them, so no schema change was needed. Validation (inline, Save disabled while invalid): product name; numbers
 through `NumberInput`; kcal/g 0.2–6.0 (also each size's implied kcal/g); percentages 0–100;
 at least one calorie basis (kcal/g, or a size with grams and kcal); source must be an http(s)
 address. Sizes without name, grams and kcal aren't saved. Duplicate check by `FoodMatching.key`

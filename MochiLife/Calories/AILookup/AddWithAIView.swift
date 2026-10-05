@@ -31,7 +31,8 @@ final class AILookupSession {
             search: BraveSearchClient(apiKey: braveKey),
             chat: DeepSeekClient(apiKey: deepSeekKey),
             fetcher: URLSessionWebFetcher(),
-            imageSearch: BraveImageSearchClient(apiKey: braveKey)
+            imageSearch: BraveImageSearchClient(apiKey: braveKey),
+            renderer: WebKitPageRenderer()
         )
         phase = .running(.searching)
         task = Task {
@@ -83,7 +84,7 @@ struct AddWithAIView: View {
                     progressView(stage)
                 case let .review(draft):
                     FoodEditorView(mode: .review(draft)) { saved in
-                        if saved { dismiss() }
+                        if saved { dismiss() } else { session.phase = .input }
                     }
                 case .notFound:
                     notFoundView
@@ -186,7 +187,7 @@ struct AddWithAIView: View {
         VStack(spacing: 20) {
             ProgressView()
                 .controlSize(.large)
-            Text(stage.rawValue + "…")
+            Text(stage.title + "…")
                 .font(.headline)
                 .multilineTextAlignment(.center)
             Button("Cancel", role: .cancel) { session.cancel() }

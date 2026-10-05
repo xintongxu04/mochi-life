@@ -10,34 +10,79 @@ struct ReducedPage: Sendable {
         var description: String?
     }
 
+    /// Sizes for diagnostics only (never content).
+    struct Diagnostics: Sendable {
+        var htmlBytes = 0
+        var textLength = 0
+        var reducedLength = 0
+        /// Section label → characters kept.
+        var sections: [(String, Int)] = []
+        var sizeHints = 0
+        var rendered = false
+    }
+
     var url: URL
     var title: String?
     var ogTitle: String?
     var products: [Product]
     var text: String
+    /// Embedded product data (JSON-LD, page state, Shopify product JSON, data-* attributes),
+    /// flattened to "path: value" lines and labeled.
+    var sections: [EmbeddedSection] = []
+    /// Package weights and multipack phrases found by the app (pointers, not evidence).
+    var sizeHints = SizeHints()
     /// Product photo candidates in priority order (see `ImageCandidateFinder`).
     var imageCandidates: [ImageCandidate]
+    var diagnostics = Diagnostics()
+
+    /// Everything sent to the AI that evidence may be quoted from (text plus data sections).
+    var evidenceText: String {
+        ([text] + sections.map(\.text)).joined(separator: "\n")
+    }
 }
 
 /// Reduces HTML to plain text and a few metadata fields without third-party parsers.
 enum HTMLReducer {
-    static let maximumTextLength = 24_000
-    static let headLength = 6_000
-    static let windowLength = 3_000
-    static let keywords = ["kcal", "calorie", "metabolizable", "ingredients", "guaranteed analysis", "crude protein"]
+    /// Characters of page text kept; longer pages keep the head plus windows around keywords.
+    static let maximumTextLength = 120_000
+    static let headLength = 12_000
+    static let windowLength = 6_000
+    /// Keyword groups in priority order: windows for earlier groups are kept first.
+    static let keywordGroups: [[String]] = [
+        [#"kcal"#, #"calori"#, #"metaboli[sz]able"#, #"\bME\b"#],
+        [#"net weight"#, #"net wt"#],
+        [#"ingredients"#, #"guaranteed analysis"#],
+        [#"\boz\b"#, #"\bounces?\b"#, #"\bgrams?\b"#, #"\bsizes?\b"#],
+    ]
 
-    static func reduce(_ page: FetchedPage) -> ReducedPage {
+    static func reduce(_ page: FetchedPage, productName: String? = nil, renderedText: String? = nil) -> ReducedPage {
         let html = page.html
         let metas = metaTags(in: html)
         let products = jsonLDProducts(in: html)
+        let title = firstMatch(of: /(?is)<title[^>]*>(.*?)<\/title>/, in: html).map(plainText(fromFragment:))
+        let name = [productName, products.first?.name, metas["og:title"], title].compactMap { $0 }.first ?? ""
+        let fullText = renderedText.map(collapse) ?? visibleText(of: html)
+        let text = trimmed(fullText)
+        let sections = EmbeddedData.sections(in: html, productName: name)
+        let hints = SizeHints.find(in: ([fullText] + sections.map(\.text)).joined(separator: "\n"))
+        var diagnostics = ReducedPage.Diagnostics()
+        diagnostics.htmlBytes = html.utf8.count
+        diagnostics.textLength = fullText.count
+        diagnostics.reducedLength = text.count
+        diagnostics.sections = sections.map { ($0.label, $0.text.count) }
+        diagnostics.sizeHints = hints.unitSizes.count + hints.multipacks.count
+        diagnostics.rendered = renderedText != nil
         return ReducedPage(
             url: page.url,
-            title: firstMatch(of: /(?is)<title[^>]*>(.*?)<\/title>/, in: html).map(plainText(fromFragment:)),
+            title: title,
             ogTitle: metas["og:title"],
             products: products,
-            text: trimmed(visibleText(of: html)),
+            text: text,
+            sections: sections,
+            sizeHints: hints,
             imageCandidates: ImageCandidateFinder.candidates(in: html, pageURL: page.url, metas: metas,
-                                                             productImages: products.flatMap(\.images))
+                                                             productImages: products.flatMap(\.images)),
+            diagnostics: diagnostics
         )
     }
 
@@ -111,47 +156,44 @@ enum HTMLReducer {
 
     // MARK: - Text
 
-    private static func visibleText(of html: String) -> String {
+    /// Page text with tags removed. Hidden tab, accordion and details content is kept (only
+    /// tags are stripped); `<template>` and script templates are unwrapped; table cells are
+    /// separated by " | " and rows by line breaks.
+    static func visibleText(of html: String) -> String {
         var text = html
-        text.replace(/(?s)<!--.*?-->/, with: " ")
-        for element in ["script", "style", "noscript", "svg", "nav", "footer", "head", "template", "iframe"] {
-            text.replace(try! Regex("(?is)<\(element)\\b.*?</\(element)\\s*>"), with: " ")
+        text = RX.replace(#"(?s)<!--.*?-->"#, in: text, with: " ")
+        // Script templates hold tab/accordion markup on some sites: keep their contents.
+        text = RX.replace(#"(?is)<script\b[^>]*type\s*=\s*["']text/(?:template|x-template|html)["'][^>]*>(.*?)</script\s*>"#, in: text, with: " $1 ")
+        for element in ["script", "style", "noscript", "svg", "nav", "head", "iframe"] {
+            text = RX.replace("(?is)<\(element)\\b.*?</\(element)\\s*>", in: text, with: " ")
         }
-        text.replace(/(?i)<(br|\/p|\/div|\/li|\/tr|\/h[1-6]|\/section|\/table)\b[^>]*>/, with: "\n")
-        text.replace(/<[^>]*>/, with: " ")
+        text = RX.replace(#"(?i)</t[dh]\s*>"#, in: text, with: " | ")
+        text = RX.replace(#"(?i)<(br|/p|/div|/li|/tr|/h[1-6]|/section|/table|/dt|/dd|/summary|/details|/caption|/article)\b[^>]*>"#, in: text, with: "\n")
+        text = RX.replace(#"<[^>]*>"#, in: text, with: " ")
         return collapse(decodeEntities(text))
     }
 
-    /// Keeps everything if short; otherwise the head plus windows around nutrition keywords.
-    private static func trimmed(_ text: String) -> String {
-        guard text.count > maximumTextLength else { return text }
-        let lowercased = text.lowercased()
-        var ranges: [Range<Int>] = [0..<headLength]
-        for keyword in keywords {
-            var searchStart = lowercased.startIndex
-            while let found = lowercased.range(of: keyword, range: searchStart..<lowercased.endIndex) {
-                let center = lowercased.distance(from: lowercased.startIndex, to: found.lowerBound)
-                let lower = max(0, center - windowLength / 2)
-                ranges.append(lower..<min(text.count, lower + windowLength))
-                searchStart = found.upperBound
-            }
-        }
-        // Merge overlapping windows, in page order, until the length limit.
-        var merged: [Range<Int>] = []
-        for range in ranges.sorted(by: { $0.lowerBound < $1.lowerBound }) {
-            if let last = merged.last, range.lowerBound <= last.upperBound {
-                merged[merged.count - 1] = last.lowerBound..<max(last.upperBound, range.upperBound)
-            } else {
-                merged.append(range)
+    /// Keeps everything up to the budget; otherwise the head plus windows around keywords, the
+    /// calorie keywords first, then net weight, ingredients and analysis, then size words.
+    static func trimmed(_ text: String) -> String {
+        let string = text as NSString
+        guard string.length > maximumTextLength else { return text }
+        var covered = IndexSet(integersIn: 0..<min(headLength, string.length))
+        groups: for group in keywordGroups {
+            for pattern in group {
+                for location in RX.locations(of: pattern, in: text, caseInsensitive: pattern != #"\bME\b"#) {
+                    if covered.count >= maximumTextLength { break groups }
+                    let lower = max(0, location - windowLength / 2)
+                    covered.insert(integersIn: lower..<min(string.length, lower + windowLength))
+                }
             }
         }
         var pieces: [String] = []
         var total = 0
-        let characters = Array(text)
-        for range in merged where total < maximumTextLength {
-            let clipped = range.lowerBound..<min(range.upperBound, range.lowerBound + maximumTextLength - total)
-            pieces.append(String(characters[clipped]))
-            total += clipped.count
+        for range in covered.rangeView where total < maximumTextLength {
+            let length = min(range.count, maximumTextLength - total)
+            pieces.append(string.substring(with: NSRange(location: range.lowerBound, length: length)))
+            total += length
         }
         return pieces.joined(separator: "\n…\n")
     }

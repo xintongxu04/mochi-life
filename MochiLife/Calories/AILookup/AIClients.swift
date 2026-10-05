@@ -173,7 +173,7 @@ enum DeepSeekModelConfig {
     /// Choosing a page needs only a short JSON answer.
     static let selectionMaxTokens = 300
     /// Room for the full extraction JSON, including long ingredient lists.
-    static let extractionMaxTokens = 2_000
+    static let extractionMaxTokens = 3_000
     /// Per request; a timeout is reported as the usual "took too long" error.
     static let requestTimeout: TimeInterval = 45
 }
