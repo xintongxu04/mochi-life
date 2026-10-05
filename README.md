@@ -35,6 +35,20 @@ The Calories tab opens on **Today**.
   product, or by searching. Then choose the size and portion (or grams), check
   the worked-out calories (or type your own number), and set the date and time
   (now by default, so you can also log something you forgot earlier).
+- **Opened cans and pouches:** when you log less than a whole can or pouch,
+  a switch ("Use the rest on the following days", on by default) adds the rest
+  to the following days in the same portion, one entry per day, with the last
+  day getting whatever is left (for example 1/4 today, then 1/4 on each of the
+  next 3 days; or 2/3 today, then 1/3 tomorrow). A one-line preview shows what
+  will be added. Portions are exact fractions, so they always add up to one
+  whole can. For more than one can (like 1.5), the rest of the last can is
+  carried forward the same way. Plans longer than 7 days ask first. This
+  applies only to can or pouch portions, not grams or quick entries.
+- Carried entries show "From a can opened …" and count toward their own day's
+  total only when that day comes. Each can be edited or deleted on its own;
+  deleting one asks whether to remove the later days too, and changing or
+  deleting the entry the can was opened with asks whether to update, remove
+  or keep the following days.
 - Log a one-off treat with **Quick Entry**: just a name and a calorie number.
 - Tap an entry to change its amount, calories or time, and swipe left to
   delete it.

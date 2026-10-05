@@ -13,6 +13,8 @@ struct Portion: Equatable {
     var size: FoodSize?
     /// How many cans or pouches, e.g. 0.5 for half of one. Used when measuring by container.
     var containers: Double?
+    /// The same amount as an exact fraction, e.g. 1/3, for carrying the rest of a can forward.
+    var exactContainers: Fraction?
     /// Used when measuring by grams.
     var grams: Double?
     /// Calories worked out from the size and amount, or from grams.
@@ -22,9 +24,9 @@ struct Portion: Equatable {
 
     var kilocalories: Double? { customKilocalories ?? calculatedKilocalories }
 
-    static let quickFractions: [(label: String, value: Double)] = [
-        ("1/4", 1.0 / 4), ("1/3", 1.0 / 3), ("1/2", 1.0 / 2),
-        ("2/3", 2.0 / 3), ("3/4", 3.0 / 4), ("1 whole", 1),
+    static let quickFractions: [(label: String, value: Double, fraction: Fraction)] = [
+        ("1/4", 1.0 / 4, Fraction(1, 4)), ("1/3", 1.0 / 3, Fraction(1, 3)), ("1/2", 1.0 / 2, Fraction(1, 2)),
+        ("2/3", 2.0 / 3, Fraction(2, 3)), ("3/4", 3.0 / 4, Fraction(3, 4)), ("1 whole", 1, .one),
     ]
 
     /// Parses a typed positive number such as "1.5" or "0,75", with up to three decimal places.
@@ -58,6 +60,9 @@ struct Portion: Equatable {
             }
             if let quick = Self.quickFractions.first(where: { abs($0.value - containers) < 0.0001 }) {
                 return "\(quick.label) of a \(size.name)"
+            }
+            if let exact = exactContainers, exact < .one, exact.denominator <= 12 {
+                return "\(exact.label) of a \(size.name)"
             }
             return "\(Self.formatAmount(containers)) × \(size.name)"
         case .grams:

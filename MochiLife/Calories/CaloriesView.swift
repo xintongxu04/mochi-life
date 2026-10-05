@@ -87,6 +87,8 @@ private struct DayEntriesList<Controls: View>: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var entries: [FoodLogEntry]
     @State private var entryBeingEdited: FoodLogEntry?
+    /// An entry with carried days after it, waiting for the owner to say what to remove.
+    @State private var entryBeingDeleted: FoodLogEntry?
 
     init(day: Date, dayControls: Controls, onSwipe: @escaping (Int) -> Void) {
         self.day = day
@@ -139,9 +141,8 @@ private struct DayEntriesList<Controls: View>: View {
                     }
                     .onDelete { offsets in
                         for index in offsets {
-                            modelContext.delete(entries[index])
+                            delete(entries[index])
                         }
-                        try? modelContext.save()
                     }
                 }
             }
@@ -154,6 +155,41 @@ private struct DayEntriesList<Controls: View>: View {
             NavigationStack {
                 LogEntryForm(mode: .edit(entry), onFinish: { entryBeingEdited = nil })
             }
+        }
+        .confirmationDialog(
+            deletionQuestion,
+            isPresented: Binding(get: { entryBeingDeleted != nil }, set: { if !$0 { entryBeingDeleted = nil } }),
+            titleVisibility: .visible,
+            presenting: entryBeingDeleted
+        ) { entry in
+            Button(entry.isCarriedForward ? "Remove This and Later Days" : "Remove All", role: .destructive) {
+                entry.laterCarriedEntries(in: modelContext).forEach(modelContext.delete)
+                modelContext.delete(entry)
+                try? modelContext.save()
+            }
+            Button(entry.isCarriedForward ? "Remove Only This Day" : "Remove Only This Entry") {
+                modelContext.delete(entry)
+                try? modelContext.save()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var deletionQuestion: String {
+        guard let entry = entryBeingDeleted else { return "" }
+        let container = entry.containerName
+        return entry.isCarriedForward
+            ? "Also remove the later days from this \(container)?"
+            : "Also remove the rest of this \(container) from the following days?"
+    }
+
+    /// Deletes an entry, first asking about any days carried forward after it.
+    private func delete(_ entry: FoodLogEntry) {
+        if entry.laterCarriedEntries(in: modelContext).isEmpty {
+            modelContext.delete(entry)
+            try? modelContext.save()
+        } else {
+            entryBeingDeleted = entry
         }
     }
 
@@ -225,6 +261,14 @@ private struct LogEntryRow: View {
                     .compactMap(\.self).joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if entry.isCarriedForward, let openedAt = entry.openedAt {
+                    Label(
+                        "From a \(entry.containerName) opened \(openedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))",
+                        systemImage: "arrow.turn.down.right"
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             Text("\(Portion.formatKilocalories(entry.kilocalories)) kcal")
