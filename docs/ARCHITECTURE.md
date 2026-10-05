@@ -154,6 +154,7 @@ Targets:
 |---|---|
 | `WeightLoggingUITests.swift` | Add weights, switch units 50 times (no drift), reopen, delete. |
 | `SavedFoodsUITests.swift` | Browse/search/details; add/edit/delete foods; no duplicate import and deleted foods stay deleted. |
+| `RecentFoodsUITests.swift` | Log Food Recent rows: a saved food, a food deleted after logging and a quick entry each open on the first tap with the keyboard up (4 rounds); Frequent doesn't repeat them; logging again from the deleted food's copy. |
 
 UI tests expect a **fresh install** (no saved data). See §10 for their current state.
 
@@ -162,6 +163,7 @@ UI tests expect a **fresh install** (no saved data). See §10 for their current 
 |---|---|
 | `FoodMatcherTests.swift` | FoodMatcher against the bundled seed data: exact name, line + recipe, shreds-vs-pâté ambiguity, one-letter OCR error, unrelated brand, size detection. |
 | `CalorieVerifierTests.swift` | The verifier only, on fixed texts: evidence present/absent, a value missing from its evidence, kJ vs kcal, per-cup vs per-can, a feeding-guide amount, a multipack total, consistent and inconsistent triples, calculated per-can calories, oz and lb conversion, deduplication, out-of-range kcal/kg. |
+| `RecentUsageTests.swift` | Recent/Frequent: a deleted food stays as a snapshot item, a quick entry opens prefilled, a food in Recent isn't repeated in Frequent (ids unique per section), same-named foods with different IDs stay separate. |
 | `BackupRoundTripTests.swift` | One of every backed-up record, export → file → read/validate → restore into a second in-memory container → export again; compares every field and the photo files. |
 
 ### Other files
@@ -619,7 +621,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 
 ## 10. Known issues and technical debt
 
-- **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05 (`BackupRoundTripTests` re-run after adding schedules: passing). Scheduled-feeding materialization has no automated test. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
+- **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05 (`BackupRoundTripTests` re-run after adding schedules: passing). `RecentUsageTests` (4) and the UI test `RecentFoodsUITests` (Recent rows for a saved food, a deleted food and a quick entry each open on the first tap with the keyboard up, 4 rounds; logging again from a deleted food) passed on 2026-10-05. Scheduled-feeding materialization has no automated test. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
   Live scanning, the model judge and the Log Food screens have no automated tests.
 - **The UI test target is not confirmed green.** Last run (2026-10-04, stopped by the owner
   before a rerun): `WeightLoggingUITests` passed; both `SavedFoodsUITests` tests failed when

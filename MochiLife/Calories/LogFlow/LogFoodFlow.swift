@@ -346,6 +346,7 @@ private struct LogFoodHomeView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(section == .recent ? "recentRow" : "frequentRow")
         .accessibilityHint(item.isInSavedFoods ? "Logs this food" : "Logs this again; it isn't in saved foods")
     }
 
