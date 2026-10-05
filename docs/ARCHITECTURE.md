@@ -447,7 +447,7 @@ MochiLifeApp
                                 (sheets: SavedFoodsView(.schedule) → ScheduleEditorView(.create); ScheduleEditorView(.edit))
                               NavigationLink(value: .dailyCalorieSettings) → CalorieTargetSettingsView
              registers .navigationDestination(for: CaloriesScreen) and .savedFoodsDestinations(mode: .browse)
-             toolbar trailing: "Log Food" (filled capsule) → MochiHome.openLogFood() → sheet LogFoodFlowView(day:)
+             toolbar trailing: "Log Food" (.glassProminent) → MochiHome.openLogFood() → sheet LogFoodFlowView(day:)
              sheet(item:): edit entry → NavigationStack → LogEntryForm(.edit)
              confirmationDialog: delete with carried days
        
@@ -1024,13 +1024,24 @@ Every new persisted field must be added to the backup DTOs, the mapping, and
 
 ### Entry
 The Calories day view has one primary action: **"Log Food" in the navigation bar**, the only and
-outermost `.topBarTrailing` item. It is a `Label` ("Log Food", `plus.circle.fill`) styled
-`.borderedProminent` with `.buttonBorderShape(.capsule)` and the accent tint, so it reads as a
-filled pill.
-- `ViewThatFits` falls back to the icon alone when the title doesn't fit (large Dynamic Type,
-  narrow widths); the accessibility label stays "Log Food".
-- The hint is "Opens search and camera logging for <day>".
-- The hit target is at least 44 × 44 pt.
+outermost `.topBarTrailing` item. It uses **system toolbar styling only**:
+`Button("Log Food", systemImage: "plus")`, `.labelStyle(.titleAndIcon)`,
+`.buttonStyle(.glassProminent)`, the accent tint and `.fixedSize()`, so the prominent glass hugs
+the whole label at every text size. There are no custom backgrounds, frames, clip shapes or
+fallbacks.
+- The accessibility label is "Log Food", and the hint is "Opens search and camera logging for
+  <day>".
+- *Fixed 2026-10-05:* it used a `ViewThatFits` whose full label was `.fixedSize()`, inside
+  `.borderedProminent` with a capsule shape and a fixed minimum frame. The toolbar gave the button
+  less width than that label, so the capsule was drawn at the narrower size and the fixed-size text
+  spilled past it.
+
+Day log rows (`LogEntryRow`) set their separator explicitly
+(`.alignmentGuide(.listRowSeparatorLeading)` at the text column, after the 44 pt thumbnail and
+12 pt spacing; trailing at the row's trailing edge). That keeps every row's separator identical.
+The "From a can opened…" and "Scheduled" lines are a fixed 16 pt icon slot plus a caption, not
+`Label`s. *(Fixed 2026-10-05: a `Label` in a row set that row's separator start from its own
+title, past its icon, so carried rows' separators didn't line up with the others.)*
 
 It shows on every day, in both the large and the collapsed title. It logs to the day being viewed
 (at the current time) via the `logDay` environment value. Nothing is pinned at the bottom, so the

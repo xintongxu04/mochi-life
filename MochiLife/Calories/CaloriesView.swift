@@ -84,27 +84,16 @@ struct DayLogView: View {
                 }
                 // The one primary action: a filled pill, outermost on the right, on every day.
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        home.openLogFood()
-                    } label: {
-                        ViewThatFits(in: .horizontal) {
-                            Label("Log Food", systemImage: "plus.circle.fill")
-                                .labelStyle(.titleAndIcon)
-                                .fixedSize()
-                            Label("Log Food", systemImage: "plus.circle.fill")
-                                .labelStyle(.iconOnly)
-                        }
-                        .font(.headline)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.capsule)
-                    .tint(.accentColor)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(.capsule)
-                    .accessibilityLabel("Log Food")
-                    .accessibilityHint(isToday ? "Opens search and camera logging for today"
-                                               : "Opens search and camera logging for \(title)")
-                    .accessibilityIdentifier("logFoodButton")
+                    // System toolbar styling only, so the glass hugs the whole label.
+                    Button("Log Food", systemImage: "plus") { home.openLogFood() }
+                        .labelStyle(.titleAndIcon)
+                        .buttonStyle(.glassProminent)
+                        .tint(.accentColor)
+                        .fixedSize()
+                        .accessibilityLabel("Log Food")
+                        .accessibilityHint(isToday ? "Opens search and camera logging for today"
+                                                   : "Opens search and camera logging for \(title)")
+                        .accessibilityIdentifier("logFoodButton")
                 }
             }
             .sheet(isPresented: $home.isLoggingFood) {
@@ -368,8 +357,13 @@ private struct CalorieProgressView: View {
 private struct LogEntryRow: View {
     let entry: FoodLogEntry
 
+    nonisolated static let thumbnailSize: CGFloat = 44
+    nonisolated static let spacing: CGFloat = 12
+    /// Width of the icon slot in the "From a can opened…" and "Scheduled" lines.
+    static let iconSlotWidth: CGFloat = 16
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Self.spacing) {
             if entry.isQuickEntry {
                 Image(systemName: "bolt")
                     .font(.title3)
@@ -387,17 +381,11 @@ private struct LogEntryRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if entry.isCarriedForward, let openedAt = entry.openedAt {
-                    Label(
-                        "From a \(entry.containerName) opened \(openedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))",
-                        systemImage: "arrow.turn.down.right"
-                    )
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    indicator("arrow.turn.down.right",
+                              "From a \(entry.containerName) opened \(openedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))")
                 }
                 if entry.isScheduled {
-                    Label("Scheduled", systemImage: "repeat")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    indicator("repeat", "Scheduled")
                         .accessibilityLabel("Added by a feeding schedule")
                 }
             }
@@ -405,6 +393,24 @@ private struct LogEntryRow: View {
             Text("\(Portion.formatKilocalories(entry.kilocalories)) kcal")
                 .monospacedDigit()
         }
+        // One separator for every row, set explicitly: from the text column to the trailing edge.
+        // (A `Label` in the row used to set its own separator start from its title, past its icon,
+        // so carried and scheduled rows got a separator that started further in than the others.)
+        .alignmentGuide(.listRowSeparatorLeading) { _ in Self.thumbnailSize + Self.spacing }
+        .alignmentGuide(.listRowSeparatorTrailing) { dimensions in dimensions[.trailing] }
+    }
+
+    /// A small icon in a fixed-width slot, centred on its caption line, then the caption.
+    private func indicator(_ symbol: String, _ text: String) -> some View {
+        HStack(alignment: .center, spacing: 4) {
+            Image(systemName: symbol)
+                .frame(width: Self.iconSlotWidth)
+                .accessibilityHidden(true)
+            Text(text)
+        }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
     }
 }
 
