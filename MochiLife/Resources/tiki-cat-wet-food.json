@@ -1,0 +1,4126 @@
+{
+ "brand": "Tiki Cat",
+ "category": "wet cat food",
+ "source": "tikipets.com product pages; two foods come from brand-page text Xintong pasted (see their notes)",
+ "read_on": "2026-10-04",
+ "how_kcal_per_g_was_set": "Uses the kcal/kg printed on the page when there is one (divided by 1000). Otherwise calculated from kcal per can or pouch divided by its weight in grams (1 oz = 28.35 g).",
+ "not_read": [],
+ "excluded": "Variety packs, dry food, treats, broths and meal toppers outside the wet food section.",
+ "products": [
+  {
+   "name": "Tiki Cat After Dark Chicken & Pork Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "59 kcal/2.8 oz can; 116 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.743,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.744,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, chicken gizzard, chicken heart, pork, tricalcium phosphate, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, tuna oil, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.6,
+    "moisture_max_pct": 81.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-pork/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 59,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 116,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Chicken & Quail Egg Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "66 kcal/2.8 oz can; 129 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.831,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.827,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, quail egg, chicken liver, chicken gizzard, chicken heart, tricalcium phosphate, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, tuna oil, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.4,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-quail/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 66,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 129,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Beef & Beef Liver Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1127 kcal ME/kg; 96 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.127,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Beef, beef broth, beef liver, beef lung, beef kidney, natural flavor, brewers dried yeast, potassium chloride, guar gum, choline chloride, tricalcium phosphate, taurine, cassia gum, xanthan gum, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/pate-cat/after-dark-pate/beef-beef-liver-pate/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 96,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 176,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Chicken & Beef Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "987 kcal ME/kg; 79 kcal/2.8 oz can; 154 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.987,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, beef, chicken liver, chicken gizzard, chicken heart, sunflower oil, dried egg product, tricalcium phosphate, potassium chloride, xanthan gum, agar agar, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, copper amino acid chelate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/pate-chicken-beef-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 79,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 154,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Chicken & Duck Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "927 kcal ME/kg; 74 kcal/2.8 oz can; 145 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.927,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, duck, chicken liver, chicken gizzard, chicken heart, sunflower oil, dried egg product, tricalcium phosphate, potassium chloride, xanthan gum, agar agar, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, copper amino acid chelate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/patechicken-duck-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 74,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 145,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Chicken & Quail Egg Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "912 kcal ME/kg; 73 kcal/2.8 oz can; 142 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.912,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, quail egg, chicken liver, chicken gizzard, chicken heart, sunflower oil, dried egg product, tricalcium phosphate, potassium chloride, xanthan gum, agar agar, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, copper amino acid chelate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/pate-chicken-quail-egg-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 73,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 142,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Chicken Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "897 kcal ME/kg; 72 kcal/2.8 oz can; 140 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.897,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, chicken liver, chicken gizzard, chicken heart, sunflower oil, dried egg product, tricalcium phosphate, potassium chloride, xanthan gum, agar agar, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, copper amino acid chelate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/pate-chicken-recipe-in-chicken-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 140,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Chicken, Chicken Liver & Quail Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1165 kcal ME/kg; 99 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.165,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, quail, brewers dried yeast, chicken heart, guar gum, potassium chloride, choline chloride, cassia gum, xanthan gum, taurine, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 6.5,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-chicken-liver-quail-recipe/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 99,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 182,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Duck & Chicken Liver Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1099 kcal ME/kg; 93 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.099,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Duck, duck broth, chicken liver, chicken heart, natural flavor, brewers dried yeast, guar gum, potassium chloride, choline chloride, taurine, cassia gum, xanthan gum, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/duck-chicken-liver-pate/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 93,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 171,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Lamb & Beef Liver Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1289 kcal ME/kg; 110 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.289,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Lamb, lamb broth, beef liver, natural flavor, brewers dried yeast, guar gum, potassium chloride, choline chloride, sunflower oil, cassia gum, xanthan gum, taurine, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 9.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/lamb-beef-liver-recipe/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 110,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 201,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Rabbit & Chicken Liver Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1155 kcal ME/kg; 98 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.155,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Rabbit, duck, chicken broth, chicken liver, chicken heart, natural flavor, brewers dried yeast, potassium chloride, guar gum, choline chloride, taurine, cassia gum, xanthan gum, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 6.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/rabbit-chicken-liver-pate/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 98,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 180,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Turkey & Turkey Liver Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1223 kcal ME/kg; 104 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.223,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Turkey, turkey broth, turkey liver, natural flavor, turkey heart, brewers dried yeast, guar gum, potassium chloride, choline chloride, taurine, cassia gum, xanthan gum, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 7.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/turkey-turkey-liver/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 104,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 191,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Pâté Venison & Beef Liver Recipe",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "1031 kcal ME/kg; 88 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.031,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Venison, venison broth, beef liver, natural flavor, brewers dried yeast, guar gum, potassium chloride, choline chloride, taurine, cassia gum, xanthan gum, iron proteinate, zinc proteinate, vitamin E supplement, thiamine mononitrate (vitamin B1), copper proteinate, manganese proteinate, sodium selenite, niacin supplement (vitamin B3), d-calcium pantothenate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), vitamin A supplement, biotin, potassium iodide, vitamin D3 supplement, vitamin B12 supplement, folic acid",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 78.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/venison-beef-liver-pate/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 88,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 161,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Shreds Chicken, Quail & Chicken Liver Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can"
+   ],
+   "calorie_statement": "801 kcal ME/kg; 68 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.801,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, quail, chicken liver, chicken heart, sunflower oil, salt, guar gum, potassium chloride, taurine, choline chloride, magnesium sulfate, zinc oxide, calcium carbonate, iron glycine complex, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), copper sulfate, sodium selenite, manganese sulfate, vitamin A supplement, d-calcium pantothenate, vitamin B12 supplement, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), biotin, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/tiki-cat-after-dark-shreds-wet-cat-food-chicken-quail-chicken-liver-3-oz/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Shreds Turkey & Turkey Liver Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can"
+   ],
+   "calorie_statement": "934 kcal ME/kg; 79 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.934,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Turkey, turkey broth, turkey liver, turkey heart, sunflower oil, tricalcium phosphate, guar gum, salt, potassium chloride, taurine, calcium carbonate, choline chloride, magnesium sulfate, zinc oxide, iron glycine complex, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), copper sulfate, sodium selenite, manganese sulfate, vitamin A supplement, d-calcium pantothenate, vitamin B12 supplement, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), biotin, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/tiki-cat-after-dark-shreds-wet-cat-food-turkey-turkey-liver-3-oz/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 79,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Shreds With Rabbit & Chicken Liver in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can"
+   ],
+   "calorie_statement": "769 kcal ME/kg; 65 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.769,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, rabbit, chicken liver, chicken heart, sunflower oil, salt, guar gum, potassium chloride, taurine, choline chloride, magnesium sulfate, calcium carbonate, zinc oxide, iron glycine complex, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), copper sulfate, sodium selenite, manganese sulfate, vitamin A supplement, d-calcium pantothenate, vitamin B12 supplement, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), biotin, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/tiki-cat-after-dark-shreds-wet-cat-food-rabbit-chicken-liver-3-oz/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 65,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Shreds With Venison & Beef Liver Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "3 oz can"
+   ],
+   "calorie_statement": "805 kcal ME/kg; 68 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.805,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Venison broth, chicken, venison, beef liver, salt, guar gum, potassium chloride, taurine, choline chloride, magnesium sulfate, zinc oxide, tricalcium phosphate, iron glycine complex, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), copper sulfate, sodium selenite, manganese sulfate, vitamin A supplement, d-calcium pantothenate, vitamin B12 supplement, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), biotin, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/tiki-cat-after-dark-shreds-wet-cat-food-venison-beef-liver-3-oz/",
+   "servings": [
+    {
+     "size": "3 oz can",
+     "grams": 85.0,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Velvet Mousse Chicken & Beef Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "1082 kcal ME/kg; 87 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.082,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, beef, chicken liver, chicken gizzard, chicken heart, dried egg product, sunflower oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/velvet-mousse-chicken-beef-recipe-in-chicken-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 87,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Velvet Mousse Chicken & Duck Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "1082 kcal ME/kg; 87 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.082,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, duck, chicken liver, chicken gizzard, chicken heart, dried egg product, sunflower oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/velvet-mousse-chicken-duck-recipe-in-chicken-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 87,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Velvet Mousse Chicken & Quail Egg Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "1045 kcal ME/kg; 84 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.045,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, quail egg, chicken liver, chicken gizzard, chicken heart, dried egg product, sunflower oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/velvet-mousse-chicken-quail-egg-recipe-in-chicken-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 84,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Velvet Mousse Chicken Recipe in Chicken Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "1045 kcal ME/kg; 84 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.045,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, chicken liver, chicken gizzard, chicken heart, dried egg product, sunflower oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, thiamine mononitrate, vitamin E supplement, ferrous sulfate, niacin, zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride, folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/velvet-mousse-chicken-recipe-in-chicken-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 84,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Whole Foods Chicken & Beef Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "59 kcal/2.8 oz can; 116 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.743,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.744,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, chicken gizzard, chicken heart, beef, tricalcium phosphate, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, tuna oil, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.4,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 81.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-beef/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 59,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 116,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Whole Foods Chicken & Duck Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "59 kcal/2.8 oz can; 114 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.743,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.731,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, chicken gizzard, chicken heart, duck, tricalcium phosphate, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, tuna oil, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-duck/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 59,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 114,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Whole Foods Chicken & Lamb Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "61 kcal/2.8 oz can; 120 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.768,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.77,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, chicken gizzard, chicken heart, lamb, tricalcium phosphate, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, tuna oil, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 2.3,
+    "crude_fiber_max_pct": 0.6,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-lamb/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 61,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 120,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat After Dark Whole Foods Chicken Recipe in Broth",
+   "line": "After Dark",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "66 kcal/2.8 oz can; 128 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.831,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.821,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, chicken gizzard, chicken heart, tricalcium phosphate, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, tuna oil, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.2,
+    "crude_fiber_max_pct": 0.7,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-2/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 66,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 128,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Hanalei Luau Wild Salmon",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "71 kcal/2.8 oz can; 151 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.894,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.888,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Salmon, salmon broth, sunflower seed oil, calcium lactate, dicalcium phosphate, potassium chloride, taurine, choline chloride, salt, magnesium sulfate, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, sodium selenite, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), folic acid, menadione sodium bisulfite complex (source of vitamin K activity), potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 15.0,
+    "crude_fat_min_pct": 3.5,
+    "crude_fiber_max_pct": 0.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/wild-salmon/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 71,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 151,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Hanalei Luau Wild Salmon Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 897 kcal/kg, 72 kcal/can; 5.5 oz can: 801 kcal/kg, 125 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.897,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.801,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Salmon broth, salmon, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.5,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 83.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/wild-salmon-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 125,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Hookena Luau Ahi Tuna & Chicken",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "72 kcal/2.8 oz can; 153 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.907,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.899,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken broth, tuna, chicken, sunflower seed oil, calcium lactate, tricalcium phosphate, choline chloride, fish oil, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, manganese sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, iron sulfate, folic acid, potassium iodide, vitamin D3 supplement, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 16.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 79.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/ahi-tuna-chicken/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 153,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Hookena Luau Ahi Tuna & Chicken Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 1128 kcal/kg, 90 kcal/can; 5.5 oz can: 1094 kcal/kg, 171 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 1.128,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 1.094,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, chicken, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.5,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/ahi-tuna-chicken-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 90,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 171,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Kapi'Olani Luau Tilapia",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "53 kcal/2.8 oz can; 113 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.668,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.664,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tilapia, tilapia broth, mackerel, sunflower seed oil, olive oil, dicalcium phosphate, calcium lactate, taurine, potassium chloride, salt, choline chloride, magnesium sulfate, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.0,
+    "moisture_max_pct": 84.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/tilapia/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 53,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 113,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Kapi'Olani Luau Tilapia Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 935 kcal/kg, 75 kcal/can; 5.5 oz can: 903 kcal/kg, 141 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.935,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.903,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tilapia broth, tilapia, mackerel, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.5,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/tilapia-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 75,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 141,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Koolina Luau Chicken & Egg",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can",
+    "10 oz can"
+   ],
+   "calorie_statement": "69 kcal/2.8 oz can; 146 kcal/6 oz can; 244 kcal/10 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.869,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.858,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "10 oz can",
+     "kcal_per_g": 0.861,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, dried egg, sunflower seed oil, calcium lactate, dicalcium phosphate, potassium chloride, taurine, choline chloride, salt, magnesium sulfate, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, copper amino acid chelate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 15.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.0,
+    "moisture_max_pct": 79.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/chicken-with-egg/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 69,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 146,
+     "basis": "stated on page"
+    },
+    {
+     "size": "10 oz can",
+     "grams": 283.5,
+     "kcal": 244,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Koolina Luau Chicken with Egg Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 965 kcal/kg, 77 kcal/can; 5.5 oz can: 1004 kcal/kg, 157 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.965,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 1.004,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 81.5,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/chicken-egg-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 77,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 157,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Napili Luau Wild Salmon & Chicken",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "72 kcal/2.8 oz can; 153 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.907,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.899,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Salmon, chicken, chicken broth, sunflower seed oil, calcium lactate, dicalcium phosphate, potassium chloride, taurine, choline chloride, salt, magnesium sulfate, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 15.0,
+    "crude_fat_min_pct": 3.5,
+    "crude_fiber_max_pct": 0.0,
+    "moisture_max_pct": 79.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/wild-salmon-chicken/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 153,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Napili Luau Wild Salmon & Chicken Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 906 kcal/kg, 72 kcal/can; 5.5 oz can: 883 kcal/kg, 138 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.906,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.883,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Salmon broth, salmon, chicken, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/wild-salmon-chicken-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 138,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Oahu Luau Seabass",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "59 kcal/2.8 oz can; 124 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.743,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.729,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Seabass broth, seabass, mackerel, sunflower seed oil, dicalcium phosphate, olive oil, calcium lactate, potassium chloride, taurine, salt, choline chloride, magnesium sulfate, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, menadione sodium bisulfite complex (source of vitamin K activity), potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.0,
+    "moisture_max_pct": 83.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/seabass/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 59,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 124,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Oahu Luau Seabass Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 940 kcal/kg, 75 kcal/can; 5.5 oz can: 1035 kcal/kg, 161 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.94,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 1.035,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Seabass broth, seabass, mackerel, sardine, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.5,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/seabass-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 75,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 161,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Papeekeo Luau Ahi Tuna & Mackerel",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "71 kcal/2.8 oz can; 150 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.894,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.882,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna, mackerel, tuna broth, sunflower seed oil, calcium lactate, tricalcium phosphate, choline chloride, fish oil, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, manganese sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), iron sulfate, copper sulfate, folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 17.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 79.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/ahi-tuna-mackerel/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 71,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 150,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Papeekeo Luau Ahi Tuna & Mackerel Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 998 kcal/kg, 80 kcal/can; 5.5 oz can: 877 kcal/kg, 137 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.998,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.877,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, mackerel, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, copper amino acid chelate, calcium pantothenate, riboflavin, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 3.5,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 81.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/ahi-tuna-mackerel-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 80,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 137,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Puka Puka Luau Succulent Chicken",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can",
+    "10 oz can"
+   ],
+   "calorie_statement": "63 kcal/2.8 oz can; 134 kcal/6 oz can; 225 kcal/10 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.794,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.788,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "10 oz can",
+     "kcal_per_g": 0.794,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower seed oil, calcium lactate, dicalcium phosphate, potassium chloride, taurine, choline chloride, salt, magnesium sulfate, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, copper amino acid chelate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 16.0,
+    "crude_fat_min_pct": 2.6,
+    "crude_fiber_max_pct": 0.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/succulent-chicken/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 63,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 134,
+     "basis": "stated on page"
+    },
+    {
+     "size": "10 oz can",
+     "grams": 283.5,
+     "kcal": 225,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Puka Puka Luau Succulent Chicken Pâté",
+   "line": "Luau",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can"
+   ],
+   "calorie_statement": "2.8 oz can: 959 kcal/kg, 77 kcal/can; 5.5 oz can: 994 kcal/kg, 155 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.959,
+     "basis": "stated kcal/kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "kcal_per_g": 0.994,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower seed oil, dried egg product, calcium lactate, dicalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, choline chloride, salt, magnesium sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.1,
+    "moisture_max_pct": 81.5,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/luau/succulent-chicken-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 77,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 155,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Bora Bora Grill Sardine Cutlets in Lobster Consomme",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "58 kcal/2.8 oz can; 124 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.731,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.729,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Sardine, lobster broth, sunflower seed oil, locust bean gum, guar gum, xanthan gum, choline chloride, paprika, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, iron sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, folic acid, manganese sulfate, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 83.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/sardine-cutlets-lobster/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 58,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 124,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Grill Mackerel & Sardines Pâté",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can"
+   ],
+   "calorie_statement": "918 kcal ME/kg; 73 kcal/2.8 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.918,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Fish broth, tuna, mackerel, sardines, dried egg product, sunflower seed oil, tricalcium phosphate, agar-agar, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity)",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/mackerel-sardines-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 73,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Grill Sardines & Lobster Consomme Pâté",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can"
+   ],
+   "calorie_statement": "901 kcal ME/kg; 72 kcal/2.8 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.901,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Sardine broth, sardines, tuna, lobster broth, dried egg product, sunflower seed oil, tricalcium phosphate, agar-agar, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity)",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/sardines-lobster-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Grill Sardines Pâté",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can"
+   ],
+   "calorie_statement": "904 kcal ME/kg; 72 kcal/2.8 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.904,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Sardine broth, sardines, tuna, dried egg product, sunflower seed oil, tricalcium phosphate, agar-agar, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, menadione sodium bisulfite complex (source of vitamin K activity), pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/sardines/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Grill Tuna & Crab Pâté",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can"
+   ],
+   "calorie_statement": "923 kcal ME/kg; 74 kcal/2.8 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.923,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna, tuna broth, crab, dried egg product, sunflower seed oil, tricalcium phosphate, agar-agar, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity)",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/tuna-with-crab-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 74,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Grill Tuna & Crab Surimi Pâté",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can"
+   ],
+   "calorie_statement": "924 kcal ME/kg; 74 kcal/2.8 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.924,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna, tuna broth, crab surimi, dried egg product, sunflower seed oil, tricalcium phosphate, agar-agar, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity)",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/tuna-crab-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 74,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Grill Tuna & Prawn Pâté",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can"
+   ],
+   "calorie_statement": "960 kcal ME/kg; 77 kcal/2.8 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.96,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna, tuna broth, prawn, dried egg product, sunflower seed oil, tricalcium phosphate, agar-agar, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin, menadione sodium bisulfite complex (source of vitamin K activity), pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/tuna-prawn-pate/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 77,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Hana Grill Ahi Tuna & Crab in Broth",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "76 kcal/2.8 oz can; 159 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.957,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.935,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna, fish broth, crab, sunflower seed oil, calcium lactate, tricalcium phosphate, choline chloride, fish oil, taurine, vitamin E supplement, zinc sulfate, niacin (vitamin B3), thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, manganese sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, iron sulfate, folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 16.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 79.0,
+    "other": [
+     "Ash (min) DM 0.04%"
+    ]
+   },
+   "notes": [
+    "Guaranteed analysis: as shown on the page; likely a site labeling error for Taurine"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/ahi-tuna-with-crab/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 76,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 159,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Hawaiian Grill Ahi Tuna",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can",
+    "10 oz can"
+   ],
+   "calorie_statement": "70 kcal/2.8 oz can; 151 kcal/6 oz can; 251 kcal/10 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.882,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.888,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "10 oz can",
+     "kcal_per_g": 0.885,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna, fish broth, sunflower seed oil, calcium lactate, tricalcium phosphate, choline chloride, taurine, vitamin E supplement, zinc sulfate, niacin (vitamin B3), thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, manganese sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, iron sulfate, folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 16.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 78.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/ahi-tuna/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 70,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 151,
+     "basis": "stated on page"
+    },
+    {
+     "size": "10 oz can",
+     "grams": 283.5,
+     "kcal": 251,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Lanai Grill Tuna & Crab Surimi",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "72 kcal/2.8 oz can; 152 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.907,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.894,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna, fish broth, crab surimi (ocean whitefish, crab broth), sunflower seed oil, calcium lactate, tricalcium phosphate, choline chloride, taurine, vitamin E supplement, zinc sulfate, niacin (vitamin B3), thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, manganese sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, iron sulfate, folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 16.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 78.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/tuna-carb-surimi/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 152,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Makaha Grill Mackerel & Sardines",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can",
+    "10 oz can"
+   ],
+   "calorie_statement": "59 kcal/2.8 oz can; 125 kcal/6 oz can; 208 kcal/10 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.743,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.735,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "10 oz can",
+     "kcal_per_g": 0.734,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Mackerel, sardine, calamari broth, calamari, sunflower seed oil, locust bean gum, guar gum, xanthan gum, choline chloride, paprika, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, iron sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, folic acid, manganese sulfate, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 84.0,
+    "other": [
+     "Ash (min) DM 0.04%"
+    ]
+   },
+   "notes": [
+    "Guaranteed analysis: as shown on the page; likely a site labeling error for Taurine"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/mackerel-sardines/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 59,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 125,
+     "basis": "stated on page"
+    },
+    {
+     "size": "10 oz can",
+     "grams": 283.5,
+     "kcal": 208,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Manana Grill Ahi Tuna & Prawns in Broth",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "75 kcal/2.8 oz can; 157 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.945,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.923,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna, fish broth, prawn, sunflower seed oil, calcium lactate, tricalcium phosphate, choline chloride, fish oil, taurine, vitamin E supplement, zinc sulfate, niacin (vitamin B3), thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, manganese sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, iron sulfate, folic acid, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 16.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 79.0,
+    "other": [
+     "Ash (min) DM 0.04%"
+    ]
+   },
+   "notes": [
+    "Guaranteed analysis: as shown on the page; likely a site labeling error for Taurine"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/ahi-tuna-with-prawns/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 75,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 157,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Tahitian Grill Sardine Cutlets in Sardine Consomme",
+   "line": "Grill",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "6 oz can"
+   ],
+   "calorie_statement": "60 kcal/2.8 oz can; 128 kcal/6 oz can",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz can",
+     "kcal_per_g": 0.756,
+     "basis": "calculated from kcal per container"
+    },
+    {
+     "size": "6 oz can",
+     "kcal_per_g": 0.753,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Sardine, sardine broth, sunflower seed oil, locust bean gum, guar gum, xanthan gum, choline chloride, paprika, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, iron sulfate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), copper sulfate, folic acid, manganese sulfate, potassium iodide, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 2.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 83.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/grill/sardine-cutlets/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 60,
+     "basis": "stated on page"
+    },
+    {
+     "size": "6 oz can",
+     "grams": 170.1,
+     "kcal": 128,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Minced Chicken & Pumpkin Recipe in Broth",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.5 oz can",
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1248 kcal ME/kg; 89 kcal/can or pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.248,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, dicalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, sodium selenite, copper amino acid complex, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/chicken-5/",
+   "servings": [
+    {
+     "size": "2.5 oz can",
+     "grams": 70.9,
+     "kcal": 89,
+     "basis": "stated on page"
+    },
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 89,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Minced Chicken, Pumpkin & Duck Recipe in Broth",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.5 oz can",
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1225 kcal ME/kg; 87 kcal/can or pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.225,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, duck, dicalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, sodium selenite, copper amino acid complex, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/chicken-pumpkin-duck-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.5 oz can",
+     "grams": 70.9,
+     "kcal": 87,
+     "basis": "stated on page"
+    },
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 87,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Minced Chicken, Pumpkin & Lamb Recipe in Broth",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.5 oz can",
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1304 kcal ME/kg; 93 kcal/can or pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.304,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, lamb, dicalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, sodium selenite, copper amino acid complex, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/chicken-pumpkin-lamb-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.5 oz can",
+     "grams": 70.9,
+     "kcal": 93,
+     "basis": "stated on page"
+    },
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 93,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Minced Chicken, Pumpkin & Tuna Recipe in Broth",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.5 oz can",
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1227 kcal ME/kg; 87 kcal/can or pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.227,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, tuna, dicalcium phosphate, xanthan gum, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), vitamin A supplement, calcium pantothenate, sodium selenite, copper amino acid complex, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [
+    "Source: Brand's own page, from text pasted by Xintong on 2026-10-04. Matches Chewy's listing"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/chicken-pumpkin-tuna-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.5 oz can",
+     "grams": 70.9,
+     "kcal": 87,
+     "basis": "stated on page"
+    },
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 87,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Tuna & Pumpkin Recipe in Broth",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can",
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "840 kcal ME/kg; 67 kcal/2.8 oz can or pouch; 131 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.84,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, pumpkin, sunflower seed oil, calcium lactate, xanthan gum, tricalcium phosphate, choline chloride, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), sodium selenite, riboflavin supplement (vitamin B2), folic acid, ferrous sulfate, copper sulfate, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 9.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Ash (min) DM 0.04%"
+    ]
+   },
+   "notes": [
+    "Guaranteed analysis: as shown on the page; likely a site labeling error for Taurine"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/tuna-with-pumpkin/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 67,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 131,
+     "basis": "stated on page"
+    },
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 67,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Tuna with Shrimp and Pumpkin",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can",
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "890 kcal ME/kg; 60 kcal/3 oz can; 60 kcal/pouch; 139 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.89,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, shrimp, pumpkin, sunflower seed oil, calcium lactate, xanthan gum, tricalcium phosphate, choline chloride, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), sodium selenite, riboflavin supplement (vitamin B2), folic acid, ferrous sulfate, copper sulfate, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 9.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [
+    "Calories: page figures are inconsistent with each other: 890 kcal/kg implies about 71 kcal per 2.8 oz"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/tuna-with-shrimp-and-pumpkin/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 71,
+     "basis": "calculated from kcal per kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 139,
+     "basis": "calculated from kcal per kg"
+    },
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 71,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Tuna with Tilapia and Pumpkin",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can",
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "893 kcal ME/kg; 62 kcal/3 oz can; 62 kcal/pouch; 139 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.893,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, tilapia, pumpkin, sunflower seed oil, calcium lactate, xanthan gum, tricalcium phosphate, choline chloride, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), sodium selenite, riboflavin supplement (vitamin B2), folic acid, ferrous sulfate, copper sulfate, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 9.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [
+    "Calories: page figures are inconsistent with each other: 893 kcal/kg implies about 71 kcal per 2.8 oz"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/tuna-with-tilapia-and-pumpkin/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 71,
+     "basis": "calculated from kcal per kg"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 139,
+     "basis": "calculated from kcal per kg"
+    },
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 71,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Aloha Friends Tuna, Ocean Whitefish & Pumpkin Recipe in Broth",
+   "line": "Aloha Friends",
+   "type": "food",
+   "sizes": [
+    "2.8 oz can",
+    "5.5 oz can",
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "909 kcal ME/kg; 73 kcal/2.8 oz can or pouch; 142 kcal/5.5 oz can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.909,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, ocean whitefish, pumpkin, sunflower seed oil, calcium lactate, xanthan gum, tricalcium phosphate, choline chloride, taurine, zinc sulfate, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), sodium selenite, riboflavin supplement (vitamin B2), folic acid, ferrous sulfate, copper sulfate, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 9.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [
+    "Source: Brand's own page, from text pasted by Xintong on 2026-10-04. Matches Chewy's listing"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/aloha-friends/tuna-with-oceanwhitefish-and-pumpkin/",
+   "servings": [
+    {
+     "size": "2.8 oz can",
+     "grams": 79.4,
+     "kcal": 73,
+     "basis": "stated on page"
+    },
+    {
+     "size": "5.5 oz can",
+     "grams": 155.9,
+     "kcal": 142,
+     "basis": "stated on page"
+    },
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 73,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Chicken & Pumpkin Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1341 kcal ME/kg; 95 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.341,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, dried egg, calcium lactate, xanthan gum, tricalcium phosphate, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, sodium selenite, pyridoxine hydrochloride (vitamin B6), copper amino acid complex, riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/chicken-pumpkin-2/",
+   "servings": [
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 95,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Chicken, Pumpkin & Duck Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1303 kcal ME/kg; 92 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.303,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, duck, dried egg, calcium lactate, xanthan gum, tricalcium phosphate, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, sodium selenite, pyridoxine hydrochloride (vitamin B6), copper amino acid complex, riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/chicken-duck-5/",
+   "servings": [
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 92,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Chicken, Pumpkin & Lamb Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1358 kcal ME/kg; 96 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.358,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, lamb, dried egg, xanthan gum, calcium lactate, tricalcium phosphate, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, sodium selenite, pyridoxine hydrochloride (vitamin B6), copper amino acid complex, riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/chicken-pumpkin-lamb/",
+   "servings": [
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 96,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Chicken, Pumpkin & Tuna Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.5 oz pouch"
+   ],
+   "calorie_statement": "1321 kcal ME/kg; 94 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.321,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, tuna, dried egg, calcium lactate, xanthan gum, tricalcium phosphate, potassium chloride, choline chloride, salt, magnesium sulfate, taurine, zinc sulfate, niacin (vitamin B3), vitamin E supplement, ferrous sulfate, manganese sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, vitamin A supplement, sodium selenite, pyridoxine hydrochloride (vitamin B6), copper amino acid complex, riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 8.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/chicken-pumpkin-tuna/",
+   "servings": [
+    {
+     "size": "2.5 oz pouch",
+     "grams": 70.9,
+     "kcal": 94,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Tuna & Pumpkin Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "855 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.855,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, pumpkin, sunflower seed oil, dried egg, calcium lactate, guar gum, xanthan gum, tricalcium phosphate, choline chloride, taurine, potassium chloride, vitamin E supplement, niacin (vitamin B3), zinc sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, sodium selenite, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), ferrous sulfate, copper sulfate, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/tuna-pumpkin-2/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Tuna, Pumpkin & Ocean Whitefish Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "870 kcal ME/kg; 70 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.87,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, pumpkin, ocean whitefish, sunflower seed oil, dried egg, calcium lactate, guar gum, xanthan gum, tricalcium phosphate, choline chloride, taurine, potassium chloride, vitamin E supplement, niacin (vitamin B3), zinc sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, sodium selenite, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), ferrous sulfate, copper sulfate, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/tuna-pumpkin-ocean-whitefish/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 70,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Tuna, Pumpkin & Shrimp Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "850 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.85,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, pumpkin, shrimp, sunflower seed oil, dried egg, calcium lactate, guar gum, xanthan gum, tricalcium phosphate, choline chloride, taurine, potassium chloride, vitamin E supplement, niacin (vitamin B3), zinc sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, sodium selenite, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), ferrous sulfate, copper sulfate, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/tuna-pumpkin-shrimp/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Friends Mousse Tuna, Pumpkin & Tilapia Recipe in Broth",
+   "line": "Friends Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "853 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.853,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, pumpkin, tilapia, sunflower seed oil, dried egg, calcium lactate, guar gum, xanthan gum, tricalcium phosphate, choline chloride, taurine, potassium chloride, vitamin E supplement, niacin (vitamin B3), zinc sulfate, thiamine mononitrate (vitamin B1), calcium pantothenate, sodium selenite, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), folic acid, vitamin D3 supplement, menadione sodium bisulfite complex (source of vitamin K activity), ferrous sulfate, copper sulfate, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 3.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 85.0,
+    "other": [
+     "Taurine (min) 0.04%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/friends-mousse/tuna-pumpkin-tilapia/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Velvet Mousse Chicken",
+   "line": "Velvet Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "83 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz pouch",
+     "kcal_per_g": 1.046,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/velvet-mousse/chicken/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 83,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Velvet Mousse Chicken & Egg",
+   "line": "Velvet Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "82 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz pouch",
+     "kcal_per_g": 1.033,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 5.3,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/velvet-mousse/chicken-with-egg-2/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 82,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Velvet Mousse Chicken & Salmon",
+   "line": "Velvet Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "83 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz pouch",
+     "kcal_per_g": 1.046,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, salmon, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 4.8,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/velvet-mousse/chicken-and-salmon/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 83,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Velvet Mousse Salmon",
+   "line": "Velvet Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "72 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz pouch",
+     "kcal_per_g": 0.907,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Salmon, salmon broth, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/velvet-mousse/wild-salmon-2/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 72,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Velvet Mousse Tuna & Chicken",
+   "line": "Velvet Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "79 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz pouch",
+     "kcal_per_g": 0.995,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, chicken, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 13.0,
+    "crude_fat_min_pct": 3.5,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/velvet-mousse/tuna-chicken/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 79,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Velvet Mousse Tuna & Mackerel",
+   "line": "Velvet Mousse",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "80 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "2.8 oz pouch",
+     "kcal_per_g": 1.008,
+     "basis": "calculated from kcal per container"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, mackerel, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, choline chloride, magnesium sulfate, salt, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 14.0,
+    "crude_fat_min_pct": 4.5,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/velvet-mousse/tuna-mackerel/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 80,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Gelée Chicken & Duck Recipe in Gelée",
+   "line": "Gelée",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "850 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.85,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, duck, sunflower seed oil, guar gum, agar agar, tricalcium phosphate, choline chloride, potassium chloride, potassium carbonate, calcium carbonate, xanthan gum, salt, taurine, zinc sulfate, l-carnitine, vitamin E supplement, niacin (vitamin B3), ferrous sulfate, thiamine mononitrate (vitamin B1), manganese sulfate, calcium pantothenate, vitamin A supplement, iron oxide, copper sulfate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), sodium selenite, folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Crude Fat (max) 5%",
+     "Taurine (min) 0.04%",
+     "L-carnitine (min) 50 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/lean-gelee/chicken-duck-4/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Gelée Chicken & Salmon Recipe in Gelée",
+   "line": "Gelée",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "849 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.849,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, salmon, sunflower seed oil, guar gum, agar agar, tricalcium phosphate, choline chloride, potassium chloride, potassium carbonate, calcium carbonate, xanthan gum, salt, taurine, zinc sulfate, l-carnitine, vitamin E supplement, niacin (vitamin B3), ferrous sulfate, thiamine mononitrate (vitamin B1), manganese sulfate, calcium pantothenate, vitamin A supplement, iron oxide, copper sulfate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), sodium selenite, folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Crude Fat (max) 5%",
+     "Taurine (min) 0.04%",
+     "L-carnitine (min) 50 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/lean-gelee/chicken-salmon-2/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Gelée Chicken Recipe in Gelée",
+   "line": "Gelée",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "846 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.846,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower seed oil, guar gum, tricalcium phosphate, agar agar, choline chloride, potassium chloride, potassium carbonate, calcium carbonate, xanthan gum, salt, taurine, zinc sulfate, l-carnitine, vitamin E supplement, niacin (vitamin B3), ferrous sulfate, thiamine mononitrate (vitamin B1), manganese sulfate, calcium pantothenate, vitamin A supplement, iron oxide, copper sulfate, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), sodium selenite, folic acid, vitamin D3 supplement, potassium iodide, biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Crude Fat (max) 5%",
+     "Taurine (min) 0.04%",
+     "L-carnitine (min) 50 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/lean-gelee/chicken-7/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Gelée Tuna & Crab Recipe in Gelée",
+   "line": "Gelée",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "852 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.852,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna, tuna broth, crab, sunflower seed oil, guar gum, natural fish flavor, tricalcium phosphate, agar agar, choline chloride, potassium chloride, potassium carbonate, calcium carbonate, xanthan gum, taurine, zinc sulfate, salt, l-carnitine, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), ferrous sulfate, folic acid, copper sulfate, vitamin D3 supplement, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Crude Fat (max) 5%",
+     "Taurine (min) 0.04%",
+     "L-carnitine (min) 50 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/lean-gelee/tiki-cat-gelee-tuna-crab-12tr-2-8-oz/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Gelée Tuna & Shrimp Recipe in Gelée",
+   "line": "Gelée",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "850 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.85,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna, tuna broth, shrimp, sunflower seed oil, guar gum, natural fish flavor, tricalcium phosphate, agar agar, choline chloride, potassium chloride, potassium carbonate, calcium carbonate, xanthan gum, taurine, zinc sulfate, salt, l-carnitine, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), ferrous sulfate, folic acid, copper sulfate, vitamin D3 supplement, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Crude Fat (max) 5%",
+     "Taurine (min) 0.04%",
+     "L-carnitine (min) 50 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/lean-gelee/tiki-cat-gelee-tuna-shrimp-12tr-2-8-oz/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Gelée Tuna Recipe in Gelée",
+   "line": "Gelée",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "850 kcal ME/kg; 68 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.85,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna, tuna broth, sunflower seed oil, guar gum, natural fish flavor, tricalcium phosphate, agar agar, choline chloride, potassium chloride, potassium carbonate, calcium carbonate, xanthan gum, taurine, zinc sulfate, salt, l-carnitine, vitamin E supplement, niacin (vitamin B3), thiamine mononitrate (vitamin B1), calcium pantothenate, manganese sulfate, vitamin A supplement, pyridoxine hydrochloride (vitamin B6), riboflavin supplement (vitamin B2), ferrous sulfate, folic acid, copper sulfate, vitamin D3 supplement, potassium iodide, menadione sodium bisulfite complex (source of vitamin K activity), biotin, vitamin B12 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 2.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Crude Fat (max) 5%",
+     "Taurine (min) 0.04%",
+     "L-carnitine (min) 50 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/lean-gelee/tiki-cat-gelee-tuna-12tr-2-8-oz/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 68,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Comfort Purée with Chicken, Chicken Liver & Pumpkin Recipe in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "6 oz pouch"
+   ],
+   "calorie_statement": "982 kcal ME/kg; 167 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.982,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, dried egg, chicken liver, coconut oil, pumpkin, calcium lactate, xanthan gum, tuna oil, potassium chloride, taurine, choline chloride, magnesium sulfate, natural tuna flavor, turmeric, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, green tea extract, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Phosphorus (min) 0.09%",
+     "Phosphorus (max) 0.15%",
+     "Vitamin A (min) 2000 IU/kg",
+     "Vitamin E (min) 10 IU/kg",
+     "Taurine (min) 0.1%",
+     "Omega 3 Fatty Acids (min) 0.05%",
+     "Omega 6 Fatty Acids (min) 0.5%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/liquid/comfort-liquid/chicken-chicken-liver-pumpkin-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "6 oz pouch",
+     "grams": 170.1,
+     "kcal": 167,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Mousse with Chicken & Pumpkin in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "941 kcal ME/kg; 75 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.941,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, pumpkin, dried egg, sunflower seed oil, tricalcium phosphate, xanthan gum, potassium chloride, salt, turmeric, choline chloride, magnesium sulfate, taurine, fish oil, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, green tea extract, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 3.8,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Omega 3 Fatty Acids (min) 0.1%",
+     "Omega 6 Fatty Acids (min) 1.8%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/chicken-for-seniors/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 75,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Mousse with Chicken, Duck & Duck Liver in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "917 kcal ME/kg; 73 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.917,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, coconut oil, duck, duck liver, pumpkin, dried egg, tricalcium phosphate, xanthan gum, potassium chloride, taurine, choline chloride, tuna oil, salt, magnesium sulfate, turmeric, thiamine mononitrate (vitamin B1), vitamin E supplement, green tea extract, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Vitamin A (max) 5000 IU/kg",
+     "Vitamin E (max) 25 IU/kg",
+     "Taurine (min) 0.2%",
+     "Omega 3 Fatty Acids (min) 0.03%",
+     "Omega 6 Fatty Acids (min) 0.15%"
+    ]
+   },
+   "notes": [
+    "Guaranteed analysis: page says max",
+    "Guaranteed analysis: page says max"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/tiki-cat-silver-mousse-with-chicken-duck-duck-liver-in-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 73,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Mousse with Salmon & Pumpkin in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "867 kcal ME/kg; 69 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.867,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Salmon broth, salmon, chicken, pumpkin, sunflower seed oil, dried egg, tricalcium phosphate, xanthan gum, potassium chloride, salt, choline chloride, turmeric, magnesium sulfate, taurine, tuna oil, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, green tea extract, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), menadione sodium bisulfite complex (source of vitamin K activity), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 9.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 83.0,
+    "other": [
+     "Vitamin A (min) 6,000 IU/kg",
+     "Vitamin E (min) 25 IU/kg",
+     "Omega 3 Fatty Acids (min) 0.1%",
+     "Omega 6 Fatty Acids (min) 1.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/senior-mousse-with-salmon-pumpkin-in-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 69,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Mousse with Tuna, Mackerel & Pumpkin in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "2.8 oz pouch"
+   ],
+   "calorie_statement": "1001 kcal ME/kg; 80 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.001,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Tuna broth, tuna, mackerel, pumpkin, coconut oil, dried egg, tricalcium phosphate, xanthan gum, potassium chloride, taurine, choline chloride, tuna oil, salt, magnesium sulfate, turmeric, thiamine mononitrate (vitamin B1), vitamin E supplement, green tea extract, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), copper amino acid chelate, menadione sodium bisulfite complex (source of vitamin K activity), pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Vitamin A (max) 5000 IU/kg",
+     "Vitamin E (max) 25 IU/kg",
+     "Taurine (min) 0.2%",
+     "Omega 3 Fatty Acids (min) 0.03%",
+     "Omega 6 Fatty Acids (min) 0.15%"
+    ]
+   },
+   "notes": [
+    "Guaranteed analysis: page says max",
+    "Guaranteed analysis: page says max"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-silver-mousse-with-tuna-mackerel-pumpkin-in-broth/",
+   "servings": [
+    {
+     "size": "2.8 oz pouch",
+     "grams": 79.4,
+     "kcal": 80,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Pâté Chicken Recipe in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "2.4 oz can"
+   ],
+   "calorie_statement": "914 kcal ME/kg; 62 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.914,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, coconut oil, pumpkin, dried egg, tricalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, tuna oil, salt, choline chloride, magnesium sulfate, turmeric, thiamine mononitrate (vitamin B1), vitamin E supplement, green tea extract, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin, copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Calcium (min) 0.15%",
+     "Phosphorus (min) 0.10%",
+     "Vitamin A (min) 5000 IU/kg",
+     "Vitamin E (min) 25 IU/kg",
+     "Taurine (min) 0.2%",
+     "Omega 3 Fatty Acid (min) 0.03%",
+     "Omega 6 Fatty Acid (min) 0.15%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/tiki-cat-silver-pate-chicken-recipe-in-broth-12tr-2-4-oz/",
+   "servings": [
+    {
+     "size": "2.4 oz can",
+     "grams": 68.0,
+     "kcal": 62,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Pâté Chicken, Duck & Duck Liver Recipe in Broth",
+   "line": "Silver",
+   "type": "food",
+   "sizes": [
+    "2.4 oz can"
+   ],
+   "calorie_statement": "886 kcal ME/kg; 60 kcal/can",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.886,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, coconut oil, duck, duck liver, pumpkin, dried egg, tricalcium phosphate, potassium chloride, taurine, agar agar, xanthan gum, tuna oil, salt, choline chloride, magnesium sulfate, turmeric, thiamine mononitrate (vitamin B1), vitamin E supplement, green tea extract, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin, copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 11.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Calcium (min) 0.15%",
+     "Phosphorus (min) 0.10%",
+     "Vitamin A (min) 5000 IU/kg",
+     "Vitamin E (min) 25 IU/kg",
+     "Taurine (min) 0.2%",
+     "Omega 3 Fatty Acid (min) 0.03%",
+     "Omega 6 Fatty Acid (min) 0.15%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/tiki-cat-silver-pate-chicken-duck-duck-liver-recipe-in-broth-12tr-2-4-oz/",
+   "servings": [
+    {
+     "size": "2.4 oz can",
+     "grams": 68.0,
+     "kcal": 60,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Comfort Supplement with Chicken & Chicken Liver Recipe",
+   "line": "Silver",
+   "type": "supplement",
+   "sizes": [
+    "0.28 oz sachet"
+   ],
+   "calorie_statement": "3084 kcal ME/kg; 25 kcal/sachet",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 3.084,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, coconut oil, chicken broth, chicken liver, dried egg, xanthan gum, natural tuna flavor, natural chicken flavor, salmon oil, l-tryptophan, chamomile",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 25.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 65.0,
+    "other": []
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/chicken-chicken-liver-recipe-supplement/",
+   "servings": [
+    {
+     "size": "0.28 oz sachet",
+     "grams": 7.9,
+     "kcal": 25,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Silver Topper Chicken & Duck Liver",
+   "line": "Silver",
+   "type": "topper",
+   "sizes": [
+    "1.5 oz pouch"
+   ],
+   "calorie_statement": "666 kcal ME/kg; 29 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.666,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, duck liver, dried egg, xanthan gum, salmon oil, natural tuna flavor, natural chicken flavor, salt, turmeric, green tea extract, glucosamine sulfate, chondroitin sulfate",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 0.5,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 90.0,
+    "other": [
+     "Omega 3 Fatty Acids (min) 0.05%",
+     "Omega 6 Fatty Acids (min) 0.4%",
+     "Glucosamine (min) 14 mg/kg",
+     "Chondroitin Sulfate (min) 7 mg/kg"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/chicken-duck-liver-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "1.5 oz pouch",
+     "grams": 42.5,
+     "kcal": 29,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Baby Mousse Chicken & Chicken Liver",
+   "line": "Baby",
+   "type": "food",
+   "sizes": [
+    "2.4 oz pouch"
+   ],
+   "calorie_statement": "1248 kcal ME/kg; 85 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.248,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, chicken liver, dried egg, sunflower seed oil, tricalcium phosphate, fish oil, xanthan gum, inulin, potassium chloride, salt, magnesium sulfate, choline chloride, taurine, ferrous sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 5.5,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Docosahexaenoic Acid (DHA) 0.1%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/chicken-for-kittens/",
+   "servings": [
+    {
+     "size": "2.4 oz pouch",
+     "grams": 68.0,
+     "kcal": 85,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Baby Mousse Chicken, Duck & Duck Liver Recipe",
+   "line": "Baby",
+   "type": "food",
+   "sizes": [
+    "2.4 oz pouch"
+   ],
+   "calorie_statement": "1138 kcal ME/kg; 77 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.138,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower oil, duck, duck liver, dried egg, tricalcium phosphate, potassium chloride, inulin, taurine, xanthan gum, tuna oil, magnesium sulfate, choline chloride, salt, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Docosahexaenoic Acid (DHA) (min) 0.01%",
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-baby-mousse-chicken-duck-duck-liver/",
+   "servings": [
+    {
+     "size": "2.4 oz pouch",
+     "grams": 68.0,
+     "kcal": 77,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Baby Mousse Chicken, Tuna & Chicken Liver Recipe",
+   "line": "Baby",
+   "type": "food",
+   "sizes": [
+    "2.4 oz pouch"
+   ],
+   "calorie_statement": "1132 kcal ME/kg; 77 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.132,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower oil, tuna, chicken liver, dried egg, tricalcium phosphate, potassium chloride, inulin, taurine, xanthan gum, tuna oil, magnesium sulfate, choline chloride, salt, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 12.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Docosahexaenoic Acid (DHA) (min) 0.01%",
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/tiki-cat-baby-mousse-chicken-tuna-chicken-liver/",
+   "servings": [
+    {
+     "size": "2.4 oz pouch",
+     "grams": 68.0,
+     "kcal": 77,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Baby Weaning Purée Chicken & Chicken Liver Recipe in Broth",
+   "line": "Baby",
+   "type": "food",
+   "sizes": [
+    "6 oz spout pouch"
+   ],
+   "calorie_statement": "1032 kcal ME/kg; 175 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 1.032,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, chicken liver, dried egg, salmon oil, tricalcium phosphate, xanthan gum, potassium chloride, inulin, taurine, choline chloride, magnesium sulfate, salt, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, copper amino acid chelate, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 5.5,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 80.0,
+    "other": [
+     "Eicosapentaenoic + Docosahexaenoic Acid (EPA + DHA) (min) 0.1%",
+     "Calcium 0.2%",
+     "Phosphorus (min) 0.15%",
+     "Vitamin E (min) 25 IU/kg",
+     "Taurine (min) 0.2%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/tiki-cat-baby-weaning-puree-chicken/",
+   "servings": [
+    {
+     "size": "6 oz spout pouch",
+     "grams": 170.1,
+     "kcal": 175,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Baby Topper Chicken & Chicken Liver Recipe",
+   "line": "Baby",
+   "type": "topper",
+   "sizes": [
+    "1.5 oz pouch"
+   ],
+   "calorie_statement": "2873 kcal ME/kg; 124 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 2.873,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken, chicken broth, sunflower oil, chicken liver, dried egg, salmon oil, natural tuna flavor, natural chicken flavor, xanthan gum",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 8.0,
+    "crude_fat_min_pct": 25.0,
+    "crude_fiber_max_pct": 0.5,
+    "moisture_max_pct": 65.0,
+    "other": [
+     "Eicosapentaenoic Acid (EPA) (min) 0.01%",
+     "Docosahexaenoic Acid (DHA) (min) 0.01%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/chicken-chicken-liver-recipe/",
+   "servings": [
+    {
+     "size": "1.5 oz pouch",
+     "grams": 42.5,
+     "kcal": 124,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Solutions Mobility Mousse Chicken & Tuna Recipe in Broth",
+   "line": "Solutions",
+   "type": "food",
+   "sizes": [
+    "2.4 oz pouch"
+   ],
+   "calorie_statement": "937 kcal ME/kg; 75 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.937,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, tuna, dried egg product, sunflower oil, tricalcium phosphate, potassium chloride, salt, xanthan gum, choline chloride, magnesium sulfate, taurine, salmon oil, chondroitin sulfate, thiamine mononitrate (vitamin B1), vitamin E supplement, glucosamine sulfate, ferrous sulfate, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin (vitamin B2), copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 1.0,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Omega 3 Fatty Acids (min) 0.1%",
+     "Omega 6 Fatty Acids (min) 1%",
+     "Glucosamine (min) 50 mg/kg",
+     "Chondroitin Sulfate (min) 15 mg/kg"
+    ]
+   },
+   "notes": [
+    "Calories: page figures are inconsistent with each other: 937 kcal/kg implies about 64 kcal per 2.4 oz"
+   ],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/solution-mousse/mobility-chicken-tuna-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.4 oz pouch",
+     "grams": 68.0,
+     "kcal": 64,
+     "basis": "calculated from kcal per kg"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Solutions Mousse Chicken, Turkey & Pumpkin Recipe in Broth",
+   "line": "Solutions",
+   "type": "food",
+   "sizes": [
+    "2.4 oz pouch"
+   ],
+   "calorie_statement": "871 kcal ME/kg; 59 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.871,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Chicken broth, chicken, turkey, pumpkin, dried egg, sunflower seed oil, tricalcium phosphate, potassium chloride, salt, xanthan gum, magnesium sulfate, choline chloride, ginger powder, tuna oil, taurine, flaxseed, l-carnitine, green tea extract, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 4.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 83.0,
+    "other": [
+     "Omega 3 Fatty Acids (min) 0.1%",
+     "Omega 6 Fatty Acids (min) 1.0%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/solution-mousse/chicken-turkey-pumpkin-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.4 oz pouch",
+     "grams": 68.0,
+     "kcal": 59,
+     "basis": "stated on page"
+    }
+   ]
+  },
+  {
+   "name": "Tiki Cat Solutions Skin + Coat Mousse Salmon Recipe in Broth",
+   "line": "Solutions",
+   "type": "food",
+   "sizes": [
+    "2.4 oz pouch"
+   ],
+   "calorie_statement": "935 kcal ME/kg; 64 kcal/pouch",
+   "kcal_per_g": [
+    {
+     "size": "all sizes",
+     "kcal_per_g": 0.935,
+     "basis": "stated kcal/kg"
+    }
+   ],
+   "ingredients": "Salmon broth, salmon, chicken, dried egg, pumpkin, coconut oil, tricalcium phosphate, salt, potassium chloride, xanthan gum, tuna oil, magnesium sulfate, choline chloride, taurine, thiamine mononitrate (vitamin B1), ferrous sulfate, vitamin E supplement, niacin (vitamin B3), zinc oxide, vitamin A supplement, biotin, vitamin B12 supplement, manganous oxide, calcium pantothenate, riboflavin supplement (vitamin B2), sodium selenite, copper amino acid chelate, pyridoxine hydrochloride (vitamin B6), menadione sodium bisulfite complex (source of vitamin K activity), folic acid, potassium iodide, vitamin D3 supplement",
+   "guaranteed_analysis": {
+    "crude_protein_min_pct": 10.0,
+    "crude_fat_min_pct": 5.0,
+    "crude_fiber_max_pct": 2.0,
+    "moisture_max_pct": 82.0,
+    "other": [
+     "Vitamin A (min) 5000 IU/kg",
+     "Vitamin E (min) 25 IU/kg",
+     "Omega 3 Fatty Acids (min) 0.3%",
+     "Omega 6 Fatty Acids (min) 0.8%"
+    ]
+   },
+   "notes": [],
+   "source_url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-cat/solution-mousse/salmon-recipe-in-broth/",
+   "servings": [
+    {
+     "size": "2.4 oz pouch",
+     "grams": 68.0,
+     "kcal": 64,
+     "basis": "stated on page"
+    }
+   ]
+  }
+ ],
+ "how_servings_were_set": "Each size has the kcal for one whole can or pouch. \"stated on page\" is the figure printed on the product page. \"calculated from kcal per kg\" means the page gave no figure for that size (or its figures conflicted), so it was worked out from kcal per kg times the weight."
+}

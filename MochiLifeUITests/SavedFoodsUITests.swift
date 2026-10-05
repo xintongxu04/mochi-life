@@ -1,117 +1,264 @@
 import XCTest
 
 /// Walks through saved foods in the Calories tab the way a person would. Expects a fresh
-/// install (no saved foods), and leaves the app with no saved foods.
+/// install, where the 99 bundled Tiki Cat foods are the only saved foods. Tests run in name
+/// order; only the last one changes saved foods.
 @MainActor
 final class SavedFoodsUITests: XCTestCase {
+    private let app = XCUIApplication()
+
     override func setUp() {
         continueAfterFailure = false
+        app.launch()
+        app.tabBars.buttons["Calories"].tap()
+        XCTAssertTrue(app.navigationBars["Saved Foods"].waitForExistence(timeout: 5))
     }
 
-    func testAddEditReopenAndDeleteFoods() {
-        let app = XCUIApplication()
-        app.launch()
+    func testA_BrowseSearchAndDetails() {
+        // Brands, with "My foods" absent until the user adds a food without a brand.
+        XCTAssertTrue(row("brandRow", "Tiki Cat").waitForExistence(timeout: 5))
+        XCTAssertTrue(row("brandRow", "Tiki Cat").label.contains("99"), row("brandRow", "Tiki Cat").label)
+        XCTAssertFalse(row("brandRow", "My foods").exists)
+        attachScreenshot("Brands")
 
-        // The Weight tab is still the first screen.
-        XCTAssertTrue(app.staticTexts["Mochi Life"].waitForExistence(timeout: 5))
+        // Lines, each with a count.
+        row("brandRow", "Tiki Cat").tap()
+        XCTAssertTrue(row("lineRow", "After Dark").waitForExistence(timeout: 5))
+        XCTAssertEqual(rows("lineRow").count, 10)
+        XCTAssertTrue(row("lineRow", "After Dark").label.contains("25"), row("lineRow", "After Dark").label)
+        attachScreenshot("Lines")
+
+        // Products in a line, then a product's details.
+        row("lineRow", "After Dark").tap()
+        // Long lists only build the rows on screen, so scroll to the product first.
+        scrollTo(row("savedFood", "Pâté Lamb & Beef Liver"))
+        row("savedFood", "Pâté Lamb & Beef Liver").tap()
+        XCTAssertTrue(app.staticTexts["After Dark Pâté Lamb & Beef Liver Recipe"].waitForExistence(timeout: 5))
+        XCTAssertTrue(row("sizeCalories", "110 kcal per can").exists)
+        let calculatedSize = row("sizeCalories", "5.5 oz can")
+        XCTAssertTrue(calculatedSize.label.contains("calculated"), calculatedSize.label)
+        XCTAssertTrue(calculatedSize.label.contains("201 kcal per can"), calculatedSize.label)
+        XCTAssertFalse(row("sizeCalories", "3 oz can").label.contains("calculated"))
+        XCTAssertTrue(app.staticTexts["As written by the brand"].exists)
+        attachScreenshot("Details top")
+
+        scrollTo(app.staticTexts["Crude protein"])
+        XCTAssertTrue(app.staticTexts["INGREDIENTS"].exists || app.staticTexts["Ingredients"].exists)
+        attachScreenshot("Details ingredients and analysis")
+        scrollTo(app.links.firstMatch)
+        XCTAssertTrue(app.links["tikipets.com"].exists)
+        attachScreenshot("Details bottom")
+
+        // Search: brand, line and name together, any order, ignoring capitals and accents.
         app.tabBars.buttons["Calories"].tap()
-        XCTAssertTrue(app.staticTexts["No foods yet"].waitForExistence(timeout: 5))
-        attachScreenshot("Empty", app)
+        app.tabBars.buttons["Calories"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("TUNA pate")
+        XCTAssertTrue(row("savedFood", "Grill Tuna & Prawn Pâté").waitForExistence(timeout: 5))
+        attachScreenshot("Search")
+        search.typeText(" grill tiki")
+        XCTAssertTrue(row("savedFood", "Grill Tuna & Prawn Pâté").waitForExistence(timeout: 5))
+        row("savedFood", "Grill Tuna & Prawn Pâté").tap()
+        XCTAssertTrue(app.staticTexts["Grill Tuna & Prawn Pâté"].waitForExistence(timeout: 5))
+        XCTAssertTrue(row("sizeCalories", "77 kcal per can").exists)
+    }
 
-        // Typed directly as kcal per gram.
-        addFood("Dry Food", calories: "3.85", per100Grams: false, in: app)
-        XCTAssertTrue(food(containing: "Dry Food", in: app).waitForExistence(timeout: 5))
-        XCTAssertTrue(food(containing: "3.85 kcal/g", in: app).exists)
-        XCTAssertFalse(app.staticTexts["No foods yet"].exists)
+    func testB_PortionPicker() {
+        row("brandRow", "Tiki Cat").tap()
+        row("lineRow", "After Dark").tap()
+        scrollTo(row("savedFood", "Pâté Lamb & Beef Liver"))
+        row("savedFood", "Pâté Lamb & Beef Liver").tap()
+        let calories = app.textFields["portionCalories"]
+        scrollTo(calories)
 
-        // Typed as kcal per 100 g, which the app converts to kcal per gram.
-        app.buttons["Add Food"].tap()
-        app.textFields["Name"].tap()
-        app.textFields["Name"].typeText("Chicken Treats")
-        app.buttons["per 100 g"].tap()
-        app.textFields["Calories"].tap()
-        app.textFields["Calories"].typeText("352")
-        XCTAssertTrue(app.staticTexts["That's 3.52 kcal per gram."].waitForExistence(timeout: 5))
-        attachScreenshot("Add per 100 g", app)
+        // Starts on the first size, one whole can.
+        XCTAssertEqual(calories.value as? String, "110")
+        app.buttons["1/2"].tap()
+        XCTAssertEqual(calories.value as? String, "55")
+        attachScreenshot("Portion half")
+
+        // Choose the other size.
+        let sizePicker = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Size'")).firstMatch
+        reveal(sizePicker)
+        sizePicker.tap()
+        app.buttons["5.5 oz can"].tap()
+        scrollTo(calories)
+        XCTAssertEqual(calories.value as? String, "100.5")
+
+        // Any other amount, including more than one can.
+        let amount = app.textFields["portionAmount"]
+        amount.tap()
+        amount.typeText("1.5")
+        XCTAssertEqual(calories.value as? String, "301.5")
+        XCTAssertFalse(app.buttons["1/2"].isSelected)
+
+        // Switch to grams: starts from the same portion in grams.
+        reveal(app.buttons["By grams"])
+        app.buttons["By grams"].tap()
+        let grams = app.textFields["portionGrams"]
+        XCTAssertTrue(grams.waitForExistence(timeout: 5))
+        reveal(calories)
+        let gramsValue = Double(grams.value as? String ?? "") ?? 0
+        XCTAssertEqual(gramsValue, 233.85, accuracy: 0.1)
+        let gramsCalories = Double(calories.value as? String ?? "") ?? 0
+        XCTAssertEqual(gramsCalories, 301.5, accuracy: 3)
+        attachScreenshot("Portion grams")
+
+        // Type my own calories over the worked-out number, then go back to it.
+        replaceText(in: calories, with: "250")
+        XCTAssertTrue(app.staticTexts["Using your own number."].waitForExistence(timeout: 5))
+        let useWorkedOut = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Use worked-out number'")).firstMatch
+        reveal(useWorkedOut)
+        useWorkedOut.tap()
+        XCTAssertEqual(Double(calories.value as? String ?? "") ?? 0, gramsCalories, accuracy: 0.05)
+
+        // Back to cans.
+        reveal(app.buttons["By can"])
+        app.buttons["By can"].tap()
+        reveal(calories)
+        XCTAssertEqual(calories.value as? String, "301.5")
+    }
+
+    func testC_AddEditDeleteAndNoDuplicates() {
+        // My own food with no brand goes under "My foods".
+        addFood(name: "Home Cooked Chicken", brand: nil, line: nil, kilocaloriesPerGram: "1.5")
+        XCTAssertTrue(row("brandRow", "My foods").waitForExistence(timeout: 5))
+        XCTAssertTrue(row("brandRow", "My foods").label.contains("1"))
+
+        // With a brand and line.
+        addFood(name: "Chicken Recipe", brand: "Ziwi", line: "Peak", kilocaloriesPerGram: "4.3")
+        XCTAssertTrue(row("brandRow", "Ziwi").waitForExistence(timeout: 5))
+
+        // "My foods" lists products directly, and opens their details.
+        row("brandRow", "My foods").tap()
+        row("savedFood", "Home Cooked Chicken").tap()
+        XCTAssertTrue(element(containing: "1.50 kcal/g").waitForExistence(timeout: 5))
+        let calories = app.textFields["portionCalories"]
+        let grams = app.textFields["portionGrams"]
+        scrollTo(grams)
+        grams.tap()
+        grams.typeText("20")
+        XCTAssertEqual(calories.value as? String, "30")
+
+        // Edit my food.
+        app.buttons["Edit"].tap()
+        replaceText(in: app.textFields["Name"], with: "Boiled Chicken")
         app.buttons["Save"].tap()
-        XCTAssertTrue(food(containing: "3.52 kcal/g", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Boiled Chicken"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        addFood("apple slices", calories: "0.52", per100Grams: false, in: app)
-        XCTAssertTrue(food(containing: "0.52 kcal/g", in: app).waitForExistence(timeout: 5))
+        // Swipe to delete my food.
+        XCTAssertTrue(row("savedFood", "Boiled Chicken").waitForExistence(timeout: 5))
+        row("savedFood", "Boiled Chicken").swipeLeft()
+        app.buttons["Delete"].tap()
+        XCTAssertTrue(app.staticTexts["No foods here"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        // Alphabetical, ignoring capital letters.
-        XCTAssertEqual(foodNames(in: app), ["apple slices", "Chicken Treats", "Dry Food"])
-        attachScreenshot("List", app)
-
-        // A per-100 g number typed as per gram is caught.
-        app.buttons["Add Food"].tap()
-        app.textFields["Name"].tap()
-        app.textFields["Name"].typeText("Wet Food")
-        app.textFields["Calories"].tap()
-        app.textFields["Calories"].typeText("385")
-        XCTAssertTrue(app.staticTexts["That's more than 10 kcal per gram. Did you mean per 100 g?"].waitForExistence(timeout: 5))
+        // Edit a loaded food's calories per can.
+        row("brandRow", "Tiki Cat").tap()
+        row("lineRow", "Grill").tap()
+        scrollTo(row("savedFood", "Grill Tuna & Prawn Pâté"))
+        row("savedFood", "Grill Tuna & Prawn Pâté").tap()
+        app.buttons["Edit"].tap()
+        let sizeCalories = app.textFields["sizeCaloriesField"].firstMatch
+        XCTAssertEqual(sizeCalories.value as? String, "77")
+        // A number far too big for the can is caught.
+        replaceText(in: sizeCalories, with: "8077")
+        XCTAssertTrue(app.staticTexts["8077 kcal is too much for a 2.8 oz can. Please check it."].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["Save"].isEnabled)
-        app.buttons["Cancel"].tap()
-        XCTAssertEqual(foodNames(in: app).count, 3)
-
-        // Tap to edit: rename and change calories.
-        food(containing: "Dry Food", in: app).tap()
-        let name = app.textFields["Name"]
-        XCTAssertTrue(name.waitForExistence(timeout: 5))
-        XCTAssertEqual(app.textFields["Calories"].value as? String, "3.85")
-        // Tap at the end of the name, then delete it and type a new one.
-        name.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
-        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Dry Food".count))
-        name.typeText("Kibble")
-        let calories = app.textFields["Calories"]
-        calories.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        calories.typeText("5")
+        replaceText(in: sizeCalories, with: "80")
         app.buttons["Save"].tap()
-        XCTAssertTrue(food(containing: "3.855 kcal/g", in: app).waitForExistence(timeout: 5))
-        XCTAssertEqual(foodNames(in: app), ["apple slices", "Chicken Treats", "Kibble"])
+        XCTAssertTrue(row("sizeCalories", "80 kcal per can").waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        // Foods are still there after closing and reopening the app.
+        // Delete a loaded food.
+        scrollTo(row("savedFood", "Grill Tuna & Prawn Pâté"))
+        row("savedFood", "Grill Tuna & Prawn Pâté").swipeLeft()
+        app.buttons["Delete"].tap()
+        XCTAssertFalse(row("savedFood", "Grill Tuna & Prawn Pâté").waitForExistence(timeout: 2))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(row("lineRow", "Grill").label.contains("12"), row("lineRow", "Grill").label)
+
+        // After reopening: no duplicates, and the deleted food doesn't come back.
         app.terminate()
         app.launch()
         app.tabBars.buttons["Calories"].tap()
-        XCTAssertTrue(food(containing: "Kibble", in: app).waitForExistence(timeout: 5))
-        XCTAssertEqual(foodNames(in: app), ["apple slices", "Chicken Treats", "Kibble"])
-
-        // Swipe to delete.
-        while foods(in: app).count > 0 {
-            let count = foods(in: app).count
-            foods(in: app).element(boundBy: 0).swipeLeft()
-            app.buttons["Delete"].tap()
-            XCTAssertEqual(foods(in: app).count, count - 1)
-        }
-        XCTAssertTrue(app.staticTexts["No foods yet"].waitForExistence(timeout: 5))
+        XCTAssertTrue(row("brandRow", "Tiki Cat").waitForExistence(timeout: 5))
+        XCTAssertTrue(row("brandRow", "Tiki Cat").label.contains("98"), row("brandRow", "Tiki Cat").label)
+        XCTAssertTrue(row("brandRow", "Ziwi").exists)
+        XCTAssertFalse(row("brandRow", "My foods").exists)
+        row("brandRow", "Tiki Cat").tap()
+        XCTAssertTrue(row("lineRow", "Grill").label.contains("12"), row("lineRow", "Grill").label)
     }
 
-    private func addFood(_ name: String, calories: String, per100Grams: Bool, in app: XCUIApplication) {
+    // MARK: - Helpers
+
+    private func rows(_ identifier: String) -> XCUIElementQuery {
+        app.descendants(matching: .any).matching(identifier: identifier)
+    }
+
+    private func row(_ identifier: String, _ text: String) -> XCUIElement {
+        rows(identifier).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    }
+
+    private func element(containing text: String) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", text, text))
+            .firstMatch
+    }
+
+    private func addFood(name: String, brand: String?, line: String?, kilocaloriesPerGram: String) {
         app.buttons["Add Food"].tap()
         let nameField = app.textFields["Name"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5))
         nameField.tap()
         nameField.typeText(name)
-        if per100Grams { app.buttons["per 100 g"].tap() }
+        if let brand {
+            app.textFields["Brand"].tap()
+            app.textFields["Brand"].typeText(brand)
+        }
+        if let line {
+            app.textFields["Line"].tap()
+            app.textFields["Line"].typeText(line)
+        }
         app.textFields["Calories"].tap()
-        app.textFields["Calories"].typeText(calories)
+        app.textFields["Calories"].typeText(kilocaloriesPerGram)
         app.buttons["Save"].tap()
     }
 
-    private func foods(in app: XCUIApplication) -> XCUIElementQuery {
-        app.buttons.matching(identifier: "savedFood")
+    /// Selects everything in the field, then types over it.
+    private func replaceText(in field: XCUIElement, with text: String) {
+        field.tap()
+        field.press(forDuration: 1.2)
+        let selectAll = app.menuItems["Select All"]
+        if selectAll.waitForExistence(timeout: 2) {
+            selectAll.tap()
+        } else {
+            let current = field.value as? String ?? ""
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+        }
+        field.typeText(text)
+        XCTAssertEqual(field.value as? String, text)
     }
 
-    private func food(containing text: String, in app: XCUIApplication) -> XCUIElement {
-        foods(in: app).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    private func scrollTo(_ element: XCUIElement) {
+        for _ in 0..<10 where !(element.exists && element.isHittable) {
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.isHittable, "Couldn't scroll to \(element)")
     }
 
-    private func foodNames(in app: XCUIApplication) -> [String] {
-        foods(in: app).allElementsBoundByIndex.map { $0.label.components(separatedBy: ",").first ?? "" }
+    /// Scrolls up, then down if needed, until the element is on screen.
+    private func reveal(_ element: XCUIElement) {
+        for _ in 0..<5 where !(element.exists && element.isHittable) {
+            app.swipeDown()
+        }
+        scrollTo(element)
     }
 
-    private func attachScreenshot(_ name: String, _ app: XCUIApplication) {
+    private func attachScreenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways

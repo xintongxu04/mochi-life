@@ -15,21 +15,38 @@ struct FoodFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
+    @State private var brand = ""
+    @State private var line = ""
     @State private var basis = CalorieBasis.perGram
     @State private var caloriesText = ""
     @State private var originalCaloriesText = ""
+    /// For foods that come in cans or pouches: calories per whole container, one per size.
+    @State private var sizeCaloriesTexts: [String] = []
+    @State private var originalSizeCaloriesTexts: [String] = []
 
     init(food: Food?) {
         self.food = food
         if let food {
             let text = food.kilocaloriesPerGram.formatted(.number.precision(.fractionLength(0...3)).grouping(.never))
+            let sizeTexts = food.sizes.map { Portion.formatKilocalories($0.kilocalories) }
             _name = State(initialValue: food.name)
+            _brand = State(initialValue: food.brand ?? "")
+            _line = State(initialValue: food.line ?? "")
             _caloriesText = State(initialValue: text)
             _originalCaloriesText = State(initialValue: text)
+            _sizeCaloriesTexts = State(initialValue: sizeTexts)
+            _originalSizeCaloriesTexts = State(initialValue: sizeTexts)
         }
     }
 
+    private var sizes: [FoodSize] { food?.sizes ?? [] }
+
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    private func optional(_ text: String) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 
     private var kilocaloriesPerGram: Double? {
         guard let value = Self.parseCalories(caloriesText) else { return nil }
@@ -52,38 +69,47 @@ struct FoodFormView: View {
         return nil
     }
 
+    /// Explains what's wrong with the calories typed for a size, or nil if they look right.
+    private func sizeCaloriesProblem(at index: Int) -> String? {
+        guard let kilocalories = Self.parseCalories(sizeCaloriesTexts[index]) else {
+            return "Enter a number like 116 for each size."
+        }
+        let size = sizes[index]
+        if kilocalories / size.grams > Food.maximumKilocaloriesPerGram {
+            return "\(Portion.formatKilocalories(kilocalories)) kcal is too much for a \(size.name). Please check it."
+        }
+        return nil
+    }
+
+    private var sizeCaloriesAreValid: Bool {
+        sizeCaloriesTexts.indices.allSatisfy { sizeCaloriesProblem(at: $0) == nil }
+    }
+
     private var canSave: Bool {
-        !trimmedName.isEmpty && kilocaloriesPerGram != nil && caloriesProblem == nil
+        guard !trimmedName.isEmpty else { return false }
+        if sizes.isEmpty {
+            return kilocaloriesPerGram != nil && caloriesProblem == nil
+        }
+        return sizeCaloriesAreValid
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Name", text: $name)
-                    .textInputAutocapitalization(.words)
                 Section {
-                    Picker("Calories", selection: $basis) {
-                        ForEach(CalorieBasis.allCases) { basis in
-                            Text(basis.rawValue).tag(basis)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    HStack {
-                        TextField("Calories", text: $caloriesText)
-                            .keyboardType(.decimalPad)
-                        Text(basis == .perGram ? "kcal/g" : "kcal/100 g")
-                            .foregroundStyle(.secondary)
-                    }
-                } footer: {
-                    if let caloriesProblem {
-                        Text(caloriesProblem)
-                            .foregroundStyle(.red)
-                    } else if basis == .per100Grams, let kilocaloriesPerGram {
-                        Text("That's \(kilocaloriesPerGram.formatted(.number.precision(.fractionLength(2...3)))) kcal per gram.")
-                            .accessibilityIdentifier("convertedCalories")
-                    } else {
-                        Text("You'll usually find this on the food's label.")
-                    }
+                    TextField("Name", text: $name)
+                        .textInputAutocapitalization(.words)
+                    TextField("Brand (optional)", text: $brand)
+                        .textInputAutocapitalization(.words)
+                        .accessibilityIdentifier("Brand")
+                    TextField("Line (optional)", text: $line)
+                        .textInputAutocapitalization(.words)
+                        .accessibilityIdentifier("Line")
+                }
+                if sizes.isEmpty {
+                    perGramSection
+                } else {
+                    sizesSection
                 }
             }
             .navigationTitle(food == nil ? "Add Food" : "Edit Food")
@@ -100,17 +126,89 @@ struct FoodFormView: View {
         }
     }
 
+    private var perGramSection: some View {
+        Section {
+            Picker("Calories", selection: $basis) {
+                ForEach(CalorieBasis.allCases) { basis in
+                    Text(basis.rawValue).tag(basis)
+                }
+            }
+            .pickerStyle(.segmented)
+            HStack {
+                TextField("Calories", text: $caloriesText)
+                    .keyboardType(.decimalPad)
+                Text(basis == .perGram ? "kcal/g" : "kcal/100 g")
+                    .foregroundStyle(.secondary)
+            }
+        } footer: {
+            if let caloriesProblem {
+                Text(caloriesProblem)
+                    .foregroundStyle(.red)
+            } else if basis == .per100Grams, let kilocaloriesPerGram {
+                Text("That's \(kilocaloriesPerGram.formatted(.number.precision(.fractionLength(2...3)))) kcal per gram.")
+                    .accessibilityIdentifier("convertedCalories")
+            } else {
+                Text("You'll usually find this on the food's label.")
+            }
+        }
+    }
+
+    private var sizesSection: some View {
+        Section {
+            ForEach(sizes.indices, id: \.self) { index in
+                HStack {
+                    Text(sizes[index].name)
+                    TextField("Calories", text: $sizeCaloriesTexts[index])
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .accessibilityIdentifier("sizeCaloriesField")
+                    Text("kcal")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("Calories per whole can or pouch")
+        } footer: {
+            if let problem = sizeCaloriesTexts.indices.lazy.compactMap(sizeCaloriesProblem).first {
+                Text(problem)
+                    .foregroundStyle(.red)
+            } else {
+                Text("Calories per gram are worked out from each size's weight.")
+            }
+        }
+    }
+
     private func save() {
-        guard canSave, let kilocaloriesPerGram else { return }
+        guard canSave else { return }
         if let food {
             food.name = trimmedName
-            // Only replace the saved value if it was actually changed, so opening and saving
-            // a food never loses precision from the rounded number shown in the form.
-            if caloriesText != originalCaloriesText || basis != .perGram {
-                food.kilocaloriesPerGram = kilocaloriesPerGram
+            food.brand = optional(brand)
+            food.line = optional(line)
+            if sizes.isEmpty {
+                // Only replace the saved value if it was actually changed, so opening and saving
+                // a food never loses precision from the rounded number shown in the form.
+                if let kilocaloriesPerGram, caloriesText != originalCaloriesText || basis != .perGram {
+                    food.kilocaloriesPerGram = kilocaloriesPerGram
+                }
+            } else {
+                var updatedSizes = food.sizes
+                for index in updatedSizes.indices
+                where sizeCaloriesTexts[index] != originalSizeCaloriesTexts[index] {
+                    guard let kilocalories = Self.parseCalories(sizeCaloriesTexts[index]) else { continue }
+                    updatedSizes[index].kilocalories = kilocalories
+                    updatedSizes[index].kilocaloriesPerGram = kilocalories / updatedSizes[index].grams
+                    updatedSizes[index].isCalculated = false
+                }
+                food.sizes = updatedSizes
+                food.kilocaloriesPerGram = updatedSizes.first?.kilocaloriesPerGram ?? food.kilocaloriesPerGram
             }
-        } else {
-            modelContext.insert(Food(name: trimmedName, kilocaloriesPerGram: kilocaloriesPerGram))
+        } else if let kilocaloriesPerGram {
+            modelContext.insert(Food(
+                name: trimmedName,
+                kilocaloriesPerGram: kilocaloriesPerGram,
+                brand: optional(brand),
+                line: optional(line)
+            ))
         }
         try? modelContext.save()
         dismiss()
