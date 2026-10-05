@@ -120,6 +120,12 @@ struct BraveSearchClient: WebSearchClient {
             let session = HTTPCheck.apiSession(timeout: 15)
             defer { session.finishTasksAndInvalidate() }
             let (data, response) = try await session.data(for: request)
+            // Brave answers an invalid token with 422 rather than 401.
+            if (response as? HTTPURLResponse)?.statusCode == 422,
+               String(decoding: data, as: UTF8.self).lowercased().contains("token") {
+                AILog.logger.info("brave_search http_status=422 token_rejected")
+                throw LookupFailure.keyRejected(.brave)
+            }
             try HTTPCheck.validate(response, service: .brave, purpose: "brave_search")
             let decoded = try JSONDecoder().decode(Response.self, from: data)
             return (decoded.web?.results ?? []).compactMap { result in

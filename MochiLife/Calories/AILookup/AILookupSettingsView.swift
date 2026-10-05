@@ -4,29 +4,26 @@ import SwiftUI
 struct AILookupSettingsView: View {
     @State private var braveKey = AIKeychain.key(for: .brave) ?? ""
     @State private var deepSeekKey = AIKeychain.key(for: .deepSeek) ?? ""
+    @State private var showsKeys = false
     @State private var braveResult: KeyTestResult?
     @State private var deepSeekResult: KeyTestResult?
-    /// The fields' values that were tested, and whether they matched what's saved.
+    /// Whether the last test used keys that differ from the saved ones.
     @State private var testedUnsavedKeys = false
-    @State private var isTesting = false
     @State private var savedMessage: String?
+    @State private var hasSavedBrave = AIKeychain.hasKey(for: .brave)
+    @State private var hasSavedDeepSeek = AIKeychain.hasKey(for: .deepSeek)
 
     var body: some View {
         Form {
             Section {
-                SecureField("Brave Search API key", text: $braveKey)
-                    .textContentType(.password)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                SecureField("DeepSeek API key", text: $deepSeekKey)
-                    .textContentType(.password)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
+                keyField("Brave Search API key", text: $braveKey)
+                keyField("DeepSeek API key", text: $deepSeekKey)
+                Toggle("Show keys", isOn: $showsKeys)
                 Button("Save Keys", action: saveKeys)
             } header: {
                 Text("API keys")
             } footer: {
-                Text(savedMessage ?? "Keys are stored only in this iPhone's Keychain.")
+                Text(savedMessage ?? "Keys are stored only in this iPhone's Keychain. An empty box never erases a saved key.")
             }
 
             Section {
@@ -48,8 +45,19 @@ struct AILookupSettingsView: View {
                 }
             } footer: {
                 Text(testedUnsavedKeys
-                     ? "Tested the keys in the fields above. They aren't saved yet — tap Save Keys."
-                     : "Tests the keys in the fields above.")
+                     ? "Tested the keys in the boxes above. They aren't saved yet — tap Save Keys."
+                     : "Tests the keys in the boxes above.")
+            }
+
+            if hasSavedBrave || hasSavedDeepSeek {
+                Section("Remove a saved key") {
+                    if hasSavedBrave {
+                        Button("Remove Brave Search Key", role: .destructive) { remove(.brave) }
+                    }
+                    if hasSavedDeepSeek {
+                        Button("Remove DeepSeek Key", role: .destructive) { remove(.deepSeek) }
+                    }
+                }
             }
 
             Section("Today") {
@@ -66,6 +74,23 @@ struct AILookupSettingsView: View {
         }
         .navigationTitle("AI Lookup")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @State private var isTesting = false
+
+    /// A key box. Not marked as a password box, so iOS doesn't offer to fill in saved passwords.
+    @ViewBuilder
+    private func keyField(_ title: String, text: Binding<String>) -> some View {
+        Group {
+            if showsKeys {
+                TextField(title, text: text)
+            } else {
+                SecureField(title, text: text)
+            }
+        }
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
+        .privacySensitive()
     }
 
     private func resultRow(_ service: String, _ result: KeyTestResult) -> some View {
@@ -85,18 +110,52 @@ struct AILookupSettingsView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Saves both boxes. Refuses a box that clearly holds the other service's key, and the same
+    /// key in both boxes; an empty box keeps the saved key.
     private func saveKeys() {
         braveKey = AIKeychain.normalize(braveKey)
         deepSeekKey = AIKeychain.normalize(deepSeekKey)
-        testedUnsavedKeys = false
-        let braveSaved = AIKeychain.setKey(braveKey, for: .brave)
-        let deepSeekSaved = AIKeychain.setKey(deepSeekKey, for: .deepSeek)
-        savedMessage = braveSaved && deepSeekSaved ? "Saved in this iPhone's Keychain." : "The Keychain couldn't save a key. Try again."
         braveResult = nil
         deepSeekResult = nil
+        testedUnsavedKeys = false
+
+        if !braveKey.isEmpty && braveKey == deepSeekKey {
+            savedMessage = "Both boxes hold the same key. Paste the Brave Search key and the DeepSeek key into their own boxes."
+            return
+        }
+        var messages: [String] = []
+        for (service, value) in [(AIService.brave, braveKey), (.deepSeek, deepSeekKey)] {
+            if let warning = AIKeychain.wrongServiceWarning(value, for: service) {
+                messages.append("\(warning) Not saved.")
+                continue
+            }
+            switch AIKeychain.setKey(value, for: service) {
+            case .saved: messages.append("\(service.rawValue) key saved.")
+            case .unchanged: break
+            case .keptExistingBecauseEmpty:
+                if AIKeychain.hasKey(for: service) {
+                    messages.append("\(service.rawValue) box was empty, so the saved key was kept.")
+                    if service == .brave { braveKey = AIKeychain.key(for: .brave) ?? "" }
+                    if service == .deepSeek { deepSeekKey = AIKeychain.key(for: .deepSeek) ?? "" }
+                }
+            case .failed: messages.append("The Keychain couldn't save the \(service.rawValue) key. Try again.")
+            }
+        }
+        hasSavedBrave = AIKeychain.hasKey(for: .brave)
+        hasSavedDeepSeek = AIKeychain.hasKey(for: .deepSeek)
+        savedMessage = messages.isEmpty ? "No changes to save." : messages.joined(separator: " ")
     }
 
-    /// Tests exactly what's in the fields, saved or not.
+    private func remove(_ service: AIService) {
+        AIKeychain.removeKey(for: service)
+        if service == .brave { braveKey = ""; braveResult = nil }
+        if service == .deepSeek { deepSeekKey = ""; deepSeekResult = nil }
+        hasSavedBrave = AIKeychain.hasKey(for: .brave)
+        hasSavedDeepSeek = AIKeychain.hasKey(for: .deepSeek)
+        savedMessage = "\(service.rawValue) key removed."
+    }
+
+    /// Tests exactly what's in the boxes, saved or not.
     private func testKeys() async {
         testedUnsavedKeys = AIKeychain.normalize(braveKey) != (AIKeychain.key(for: .brave) ?? "")
             || AIKeychain.normalize(deepSeekKey) != (AIKeychain.key(for: .deepSeek) ?? "")

@@ -45,21 +45,60 @@ enum AIKeychain {
         return set
     }()
 
-    /// Saves the key, or removes it when `key` is empty. Returns false if the Keychain refused.
-    @discardableResult
-    static func setKey(_ key: String, for service: AIService) -> Bool {
-        let match: [String: Any] = [
+    enum SaveResult: Equatable {
+        case saved
+        case unchanged
+        /// The value was empty after cleaning, so the stored key was kept.
+        case keptExistingBecauseEmpty
+        case failed
+    }
+
+    /// Saves the cleaned key, replacing the stored one in place. An empty value never replaces or
+    /// deletes a stored key — use `removeKey(for:)` for that.
+    static func setKey(_ key: String, for service: AIService) -> SaveResult {
+        let cleaned = normalize(key)
+        guard !cleaned.isEmpty else { return .keptExistingBecauseEmpty }
+        guard cleaned != self.key(for: service) else { return .unchanged }
+        let match = itemQuery(service)
+        let data = Data(cleaned.utf8)
+        // Update in place, so a failure can't leave the item deleted.
+        let update = SecItemUpdate(match as CFDictionary, [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        ] as CFDictionary)
+        if update == errSecSuccess { return .saved }
+        guard update == errSecItemNotFound else { return .failed }
+        var item = match
+        item[kSecValueData as String] = data
+        item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        return SecItemAdd(item as CFDictionary, nil) == errSecSuccess ? .saved : .failed
+    }
+
+    /// Deletes a stored key. Only called from an explicit Remove button.
+    static func removeKey(for service: AIService) {
+        SecItemDelete(itemQuery(service) as CFDictionary)
+    }
+
+    private static func itemQuery(_ service: AIService) -> [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: self.service,
             kSecAttrAccount as String: account(service),
         ]
-        SecItemDelete(match as CFDictionary)
-        let trimmed = normalize(key)
-        guard !trimmed.isEmpty else { return true }
-        var item = match
-        item[kSecValueData as String] = Data(trimmed.utf8)
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
+    }
+
+    /// Why a cleaned key clearly belongs to the other service, if it does. DeepSeek keys start
+    /// with "sk-"; Brave Search tokens don't.
+    static func wrongServiceWarning(_ key: String, for service: AIService) -> String? {
+        let cleaned = normalize(key)
+        switch service {
+        case .brave where cleaned.hasPrefix("sk-"):
+            return "The Brave Search box holds a key starting “sk-”, which is a DeepSeek key."
+        case .deepSeek where !cleaned.isEmpty && !cleaned.hasPrefix("sk-"):
+            return "The DeepSeek box holds a key that doesn't start with “sk-”, as DeepSeek keys do."
+        default:
+            return nil
+        }
     }
 
     static func hasKey(for service: AIService) -> Bool { key(for: service) != nil }
@@ -137,17 +176,23 @@ enum AIKeyTester {
             switch status {
             case 200..<300:
                 return KeyTestResult(summary: "Working")
-            case 401, 403:
-                return KeyTestResult(
-                    summary: "Key rejected (HTTP \(status))",
-                    serviceMessage: errorMessage(in: data),
-                    keyHint: hint(for: key, service: service)
-                )
             case 300..<400:
                 return KeyTestResult(summary: "Redirected (HTTP \(status)); the request wasn't sent on")
-            case 402: return KeyTestResult(summary: "No balance left (HTTP 402)")
-            case 429: return KeyTestResult(summary: "Rate limited (HTTP 429)")
-            default: return KeyTestResult(summary: "HTTP \(status)", serviceMessage: errorMessage(in: data))
+            case 400..<500:
+                // Every 4xx gets the service's message and the safe key hint. Brave reports a bad
+                // token as 422 ("The provided subscription token is invalid").
+                let message = errorMessage(in: data)
+                let summary: String = switch status {
+                case 401, 403: "Key rejected (HTTP \(status))"
+                case 422 where service == .brave && message?.lowercased().contains("token") == true:
+                    "Key rejected (HTTP 422)"
+                case 402: "No balance left (HTTP 402)"
+                case 429: "Rate limited (HTTP 429)"
+                default: "HTTP \(status)"
+                }
+                return KeyTestResult(summary: summary, serviceMessage: message, keyHint: hint(for: key, service: service))
+            default:
+                return KeyTestResult(summary: "HTTP \(status)", serviceMessage: errorMessage(in: data))
             }
         } catch let error as URLError where [.notConnectedToInternet, .networkConnectionLost].contains(error.code) {
             return KeyTestResult(summary: "Offline")
@@ -159,8 +204,8 @@ enum AIKeyTester {
     /// "Key sent: 35 characters, starting “sk-”" — never more of the key than that.
     static func hint(for key: String, service: AIService) -> String {
         var text = "Key sent: \(key.count) characters, starting “\(key.prefix(3))”."
-        if service == .deepSeek && !key.hasPrefix("sk-") {
-            text += " DeepSeek keys start with “sk-”."
+        if let warning = AIKeychain.wrongServiceWarning(key, for: service) {
+            text += " " + warning
         }
         return text
     }

@@ -635,10 +635,18 @@ offers Update Existing or Save as New. Saved foods get `origin = .aiLookup`, `so
   line breaks and invisible characters (control characters, zero-width spaces/joiners, BOM, soft
   hyphen) anywhere in the key, a pasted "Bearer " prefix, and surrounding quotes. Keys never
   contain spaces, so this can't damage a valid key. Saving shows the cleaned value in the field.
+- **Saving never loses a key**: `AIKeychain.setKey` updates the item in place
+  (`SecItemUpdate`, adding only if missing) and an empty value never replaces or deletes a stored
+  key; only the explicit Remove buttons call `removeKey`. Save refuses a box that clearly holds
+  the other service's key (a DeepSeek "sk-" key in the Brave box, or a non-"sk-" value in the
+  DeepSeek box) and the same key in both boxes. The read-time clean never writes back.
+- The key boxes are not marked as password fields (no `textContentType(.password)`), so iOS
+  doesn't offer to fill saved passwords into them; a "Show keys" switch reveals them.
 - **Test Keys tests the values in the fields** (saved or not) and says when they aren't saved
-  yet. On 401/403 it shows the service's own error message and, for the key sent, only its
-  length and first three characters (DeepSeek keys start with "sk-"); nothing about the key is
-  logged.
+  yet. On any 4xx it shows the service's own error message and, for the key sent, only its
+  length and first three characters, plus a warning if it looks like the other service's key;
+  nothing about the key is logged. Brave reports an invalid token as **422** ("The provided
+  subscription token is invalid"), which both the test and lookups treat as a rejected key.
 - **API calls don't follow redirects** (`HTTPCheck.apiSession`, used by Brave, DeepSeek and the
   key test), so an `Authorization` / `X-Subscription-Token` header can't be dropped or sent to
   another host; a redirect surfaces as its 3xx status. Page and image downloads still follow
