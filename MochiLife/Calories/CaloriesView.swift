@@ -61,14 +61,27 @@ struct DayLogView: View {
                         Label("Daily Calories", systemImage: "slider.horizontal.3")
                     }
                 }
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Log Food", systemImage: "plus") {
-                        isLogging = true
-                    }
+            }
+            // The one primary action, always visible above the tab bar; the list scrolls under it
+            // and is inset so its last row is never hidden.
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    isLogging = true
+                } label: {
+                    Label("Log Food", systemImage: "plus.circle.fill")
+                        .font(.headline)
+                        .frame(minHeight: 44)
+                        .padding(.horizontal, 8)
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .accessibilityHint(isToday ? "Logs something eaten today" : "Logs something for \(title)")
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(.bar)
             }
             .sheet(isPresented: $isLogging) {
-                LogFoodSheet()
+                LogFoodFlowView(day: day)
             }
             // Registered here, at the root of the Calories stack, so links inside saved foods
             // (brand, line, food) are found when saved foods is opened from this screen.

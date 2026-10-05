@@ -15,6 +15,9 @@ struct FoodEditorView: View {
     }
 
     let mode: Mode
+    /// Called with the saved food right after a successful save (before `onFinish`), e.g. to
+    /// continue straight to logging it.
+    var onSavedFood: ((Food) -> Void)?
     /// Called with true after saving, false after Cancel.
     let onFinish: (Bool) -> Void
 
@@ -75,8 +78,9 @@ struct FoodEditorView: View {
 
     static let kilocaloriesPerGramRange = 0.2...6.0
 
-    init(mode: Mode, onFinish: @escaping (Bool) -> Void) {
+    init(mode: Mode, onSavedFood: ((Food) -> Void)? = nil, onFinish: @escaping (Bool) -> Void) {
         self.mode = mode
+        self.onSavedFood = onSavedFood
         self.onFinish = onFinish
         func text(_ value: Double?, digits: Int = 2) -> String {
             value.map { $0.formatted(.number.precision(.fractionLength(0...digits)).grouping(.never)) } ?? ""
@@ -589,7 +593,10 @@ struct FoodEditorView: View {
         // Save first, so a new food has its stable identifier for the photo's file name.
         guard Persistence.save(modelContext) else { return }
         applyPhoto(to: food)
-        if Persistence.save(modelContext) { onFinish(true) }
+        if Persistence.save(modelContext) {
+            onSavedFood?(food)
+            onFinish(true)
+        }
     }
 
     private func applyPhoto(to food: Food) {

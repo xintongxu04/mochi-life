@@ -1,7 +1,7 @@
 import Foundation
 
 /// How much of a food was chosen in a `PortionPicker`, and its calories.
-struct Portion: Equatable {
+struct Portion: Hashable {
     enum Measure: Hashable {
         /// A number of whole or part cans or pouches.
         case containers

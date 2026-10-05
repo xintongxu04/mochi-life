@@ -10,10 +10,17 @@ struct LogEntryForm: View {
     }
 
     let mode: Mode
+    /// Prefills a quick entry's name (e.g. the text that wasn't found).
+    var initialName: String?
+    /// For a food matched automatically: shows "Not this one", which goes back to the choices.
+    var notThisOne: (() -> Void)?
     /// Called after saving or cancelling, to close the screen this form is in.
     let onFinish: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    /// The day being viewed when logging started; new entries default to it.
+    @Environment(\.logDay) private var logDay
+    @State private var hasSetDefaultDate = false
     @State private var portion = Portion()
     @State private var loggedAt = Date.now
     @State private var name = ""
@@ -22,9 +29,14 @@ struct LogEntryForm: View {
     @State private var isConfirmingLongPlan = false
     @State private var isAskingAboutCarriedEntries = false
 
-    init(mode: Mode, onFinish: @escaping () -> Void) {
+    init(mode: Mode, initialName: String? = nil, notThisOne: (() -> Void)? = nil, onFinish: @escaping () -> Void) {
         self.mode = mode
+        self.initialName = initialName
+        self.notThisOne = notThisOne
         self.onFinish = onFinish
+        if case .quickEntry = mode, let initialName {
+            _name = State(initialValue: initialName)
+        }
         if case let .edit(entry) = mode {
             _loggedAt = State(initialValue: entry.loggedAt)
             _name = State(initialValue: entry.foodName)
@@ -91,6 +103,14 @@ struct LogEntryForm: View {
 
     var body: some View {
         Form {
+            if let notThisOne {
+                Section {
+                    Button("Not this one?", systemImage: "arrow.uturn.backward", action: notThisOne)
+                        .accessibilityHint("Shows the other possible foods and web search")
+                } footer: {
+                    Text("Matched automatically from the package.")
+                }
+            }
             header
             if let portionSource {
                 PortionPicker(source: portionSource, portion: $portion, startingFrom: startingPortion)
@@ -119,6 +139,7 @@ struct LogEntryForm: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: defaultToViewedDay)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel", action: onFinish)
@@ -229,6 +250,17 @@ struct LogEntryForm: View {
         }
     }
 
+    /// When logging from an earlier day's view, start on that day (at the current time).
+    private func defaultToViewedDay() {
+        guard !hasSetDefaultDate else { return }
+        hasSetDefaultDate = true
+        if case .edit = mode { return }
+        let calendar = Calendar.current
+        guard let logDay, !calendar.isDateInToday(logDay) else { return }
+        let time = calendar.dateComponents([.hour, .minute], from: .now)
+        loggedAt = calendar.date(bySettingHour: time.hour ?? 12, minute: time.minute ?? 0, second: 0, of: logDay) ?? logDay
+    }
+
     private func logFood(carryingForward: Bool) {
         guard case let .logFood(food, _) = mode else { return }
         let entry = FoodLogEntry(foodName: food.name, kilocalories: 0, loggedAt: loggedAt)
@@ -277,15 +309,7 @@ private struct EntrySnapshot: Equatable {
     }
 }
 
-/// The "+" flow: find a food by browsing or searching (or make a quick entry), then log it.
-struct LogFoodSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            SavedFoodsView(mode: .pick(onFinish: { dismiss() }))
-                .savedFoodsDestinations(mode: .pick(onFinish: { dismiss() }))
-        }
-        .environment(\.isPickingFood, true)
-    }
+extension EnvironmentValues {
+    /// The day being viewed when the log flow started; new entries default to it.
+    @Entry var logDay: Date? = nil
 }
