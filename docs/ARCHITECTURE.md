@@ -430,7 +430,7 @@ MochiLifeApp
    │                         (sheets: SavedFoodsView(.schedule) → ScheduleEditorView(.create); ScheduleEditorView(.edit))
    │                       NavigationLink(value: .dailyCalorieSettings) → CalorieTargetSettingsView
    │      registers .navigationDestination(for: CaloriesScreen) and .savedFoodsDestinations(mode: .browse)
-   │      safeAreaInset(bottom): "Log Food" (.borderedProminent, large) → sheet LogFoodFlowView(day:)
+   │      toolbar trailing: "Log Food" (filled capsule, .borderedProminent) → sheet LogFoodFlowView(day:)
    │      sheet(item:): edit entry → NavigationStack → LogEntryForm(.edit)
    │      confirmationDialog: delete with carried days
    │
@@ -568,6 +568,11 @@ closes via an `onFinish` closure instead of `dismiss`.
 - **Wording** — short, plain owner language; nothing is presented as veterinary advice. The
   only advice-style disclaimer is on the calorie settings screen.
 - **Previews** — `#Preview` blocks use `.modelContainer(for:…, inMemory: true)`.
+- **Controls stay visible** — a screen's controls are never collapsed into menus, overflow ("More")
+  buttons or nested groups. Every action stays directly visible as its own button with its icon
+  and label. If a bar can't fit everything, plain icon buttons move to the other side, still
+  individually; if it still doesn't fit, that's raised with the owner rather than collapsing
+  anything.
 
 ---
 
@@ -1003,12 +1008,21 @@ Every new persisted field must be added to the backup DTOs, the mapping, and
 ## 13. Log Food flow (`Calories/LogFlow/`)
 
 ### Entry
-The Calories day view has one primary action: a centered "Log Food" button pinned above the tab
-bar with `safeAreaInset(edge: .bottom)` (`.borderedProminent`, `.large`, ≥ 44 pt, bar material
-behind it; the list is inset so its last row isn't hidden). It shows on every day and logs to the
-day being viewed (at the current time) via the `logDay` environment value. Saved Foods and Daily
-Calories stay as secondary toolbar items; the old "+" was removed. Schedules (§14) is a third
-secondary toolbar item.
+The Calories day view has one primary action: **"Log Food" in the navigation bar**, the only and
+outermost `.topBarTrailing` item. It is a `Label` ("Log Food", `plus.circle.fill`) styled
+`.borderedProminent` with `.buttonBorderShape(.capsule)` and the accent tint, so it reads as a
+filled pill.
+- `ViewThatFits` falls back to the icon alone when the title doesn't fit (large Dynamic Type,
+  narrow widths); the accessibility label stays "Log Food".
+- The hint is "Opens search and camera logging for <day>".
+- The hit target is at least 44 × 44 pt.
+
+It shows on every day, in both the large and the collapsed title. It logs to the day being viewed
+(at the current time) via the `logDay` environment value. Nothing is pinned at the bottom, so the
+list and chart run to the tab bar. *(Until 2026-10-05 it was pinned above the tab bar with
+`safeAreaInset(edge: .bottom)` and covered content.)* The secondary actions (Saved Foods,
+Schedules (§14), Daily Calories) stay as individual icon buttons in `.topBarLeading`, in that
+order.
 
 The sheet (`LogFoodFlowView`, its own `NavigationStack(path:)`) shows a focused search field with a
 camera button; **Recent** and **Frequent** from the food log; live library results while typing;

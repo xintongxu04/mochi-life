@@ -36,7 +36,7 @@ The Calories tab opens on **Today**.
   have entries (like the rest of an opened can) to edit or delete them there.
   Those days show their calories as "planned"; they aren't counted as eaten, in
   the progress bar or in the chart until the day arrives.
-- Tap the big **Log Food** button at the bottom (it's there on every day, and
+- Tap the blue **Log Food** button at the top right (it's there on every day, and
   logs to the day you're looking at). The Log Food screen shows your **Recent**
   and **Frequent** foods (tap one to log it again with the same portion; a food
   is never listed twice, and foods you've since deleted, or quick entries, still

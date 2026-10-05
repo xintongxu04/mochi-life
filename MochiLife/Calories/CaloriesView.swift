@@ -65,24 +65,30 @@ struct DayLogView: View {
                         Label("Daily Calories", systemImage: "slider.horizontal.3")
                     }
                 }
-            }
-            // The one primary action, always visible above the tab bar; the list scrolls under it
-            // and is inset so its last row is never hidden.
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    isLogging = true
-                } label: {
-                    Label("Log Food", systemImage: "plus.circle.fill")
+                // The one primary action: a filled pill, outermost on the right, on every day.
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isLogging = true
+                    } label: {
+                        ViewThatFits(in: .horizontal) {
+                            Label("Log Food", systemImage: "plus.circle.fill")
+                                .labelStyle(.titleAndIcon)
+                                .fixedSize()
+                            Label("Log Food", systemImage: "plus.circle.fill")
+                                .labelStyle(.iconOnly)
+                        }
                         .font(.headline)
-                        .frame(minHeight: 44)
-                        .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .tint(.accentColor)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.capsule)
+                    .accessibilityLabel("Log Food")
+                    .accessibilityHint(isToday ? "Opens search and camera logging for today"
+                                               : "Opens search and camera logging for \(title)")
+                    .accessibilityIdentifier("logFoodButton")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .accessibilityHint(isToday ? "Logs something eaten today" : "Logs something for \(title)")
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(.bar)
             }
             .sheet(isPresented: $isLogging) {
                 LogFoodFlowView(day: day)
@@ -190,7 +196,7 @@ private struct DayEntriesList<Controls: View>: View {
                     ContentUnavailableView(
                         "Nothing logged",
                         systemImage: "fork.knife",
-                        description: Text("Tap + to log something \(catName) ate.")
+                        description: Text("Tap Log Food to log something \(catName) ate.")
                     )
                 } else {
                     ForEach(entries) { entry in
