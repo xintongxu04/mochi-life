@@ -13,11 +13,12 @@ extension UTType {
 
 enum BackupFormat {
     /// Raise when the file layout changes, and add an upgrade in `BackupDecoder.upgrade`.
-    static let currentFormatVersion = 1
+    /// 2: adds `schedules` and `FoodLogEntryDTO.scheduleID` (format 1 files are upgraded).
+    static let currentFormatVersion = 2
     static let fileExtension = "mochibackup"
     static let maximumFileSize = 100 * 1024 * 1024
     /// The SwiftData schema version the app writes.
-    static var currentSchemaVersion: Schema.Version { SchemaV3.versionIdentifier }
+    static var currentSchemaVersion: Schema.Version { SchemaV4.versionIdentifier }
 }
 
 struct BackupEnvelope: Codable, Sendable, Equatable {
@@ -56,6 +57,8 @@ struct BackupPayload: Codable, Sendable, Equatable {
     var profile: ProfileDTO?
     var vaccinations: [VaccinationDTO]
     var medicalRecords: [MedicalRecordDTO]
+    /// Feeding schedules (format 2).
+    var schedules: [FeedingScheduleDTO]
     var settings: SettingsDTO
 }
 
@@ -126,6 +129,35 @@ struct FoodLogEntryDTO: Codable, Sendable, Equatable {
     var carryGroupID: UUID?
     var carryDay: Int
     var openedAt: Date?
+    /// The feeding schedule that made the entry (format 2); nil for entries logged by hand.
+    var scheduleID: UUID?
+}
+
+struct FeedingScheduleDTO: Codable, Sendable, Equatable {
+    var id: UUID
+    var foodName: String
+    var foodBrand: String?
+    var foodLine: String?
+    var foodSeedID: String?
+    /// A photo key like the log's `foodLibraryIdentifier` ("user/<name>" files are in `files`).
+    var foodPhotoKey: String?
+    var portionSource: PortionSourceDTO?
+    var measure: String
+    var sizeName: String?
+    var containersNumerator: Int?
+    var containersDenominator: Int?
+    var grams: Double?
+    var kilocaloriesPerOccurrence: Double
+    var isKilocaloriesOverridden: Bool
+    var label: String?
+    /// Calendar weekdays as bits: bit 0 = Sunday … bit 6 = Saturday.
+    var weekdays: Int
+    var startDate: Date
+    var endDate: Date?
+    var isPaused: Bool
+    var lastMaterializedDay: Date?
+    var createdAt: Date
+    var updatedAt: Date
 }
 
 struct ProfileDTO: Codable, Sendable, Equatable {
@@ -177,6 +209,7 @@ struct BackupCounts: Sendable, Equatable {
     var hasProfile = false
     var vaccinations = 0
     var medicalRecords = 0
+    var schedules = 0
     var photos = 0
 
     init() {}
@@ -190,6 +223,7 @@ struct BackupCounts: Sendable, Equatable {
         hasProfile = payload.profile != nil
         vaccinations = payload.vaccinations.count
         medicalRecords = payload.medicalRecords.count
+        schedules = payload.schedules.count
         photos = files.count
     }
 }

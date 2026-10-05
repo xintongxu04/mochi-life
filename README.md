@@ -66,6 +66,21 @@ The Calories tab opens on **Today**.
   deleting one asks whether to remove the later days too, and changing or
   deleting the entry the can was opened with asks whether to update, remove
   or keep the following days.
+- **Schedules** (the calendar button at the top of the Calories tab): for food
+  Mochi gets on a routine, like morning kibble. Pick a food from your saved
+  foods, choose the amount (by can, pouch or grams, or type your own calories),
+  an optional label, which days (every day, or chosen weekdays), a start date
+  and an optional end date. Each chosen day gets an entry in the food log
+  automatically, marked "Scheduled", and it counts in the day's total, the
+  progress bar and the chart like anything you log yourself. To skip a day,
+  delete that day's entry; it won't come back.
+  - A schedule that starts in the past fills in the past days right away (up to
+    the last 60 days), and asks first how many entries that adds.
+  - Swipe a schedule to pause or resume it (paused days are skipped) or to
+    delete it. Editing or deleting a schedule never changes entries already in
+    the log.
+  - Future days show upcoming scheduled food as a dimmed preview, not counted
+    until the day arrives.
 - Log a one-off treat with **Quick Entry**: just a name and a calorie number.
 - Tap an entry to change its amount, calories or time, and swipe left to
   delete it.
@@ -198,13 +213,13 @@ If saving ever fails, the app tells you and lets you try again or discard the
 change, instead of failing silently.
 
 - **Back Up and Restore** (on the Mochi tab): save all your data — weights, foods
-  you added or edited, the food log, Mochi's profile and photo, vaccinations,
+  you added or edited, the food log, feeding schedules, Mochi's profile and photo, vaccinations,
   medical history, your settings and saved food photos — to one
   `.mochibackup` file you can AirDrop or save to Files or iCloud Drive. Restoring
   a backup (from Files, or by opening the file) shows what's in it next to
   what's on the iPhone, asks before replacing everything, and first saves a
   safety backup of the current data (the last three are kept and can be
-  restored). Backups don't include your API keys. The file contains Mochi's
+  restored). Backups made by older versions of the app still restore. Backups don't include your API keys. The file contains Mochi's
   health records in readable form, so keep it private.
 
 Everything you enter (weights, the kg / lb choice, foods, food log entries and
@@ -240,6 +255,5 @@ own phone. Don't publish them anywhere public.
 
 These are not built yet:
 
-- Scheduled or repeating meals
 - Weight-loss plans
 - Reminders and notifications (including for vaccinations)

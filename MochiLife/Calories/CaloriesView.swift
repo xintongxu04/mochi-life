@@ -5,6 +5,7 @@ import SwiftUI
 enum CaloriesScreen: Hashable {
     case savedFoods
     case dailyCalorieSettings
+    case schedules
 }
 
 /// The Calories tab. Opens on what the cat has eaten today, with saved foods one tap away.
@@ -57,6 +58,9 @@ struct DayLogView: View {
                     NavigationLink(value: CaloriesScreen.savedFoods) {
                         Label("Saved Foods", systemImage: "books.vertical")
                     }
+                    NavigationLink(value: CaloriesScreen.schedules) {
+                        Label("Schedules", systemImage: "calendar.badge.clock")
+                    }
                     NavigationLink(value: CaloriesScreen.dailyCalorieSettings) {
                         Label("Daily Calories", systemImage: "slider.horizontal.3")
                     }
@@ -89,6 +93,7 @@ struct DayLogView: View {
                 switch screen {
                 case .savedFoods: SavedFoodsView()
                 case .dailyCalorieSettings: CalorieTargetSettingsView()
+                case .schedules: FeedingSchedulesView()
                 }
             }
             .savedFoodsDestinations(mode: .browse)
@@ -131,6 +136,9 @@ private struct DayEntriesList<Controls: View>: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.catName) private var catName
     @Query private var entries: [FoodLogEntry]
+    /// For future days: schedules shown as previews (never saved, never counted).
+    @Query(filter: #Predicate<FeedingSchedule> { !$0.isPaused }, sort: [SortDescriptor(\FeedingSchedule.createdAt)])
+    private var activeSchedules: [FeedingSchedule]
     @State private var entryBeingEdited: FoodLogEntry?
     /// An entry with carried days after it, waiting for the owner to say what to remove.
     @State private var entryBeingDeleted: FoodLogEntry?
@@ -149,6 +157,11 @@ private struct DayEntriesList<Controls: View>: View {
     }
 
     private var total: Double { entries.reduce(0) { $0 + $1.kilocalories } }
+
+    /// Schedules that would add an entry on this future day.
+    private var upcomingSchedules: [FeedingSchedule] {
+        activeSchedules.filter { $0.applies(on: day) }
+    }
 
     var body: some View {
         CalorieTargetReader { target in
@@ -194,6 +207,18 @@ private struct DayEntriesList<Controls: View>: View {
                             delete(entries[index])
                         }
                     }
+                }
+            }
+
+            if isFuture, !upcomingSchedules.isEmpty {
+                Section {
+                    ForEach(upcomingSchedules) { schedule in
+                        ScheduledPreviewRow(schedule: schedule)
+                    }
+                } header: {
+                    Text("Scheduled")
+                } footer: {
+                    Text("Added to the log on the day. Not counted in the total until then.")
                 }
             }
 
@@ -325,7 +350,7 @@ private struct LogEntryRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.foodName)
                     .lineLimit(2)
-                Text([entry.amountDescription, entry.loggedAt.formatted(date: .omitted, time: .shortened)]
+                Text([entry.amountDescription, entry.isScheduled ? nil : entry.loggedAt.formatted(date: .omitted, time: .shortened)]
                     .compactMap(\.self).joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -337,10 +362,46 @@ private struct LogEntryRow: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 }
+                if entry.isScheduled {
+                    Label("Scheduled", systemImage: "repeat")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("Added by a feeding schedule")
+                }
             }
             Spacer()
             Text("\(Portion.formatKilocalories(entry.kilocalories)) kcal")
                 .monospacedDigit()
         }
+    }
+}
+
+/// A schedule on a future day: shown dimmed and dashed, not saved and not counted.
+private struct ScheduledPreviewRow: View {
+    let schedule: FeedingSchedule
+
+    var body: some View {
+        HStack(spacing: 12) {
+            FoodThumbnail(libraryIdentifier: schedule.foodPhotoKey, size: 44)
+                .opacity(0.5)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(schedule.title)
+                    .lineLimit(2)
+                if let amount = schedule.amountDescription {
+                    Text(amount)
+                        .font(.caption)
+                }
+                Label("Scheduled", systemImage: "repeat")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.secondary)
+            Spacer()
+            Text("\(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal")
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Scheduled preview: \(schedule.title), \(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal, not counted yet")
     }
 }

@@ -92,6 +92,14 @@ Targets:
 | `PhotoCandidatePickerView.swift` | "Find online": grid of up to 8 photo candidates, loaded lazily with cancellation. |
 | `LogEntryForm.swift` | Log a food, quick entry, or edit an entry; carry-forward switch and dialogs; "Not this one" for automatic matches; defaults to the viewed day (`logDay` environment value). |
 
+**`Calories/Schedules/`** (scheduled feedings, §14)
+| File | Purpose |
+|---|---|
+| `FeedingSchedule.swift` | `@Model FeedingSchedule` (food snapshot, amount, kcal, days, dates, pause, `lastMaterializedDay`), `makeEntry(for:)`; `Weekdays` (bitmask, ordering, "Every day" / "Weekdays" / short-list wording). |
+| `ScheduleMaterializer.swift` | Turns schedules into log entries up to today: `pendingDays(for:through:)` (pure) and `materialize(through:)`; 60-day catch-up cap; logger category `schedules`. |
+| `FeedingSchedulesView.swift` | The Schedules list: rows, swipe to pause/resume and delete (with confirmation), empty state, add (saved-foods browser in `.schedule` mode) and edit sheets. |
+| `ScheduleEditorView.swift` | Create/edit form: shared portion picker, label, weekdays with "Every day", start and optional end date, validation, past-entries confirmation. |
+
 **`Calories/LogFlow/`** (the Log Food flow, §13)
 | File | Purpose |
 |---|---|
@@ -101,7 +109,7 @@ Targets:
 | `LogFoodFlow.swift` | `LogRoute`, `LogFlowModel` (index, text and camera decisions), `LogFoodFlowView` (the sheet), home (search, Recent, Frequent), candidate list, web fallback. |
 | `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions, number formatting, `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
-| `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
+| `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick/schedule modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
 | `FoodThumbnailStore.swift` | Photos the app saves for foods (one file per food, `user/<name>` keys, JPEG files in Application Support/FoodThumbnails), the "none" marker, the shared ImageIO thumbnail maker, and `ThumbnailRevision` (redraw on change). |
 
 **`Calories/AILookup/`** ("Add with AI", §11)
@@ -164,7 +172,7 @@ UI tests expect a **fresh install** (no saved data). See §10 for their current 
 
 ## 3. Data model (SwiftData)
 
-Container: `ModelContainer(for: Schema(versionedSchema: SchemaV2.self), migrationPlan: MochiLifeMigrationPlan.self)`
+Container: `ModelContainer(for: Schema(versionedSchema: SchemaV4.self), migrationPlan: MochiLifeMigrationPlan.self)`
 with the default configuration (on-disk store `default.store` in Application Support).
 A failure to open the store calls `fatalError`.
 
@@ -179,10 +187,16 @@ A failure to open the store calls `fatalError`.
 - `SchemaV2` (2.0.0) — adds `Food.seedID` (unique), `Food.isUserModified` and
   `CatProfile.createdAt`. Food is a frozen nested copy; the other models are the live types
   (unchanged since V2).
-- `SchemaV3` (3.0.0, current) — adds `Food.originRawValue` and `Food.thumbnailKey` (both
-  optional). Its `models` are the live types.
+- `SchemaV3` (3.0.0) — adds `Food.originRawValue` and `Food.thumbnailKey` (both optional).
+  FoodLogEntry is a frozen nested copy (it changed in V4; V2 lists the same frozen copy); the
+  other models are the live types.
+- `SchemaV4` (4.0.0, current) — adds the `FeedingSchedule` model and `FoodLogEntry.scheduleID`
+  (optional). Its `models` are the live types.
 - Stage V1 → V2: `.lightweight` (only additive). Stage V2 → V3: `.lightweight` (two optional
-  properties). V2 → V3 was checked on 2026-10-04 with a copy of a real V2 store (everything kept,
+  properties). Stage V3 → V4: `.lightweight` (a new model and one optional property; existing
+  entries get `scheduleID = nil`, meaning logged by hand). V3 → V4 was checked on 2026-10-05 on the
+  simulator's real store (4 weights, 103 foods, profile, vaccination, medical record: all kept;
+  the new table and column added). V2 → V3 was checked on 2026-10-04 with a copy of a real V2 store (everything kept,
   new columns added). Data fixes that need the bundled food file or
   apply to old entries (seed-ID backfill, missing fractions) run as repeat-safe launch tasks
   (`LaunchMaintenance`), not in the stage.
@@ -193,8 +207,8 @@ A failure to open the store calls `fatalError`.
 General facts that apply to every model:
 - **No relationships** between models (no `@Relationship`, so no delete rules). Links are by
   copied values or IDs (see `FoodLogEntry`).
-- **One uniqueness constraint:** `Food.seedID` (`@Attribute(.unique)`). It is optional;
-  several foods may have no seed ID.
+- **Two uniqueness constraints:** `Food.seedID` (`@Attribute(.unique)`; optional, several foods
+  may have none) and `FeedingSchedule.id`.
 - **Versioned schemas and a migration plan** — see above.
 - Enums are stored as `String` raw values in `…RawValue` properties with computed accessors,
   rather than as enum-typed properties.
@@ -255,6 +269,30 @@ details when logged, so later edits or deletion of a `Food` never change history
 | `carryGroupID` | `UUID?` | Shared by an entry and the entries carrying its opened can forward. |
 | `carryDay` | `Int` = `0` | 0 = the entry the can was opened with; 1, 2, … = following days. |
 | `openedAt` | `Date?` | For carried entries: when the can was opened. |
+| `scheduleID` | `UUID?` | The `FeedingSchedule` that made the entry (`isScheduled`); kept after the schedule is deleted. Nil = logged by hand (all entries before V4). Scheduled entries are dated at the start of their day. (V4) |
+
+### `FeedingSchedule` (`Calories/Schedules/FeedingSchedule.swift`) (V4)
+A food fed on a routine, counted automatically (§14). Like a log entry it is a **snapshot**:
+no relationship to `Food`, so deleting or editing the food never changes it.
+
+| Property | Type | Notes |
+|---|---|---|
+| `id` | `UUID`, **unique** | Copied into each entry's `scheduleID`. |
+| `foodName`, `foodBrand`, `foodLine`, `foodSeedID` | `String` / `String?` | Copied from the food. |
+| `foodPhotoKey` | `String?` | The food's `photoKey`, for the thumbnail. |
+| `portionSource` | `PortionSource?` | Copy of the food's sizes and kcal/g, for editing the amount. |
+| `measureRawValue` | `String` | `"containers"` or `"grams"`. |
+| `sizeName` | `String?` | Size used (containers). |
+| `containersNumerator`, `containersDenominator` | `Int?` | Exact amount of a can/pouch. |
+| `grams` | `Double?` | Amount by grams. |
+| `kilocaloriesPerOccurrence` | `Double` | Worked out when saved, or typed. |
+| `isKilocaloriesOverridden` | `Bool` = `false` | The owner typed the calories. |
+| `label` | `String?` | Like "Morning kibble". |
+| `weekdays` | `Int` | Bitmask of `Calendar` weekdays: bit 0 = Sunday (1) … bit 6 = Saturday (7); 127 = every day. |
+| `startDate`, `endDate` | `Date`, `Date?` | Starts of the first and last days (`Calendar.current`). |
+| `isPaused` | `Bool` = `false` | |
+| `lastMaterializedDay` | `Date?` | Start of the last day entries were made up to; only moves forward. |
+| `createdAt`, `updatedAt` | `Date` | |
 
 `PortionSource` (`Calories/Portion.swift`): `sizes: [FoodSize]`, `kilocaloriesPerGram: Double`.
 
@@ -385,6 +423,8 @@ MochiLifeApp
    │      DayEntriesList (List): day arrows + CalorieProgressView (or PlannedCaloriesView
    │        on future days), entries, CalorieChartView
    │      toolbar leading: NavigationLink(value: CaloriesScreen.savedFoods) → SavedFoodsView (browse)
+   │                       NavigationLink(value: .schedules) → FeedingSchedulesView
+   │                         (sheets: SavedFoodsView(.schedule) → ScheduleEditorView(.create); ScheduleEditorView(.edit))
    │                       NavigationLink(value: .dailyCalorieSettings) → CalorieTargetSettingsView
    │      registers .navigationDestination(for: CaloriesScreen) and .savedFoodsDestinations(mode: .browse)
    │      safeAreaInset(bottom): "Log Food" (.borderedProminent, large) → sheet LogFoodFlowView(day:)
@@ -470,6 +510,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 | Add/edit/delete foods | `FoodEditorView.swift`, `SavedFoodsView.swift`, `PhotoCandidatePickerView.swift` | Every field is editable, including sizes (add, delete, reorder), notes, source and photo. kcal/g must be 0.2–6.0 when typed (the AI verifier accepts only 0.3–6.0). Saving an edit of a seeded food sets `isUserModified`. |
 | Size-and-portion picker | `PortionPicker.swift`, `Portion.swift` | Typed amounts allow up to 3 decimal places. |
 | Food log (Today, days, + flow, quick entry, edit, delete, Log This) | `CaloriesView.swift`, `LogEntryForm.swift`, `FoodLogEntry.swift` | Forward navigation stops at the last future day with entries. Future days show calories as "planned" and are excluded from progress and the chart. Deleting several rows at once only asks about the last one with carried days. |
+| Scheduled feedings | `Calories/Schedules/*`, `CaloriesView.swift`, `ContentView.swift`, `LaunchMaintenance.swift` | Day-level only (no time of day). Paused days are skipped, not filled in on resume. The food can't be changed when editing (add a new schedule). The materializer has no automated test; only its backup round trip is tested. |
 | Carry-forward of opened cans | `CarryForward.swift`, `FoodLogEntry.swift`, `LogEntryForm.swift`, `CaloriesView.swift` | Older entries without an exact fraction get one at launch only if it's within 1e-6 of n/d with d ≤ 12. Plans over 90 days aren't offered; over 7 days ask first. |
 | Daily calorie target (estimate or own) | `CalorieTarget.swift`, `CalorieTargetSettingsView.swift` | Past days are compared with today's target (no history of targets). Own target must be a whole number 50–1,000 kcal; Save Target is disabled otherwise. |
 | Calories vs target on Today | `CaloriesView.swift` (`CalorieProgressView`) | — |
@@ -577,7 +618,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 
 ## 10. Known issues and technical debt
 
-- **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
+- **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05 (`BackupRoundTripTests` re-run after adding schedules: passing). Scheduled-feeding materialization has no automated test. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
   Live scanning, the model judge and the Log Food screens have no automated tests.
 - **The UI test target is not confirmed green.** Last run (2026-10-04, stopped by the owner
   before a rerun): `WeightLoggingUITests` passed; both `SavedFoodsUITests` tests failed when
@@ -896,25 +937,25 @@ free-provisioned build. Reached from the Mochi tab ("Back Up and Restore"); open
 ### Format
 - One file, extension `.mochibackup`, UTType `com.xintongxu.mochilife.backup` (conforms to
   `public.data`, `public.json`), exported and registered as a document type in `MochiLife/Info.plist`.
-- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (1), `schemaVersion` (the SwiftData version,
-  "3.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
+- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (2), `schemaVersion` (the SwiftData version,
+  "4.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
   = `foodThumbnail` | `profilePhoto`, `base64`).
 - Dates are ISO 8601 UTC with milliseconds, written from a rounded whole number of milliseconds so
   they read back and re-encode identically. Numbers are plain JSON numbers (the app has no
   `Decimal` values; Doubles round-trip exactly). Portions keep numerator/denominator; weights are
   in kilograms.
 - **DTO rule:** the backup uses dedicated Codable DTOs (`WeightDTO`, `FoodDTO`, `FoodLogEntryDTO`,
-  `ProfileDTO`, `VaccinationDTO`, `MedicalRecordDTO`, `SettingsDTO`, …) mapped explicitly in
+  `ProfileDTO`, `VaccinationDTO`, `MedicalRecordDTO`, `FeedingScheduleDTO`, `SettingsDTO`, …) mapped explicitly in
   `BackupMapping.swift`. Models are never Codable or serialized directly.
 
 ### Contents
 - Included: all weights; foods of origin manual and aiLookup in full; seeded foods only where
   `isUserModified` (as overrides keyed by `seedID`); `deletedSeedIDs`; every food log entry with
-  its portion snapshot, exact fraction and carry fields (`carryGroupID`, `carryDay`, `openedAt`);
+  its portion snapshot, exact fraction, carry fields (`carryGroupID`, `carryDay`, `openedAt`) and
+  `scheduleID`; every feeding schedule (`schedules`, every field including `lastMaterializedDay`);
   the profile (photo as a `profilePhoto` file); vaccinations; medical history; settings
   (`weightUnit`, own calorie target, gains weight easily); and every photo file in
-  Application Support/FoodThumbnails referenced by a food or log entry. There are no feeding
-  schedules or scheduled-meal fields in the app.
+  Application Support/FoodThumbnails referenced by a food, log entry or schedule.
 - Excluded: API keys and anything in the Keychain; AI lookup counters; the image-search
   availability flag; the last-export date; bundled seed data and photos. The seed version
   marker isn't stored; restore resets it so the bundled foods are re-applied.
@@ -929,7 +970,9 @@ and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cance
 1. `BackupReader.prepare` (off the main actor, cancellable): security-scoped read; reject files
    over 100 MB; check it's JSON; read `formatVersion`/`schemaVersion` and refuse newer ones
    ("update the app"); decode through `upgrade(_:from:)` (one explicit step per older format
-   version; v1 is current); validate (weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
+   version: v1 → v2 adds an empty `schedules` list, and missing `scheduleID`s decode as nil; v2
+   is current); validate (also schedules: food name, weekdays 1–127, kcal 0–100,000, amounts,
+   end ≥ start, unique IDs; (weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
    denominators > 0, carry day ≥ 0, target ≤ 5,000, safe file names, valid base64), with distinct
    messages; stage photo files in a temporary folder.
 2. `RestoreFlowView` shows the backup's date, device and app version, and per-type counts next to
@@ -944,7 +987,8 @@ and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cance
    photos move into place, unreferenced photo files are removed, settings and `deletedSeedIDs` are
    written, the seed version marker is reset and `FoodLibraryLoader.updateBundledLibraries` re-adds
    bundled foods (skipping edited and deleted ones, no duplicates), and the single profile is
-   ensured. The replacement runs on the main context so screens never hold deleted objects; the
+   ensured, and `ScheduleMaterializer` runs once so restored schedules catch up from their own
+   `lastMaterializedDay` (existing entries are never duplicated). The replacement runs on the main context so screens never hold deleted objects; the
    slow work (reading, decoding, staging, safety backup) is off the main actor.
 
 ### Rule
@@ -1023,3 +1067,66 @@ picker, own calories, date and time, carry-forward); saving dismisses the whole 
 model was used, its latency and certainty, and whether the web fallback ran. Never recognized text
 or queries.
 
+---
+
+## 14. Scheduled feedings (`Calories/Schedules/`)
+
+Food fed on a fixed routine (for example dry kibble every morning) is added to the food log
+automatically, one entry per chosen day, without logging it by hand.
+
+### Decisions (differences from the original spec)
+- **No relationship to the saved food** (convention §3): the schedule keeps a snapshot (name,
+  brand, line, seed ID, photo key, `PortionSource`), so it survives the food being deleted.
+- **Doubles, not Decimal**, like every other amount in the app; part-cans use exact fractions.
+- **Log entries had no origin field**: `scheduleID` itself marks an entry as scheduled.
+- **Day-level entries** are dated at the start of the day (`Calendar.current.startOfDay`); their
+  rows show no time.
+- **Paused days are skipped**: resuming sets `lastMaterializedDay` to yesterday (if it was
+  earlier), so catch-up starts today.
+- **Editing can't change the food**; the owner adds a new schedule instead.
+
+### Materialization (`ScheduleMaterializer`, main-actor `ModelContext`)
+- `materialize(through: .now)`: for each schedule that isn't paused, the pending days are from
+  max(start, `lastMaterializedDay` + 1 day) through min(today, end), selected weekdays only.
+  Before inserting, it fetches the schedule's entries (`scheduleID == id`) and skips days that
+  already have one. Then `lastMaterializedDay` = today (it only moves forward). Saves through
+  `Persistence.save`.
+- **Catch-up cap:** at most the last 60 calendar days; earlier days are skipped and logged
+  (`os.Logger`, category `schedules`, a count only).
+- **Skip a day:** delete that day's scheduled entry. It isn't made again, because
+  `lastMaterializedDay` has moved past it.
+- Never makes entries for future days.
+- All day arithmetic uses `Calendar.current` (`startOfDay`, `date(byAdding: .day)`), never
+  86,400-second steps, so time-zone and daylight-saving changes are handled.
+- **Triggers:** app launch (`LaunchMaintenance.run`), `scenePhase` becoming `.active`,
+  `NSCalendarDayChanged`, and `UIApplication.significantTimeChangeNotification` (all in
+  `ContentView`); after saving or pausing/resuming a schedule; and once after a restore.
+
+### Edit semantics
+- Editing a schedule affects only days after `lastMaterializedDay`; existing entries are snapshots
+  and stay unchanged.
+- Deleting a schedule keeps its past entries (they keep `scheduleID`), and the confirmation says
+  so.
+- Editing or deleting a scheduled entry affects only that entry (the normal entry form).
+- A schedule whose start is in the past fills in its backlog right away (60-day cap). The editor
+  first counts the days with `pendingDays` and asks "Add N past entries?".
+
+### Screens
+- **Calories toolbar** (secondary, beside Saved Foods): "Schedules" (`calendar.badge.clock`).
+- **Schedules list**: rows show thumbnail, label (or food name), amount · day pattern ("Every
+  day", "Weekdays", "Weekends" or "Mon, Wed, Fri"; full day names for VoiceOver), end date or
+  "Paused", and kcal. Swipe right to pause or resume; swipe left to delete. Empty state with "Add a
+  Schedule".
+- **Add**: the saved-foods browser and search (all origins) in `.schedule` mode, then
+  `ScheduleEditorView`.
+- **Editor**: food header; `PortionPicker` (grams by default for gram-only foods; calorie override
+  as in logging); optional label; "Every day" switch and one row per weekday; start date; "Ends"
+  switch with last day. Save is disabled with a red footer while there is no amount (greater than
+  zero), no day, or the end is before the start.
+- **Day view**: scheduled entries look like other entries with a "Scheduled" (`repeat`) label,
+  like the carried-can label. On a future day, a "Scheduled" section previews the schedules that
+  would apply there (dimmed). These rows aren't saved and aren't counted.
+
+### Totals
+Materialized entries are ordinary `FoodLogEntry` rows, so they count in the day total, the
+eaten-versus-target progress and the calories chart. Preview rows never count.

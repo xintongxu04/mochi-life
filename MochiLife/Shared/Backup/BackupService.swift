@@ -28,10 +28,13 @@ actor BackupService {
             .sorted { ($0.dateGiven, $0.name) < ($1.dateGiven, $1.name) }
         let records = try context.fetch(FetchDescriptor<MedicalRecord>())
             .sorted { ($0.date, $0.title) < ($1.date, $1.title) }
+        let schedules = try context.fetch(FetchDescriptor<FeedingSchedule>())
+            .sorted { ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString) }
 
-        // Every photo file referenced by a food or a log entry that exists in the container.
+        // Every photo file referenced by a food, a log entry or a schedule that exists in the container.
         var files: [BackupFile] = []
-        let keys = Set(foods.compactMap(\.thumbnailKey) + log.compactMap(\.foodLibraryIdentifier))
+        let keys = Set(foods.compactMap(\.thumbnailKey) + log.compactMap(\.foodLibraryIdentifier)
+            + schedules.compactMap(\.foodPhotoKey))
         for key in keys.sorted() {
             try Task.checkCancellation()
             guard let name = FoodThumbnailStore.fileName(forKey: key),
@@ -59,6 +62,7 @@ actor BackupService {
                 profile: profile.map { ProfileDTO($0, photoFile: photoFile) },
                 vaccinations: vaccinations.map(VaccinationDTO.init),
                 medicalRecords: records.map(MedicalRecordDTO.init),
+                schedules: schedules.map(FeedingScheduleDTO.init),
                 settings: settings
             ),
             files: files

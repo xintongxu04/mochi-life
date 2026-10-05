@@ -27,6 +27,8 @@ struct SavedFoodsView: View {
         case browse
         /// Choose a food to log. `onFinish` closes the logging screens.
         case pick(onFinish: () -> Void)
+        /// Choose a food for a new feeding schedule. `onFinish` closes the schedule screens.
+        case schedule(onFinish: () -> Void)
     }
 
     var mode: Mode = .browse
@@ -57,7 +59,10 @@ struct SavedFoodsView: View {
     }
 
     private var isPicking: Bool {
-        if case .pick = mode { true } else { false }
+        switch mode {
+        case .browse: false
+        case .pick, .schedule: true
+        }
     }
 
     private var isSearching: Bool {
@@ -130,7 +135,7 @@ struct SavedFoodsView: View {
                         isAddingFood = true
                     }
                 }
-            case let .pick(onFinish):
+            case let .pick(onFinish), let .schedule(onFinish):
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onFinish)
                 }
@@ -164,6 +169,8 @@ extension View {
                 FoodDetailView(food: food)
             case let .pick(onFinish):
                 LogEntryForm(mode: .logFood(food, startingFrom: nil), onFinish: onFinish)
+            case let .schedule(onFinish):
+                ScheduleEditorView(mode: .create(food), onFinish: onFinish)
             }
         }
         .navigationDestination(for: QuickEntrySelection.self) { _ in

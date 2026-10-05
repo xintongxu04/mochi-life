@@ -8,7 +8,7 @@ import Testing
 @MainActor
 struct BackupRoundTripTests {
     @Test func exportAndRestoreKeepEveryRecordAndPhoto() async throws {
-        let schema = Schema(versionedSchema: SchemaV3.self)
+        let schema = Schema(versionedSchema: SchemaV4.self)
         let source = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let target = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let work = URL.temporaryDirectory.appending(path: "backup-test-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -60,6 +60,18 @@ struct BackupRoundTripTests {
         quick.foodLibraryIdentifier = "user/food-test"
         context.insert(quick)
 
+        // A feeding schedule already caught up to today, and one entry it made.
+        let schedule = FeedingSchedule(foodName: aiFood.name, measureRawValue: "containers", kilocaloriesPerOccurrence: 36.15,
+                                       weekdays: Weekdays.weekdaysOnly, startDate: Calendar.current.startOfDay(for: date), createdAt: date)
+        schedule.record(aiFood)
+        schedule.record(Portion(measure: .containers, size: aiFood.sizes[0], containers: 0.5,
+                                exactContainers: Fraction(1, 2), calculatedKilocalories: 36.15))
+        schedule.label = "Morning"
+        schedule.endDate = Calendar.current.date(byAdding: .year, value: 1, to: Calendar.current.startOfDay(for: date))
+        schedule.lastMaterializedDay = Calendar.current.startOfDay(for: .now)
+        context.insert(schedule)
+        context.insert(schedule.makeEntry(for: date))
+
         let profile = CatProfile(createdAt: date)
         profile.name = "Mochi"
         profile.photoData = Data([9, 8, 7])
@@ -101,7 +113,9 @@ struct BackupRoundTripTests {
         #expect(reexported.files == exported.files)
         #expect(exported.payload.weights.count == 1)
         #expect(exported.payload.foods.count == 3)
-        #expect(exported.payload.foodLog.count == 3)
+        #expect(exported.payload.foodLog.count == 4)
+        #expect(exported.payload.schedules.count == 1)
+        #expect(exported.formatVersion == 2)
         #expect(exported.payload.vaccinations.count == 1)
         #expect(exported.payload.medicalRecords.count == 1)
         #expect(exported.payload.profile != nil)
@@ -116,6 +130,28 @@ struct BackupRoundTripTests {
         #expect(restoredCarried.carryGroupID == opened.carryGroupID)
         #expect(restoredCarried.exactContainers == Fraction(1, 4))
         #expect(try target.mainContext.fetch(FetchDescriptor<CatProfile>()).first?.photoData == Data([9, 8, 7]))
+        // The schedule and its entry came back linked, and catching up after the restore added nothing.
+        let restoredSchedule = try #require(try target.mainContext.fetch(FetchDescriptor<FeedingSchedule>()).first)
+        #expect(restoredSchedule.id == schedule.id)
+        #expect(restoredSchedule.exactContainers == Fraction(1, 2))
+        #expect(restoredLog.count == 4)
+        #expect(restoredLog.filter { $0.scheduleID == schedule.id }.count == 1)
+
+        // A format 1 file (no schedules, no scheduleID) is upgraded on reading.
+        var oldFile = try #require(try JSONSerialization.jsonObject(with: encoder.encode(exported)) as? [String: Any])
+        var oldPayload = try #require(oldFile["payload"] as? [String: Any])
+        oldPayload.removeValue(forKey: "schedules")
+        oldPayload["foodLog"] = (oldPayload["foodLog"] as? [[String: Any]])?.map { entry in
+            var entry = entry
+            entry.removeValue(forKey: "scheduleID")
+            return entry
+        }
+        oldFile["payload"] = oldPayload
+        oldFile["formatVersion"] = 1
+        let upgraded = try BackupReader.decode(JSONSerialization.data(withJSONObject: oldFile))
+        #expect(upgraded.payload.schedules.isEmpty)
+        #expect(upgraded.payload.foodLog.count == 4)
+        #expect(upgraded.payload.foodLog.allSatisfy { $0.scheduleID == nil })
 
         // Bundled foods were re-applied on top: the edited one kept, the deleted one absent.
         let restoredFoods = try target.mainContext.fetch(FetchDescriptor<Food>())

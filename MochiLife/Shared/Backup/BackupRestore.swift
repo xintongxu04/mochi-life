@@ -69,10 +69,19 @@ enum BackupReader {
         }
     }
 
-    /// One explicit step per older format version. Version 1 is the current format.
-    private static func upgrade(_ data: Data, from formatVersion: Int) throws -> BackupEnvelope {
+    /// One explicit step per older format version. Version 2 is the current format.
+    static func upgrade(_ data: Data, from formatVersion: Int) throws -> BackupEnvelope {
         switch formatVersion {
         case 1:
+            // Format 1 had no schedules; log entries had no `scheduleID` (decoded as nil).
+            guard var root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  var payload = root["payload"] as? [String: Any]
+            else { throw BackupError.notABackup }
+            payload["schedules"] = payload["schedules"] ?? [Any]()
+            root["payload"] = payload
+            root["formatVersion"] = 2
+            return try upgrade(JSONSerialization.data(withJSONObject: root), from: 2)
+        case 2:
             return try BackupCoding.decoder().decode(BackupEnvelope.self, from: data)
         default:
             throw BackupError.invalidValue("format version \(formatVersion)")
@@ -119,6 +128,16 @@ enum BackupReader {
             try check((entry.containersDenominator ?? 1) > 0, "a fraction with denominator 0 in a log entry")
             try check(entry.carryDay >= 0, "a negative carry-forward day")
         }
+        for schedule in payload.schedules {
+            try check(!schedule.foodName.isEmpty, "a feeding schedule without a food name")
+            try check((1...Weekdays.everyDay).contains(schedule.weekdays), "the days of the schedule for “\(schedule.foodName)”")
+            try check(schedule.kilocaloriesPerOccurrence >= 0 && schedule.kilocaloriesPerOccurrence <= 100_000,
+                      "\(schedule.kilocaloriesPerOccurrence) kcal in a feeding schedule")
+            try check((schedule.containersDenominator ?? 1) > 0 && (schedule.grams ?? 0) >= 0,
+                      "the amount of the schedule for “\(schedule.foodName)”")
+            try check(schedule.endDate.map { $0 >= schedule.startDate } ?? true, "a schedule that ends before it starts")
+        }
+        try check(Set(payload.schedules.map(\.id)).count == payload.schedules.count, "two schedules with the same ID")
         if let target = payload.settings.ownCalorieTarget {
             try check(target >= 0 && target <= 5_000, "a daily calorie target of \(target)")
         }
@@ -178,6 +197,7 @@ enum BackupRestorer {
             try context.fetch(FetchDescriptor<CatProfile>()).forEach(context.delete)
             try context.fetch(FetchDescriptor<Vaccination>()).forEach(context.delete)
             try context.fetch(FetchDescriptor<MedicalRecord>()).forEach(context.delete)
+            try context.fetch(FetchDescriptor<FeedingSchedule>()).forEach(context.delete)
 
             let existingSeedIDs = Set(try context.fetch(FetchDescriptor<Food>()).filter { !$0.isDeleted }.compactMap(\.seedID))
             for dto in payload.foods where dto.seedID == nil || !existingSeedIDs.contains(dto.seedID!) {
@@ -189,6 +209,7 @@ enum BackupRestorer {
             payload.foodLog.forEach { context.insert($0.makeModel()) }
             payload.vaccinations.forEach { context.insert($0.makeModel()) }
             payload.medicalRecords.forEach { context.insert($0.makeModel()) }
+            payload.schedules.forEach { context.insert($0.makeModel()) }
             if let profile = payload.profile {
                 context.insert(profile.makeModel(photoData: prepared.profilePhoto))
             }
@@ -212,6 +233,8 @@ enum BackupRestorer {
         }
         FoodLibraryLoader.updateBundledLibraries(in: context, defaults: defaults)
         _ = CatProfile.current(in: context)
+        // Restored schedules catch up from their own last day; existing entries aren't duplicated.
+        ScheduleMaterializer(context: context).materialize()
         Persistence.logger.notice("Restore completed from a backup made \(prepared.envelope.createdAt.formatted(.iso8601), privacy: .public)")
     }
 
@@ -225,7 +248,9 @@ enum BackupRestorer {
         }
         let foods = (try? context.fetch(FetchDescriptor<Food>())) ?? []
         let log = (try? context.fetch(FetchDescriptor<FoodLogEntry>())) ?? []
-        let referenced = Set((foods.compactMap(\.thumbnailKey) + log.compactMap(\.foodLibraryIdentifier))
+        let schedules = (try? context.fetch(FetchDescriptor<FeedingSchedule>())) ?? []
+        let referenced = Set((foods.compactMap(\.thumbnailKey) + log.compactMap(\.foodLibraryIdentifier)
+            + schedules.compactMap(\.foodPhotoKey))
             .compactMap(FoodThumbnailStore.fileName(forKey:)))
         for name in (try? manager.contentsOfDirectory(atPath: directory.path)) ?? [] where !referenced.contains(name) {
             try? manager.removeItem(at: directory.appending(path: name))

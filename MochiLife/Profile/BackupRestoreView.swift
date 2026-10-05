@@ -209,6 +209,7 @@ struct RestoreFlowView: View {
                 countRow("Edited Tiki Cat foods", backup.editedSeedFoods, currentCounts.editedSeedFoods)
                 countRow("Deleted Tiki Cat foods", backup.deletedSeedFoods, currentCounts.deletedSeedFoods)
                 countRow("Food log entries", backup.foodLog, currentCounts.foodLog)
+                countRow("Feeding schedules", backup.schedules, currentCounts.schedules)
                 countRow("Profile", backup.hasProfile ? 1 : 0, currentCounts.hasProfile ? 1 : 0)
                 countRow("Vaccinations", backup.vaccinations, currentCounts.vaccinations)
                 countRow("Medical history", backup.medicalRecords, currentCounts.medicalRecords)

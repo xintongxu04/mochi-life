@@ -5,19 +5,20 @@ import SwiftData
 // MochiLifeMigrationPlan. Earlier versions keep frozen copies of their models so old stores can
 // still be recognized and upgraded. The live model types are always the latest version's.
 
-/// Version 3 (current): Food gains `originRawValue` (seed, manual or AI lookup) and
-/// `thumbnailKey` (a photo saved by the app). The live model types are this version.
-enum SchemaV3: VersionedSchema {
-    static let versionIdentifier = Schema.Version(3, 0, 0)
+/// Version 4 (current): adds `FeedingSchedule` and `FoodLogEntry.scheduleID`. The live model
+/// types are this version.
+enum SchemaV4: VersionedSchema {
+    static let versionIdentifier = Schema.Version(4, 0, 0)
 
     static var models: [any PersistentModel.Type] {
-        [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self]
+        [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self,
+         FeedingSchedule.self]
     }
 }
 
 enum MochiLifeMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
     }
 
     static var stages: [MigrationStage] {
@@ -27,18 +28,62 @@ enum MochiLifeMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
             // Only adds two optional Food properties.
             .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
+            // Adds a new model and one optional FoodLogEntry property; existing entries get nil
+            // (logged by hand), so they keep their meaning.
+            .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self),
         ]
     }
 }
 
+/// Version 3: Food gains `originRawValue` (seed, manual or AI lookup) and `thumbnailKey` (a photo
+/// saved by the app). FoodLogEntry is a frozen copy (it changed in V4); the other models are the
+/// live types (unchanged since V3). Don't change the frozen copy.
+enum SchemaV3: VersionedSchema {
+    static let versionIdentifier = Schema.Version(3, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self]
+    }
+
+    @Model
+    final class FoodLogEntry {
+        var loggedAt: Date
+        var foodName: String
+        var foodBrand: String?
+        var foodLine: String?
+        var foodLibraryIdentifier: String?
+        var portionSource: PortionSource?
+        var measureRawValue: String?
+        var sizeName: String?
+        var containers: Double?
+        var grams: Double?
+        var containersNumerator: Int?
+        var containersDenominator: Int?
+        var kilocalories: Double
+        var isCustomKilocalories: Bool = false
+        var createdAt: Date
+        var carryGroupID: UUID?
+        var carryDay: Int = 0
+        var openedAt: Date?
+
+        init(foodName: String, kilocalories: Double, loggedAt: Date, createdAt: Date) {
+            self.foodName = foodName
+            self.kilocalories = kilocalories
+            self.loggedAt = loggedAt
+            self.createdAt = createdAt
+        }
+    }
+}
+
 /// Version 2: Food gained `seedID` (unique) and `isUserModified`; CatProfile gained `createdAt`.
-/// Food is a frozen copy (it changed in V3); the other models are unchanged since V2, so the
-/// live types are used. Don't change the frozen copy.
+/// Food is a frozen copy (it changed in V3) and FoodLogEntry is V3's frozen copy (it changed in
+/// V4); the other models are unchanged since V2, so the live types are used. Don't change the
+/// frozen copies.
 enum SchemaV2: VersionedSchema {
     static let versionIdentifier = Schema.Version(2, 0, 0)
 
     static var models: [any PersistentModel.Type] {
-        [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self]
+        [WeightEntry.self, Food.self, SchemaV3.FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self]
     }
 
     @Model

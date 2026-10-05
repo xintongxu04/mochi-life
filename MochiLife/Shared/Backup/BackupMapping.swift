@@ -73,7 +73,8 @@ extension FoodLogEntryDTO {
             grams: entry.grams, containersNumerator: entry.containersNumerator,
             containersDenominator: entry.containersDenominator, kilocalories: entry.kilocalories,
             isCustomKilocalories: entry.isCustomKilocalories, createdAt: entry.createdAt,
-            carryGroupID: entry.carryGroupID, carryDay: entry.carryDay, openedAt: entry.openedAt
+            carryGroupID: entry.carryGroupID, carryDay: entry.carryDay, openedAt: entry.openedAt,
+            scheduleID: entry.scheduleID
         )
     }
 
@@ -95,7 +96,51 @@ extension FoodLogEntryDTO {
         entry.carryGroupID = carryGroupID
         entry.carryDay = carryDay
         entry.openedAt = openedAt
+        entry.scheduleID = scheduleID
         return entry
+    }
+}
+
+extension FeedingScheduleDTO {
+    init(_ schedule: FeedingSchedule) {
+        self.init(
+            id: schedule.id, foodName: schedule.foodName, foodBrand: schedule.foodBrand, foodLine: schedule.foodLine,
+            foodSeedID: schedule.foodSeedID, foodPhotoKey: schedule.foodPhotoKey,
+            portionSource: schedule.portionSource.map {
+                PortionSourceDTO(sizes: $0.sizes.map(FoodSizeDTO.init), kilocaloriesPerGram: $0.kilocaloriesPerGram)
+            },
+            measure: schedule.measureRawValue, sizeName: schedule.sizeName,
+            containersNumerator: schedule.containersNumerator, containersDenominator: schedule.containersDenominator,
+            grams: schedule.grams, kilocaloriesPerOccurrence: schedule.kilocaloriesPerOccurrence,
+            isKilocaloriesOverridden: schedule.isKilocaloriesOverridden, label: schedule.label,
+            weekdays: schedule.weekdays, startDate: schedule.startDate, endDate: schedule.endDate,
+            isPaused: schedule.isPaused, lastMaterializedDay: schedule.lastMaterializedDay,
+            createdAt: schedule.createdAt, updatedAt: schedule.updatedAt
+        )
+    }
+
+    func makeModel() -> FeedingSchedule {
+        let schedule = FeedingSchedule(id: id, foodName: foodName, measureRawValue: measure,
+                                       kilocaloriesPerOccurrence: kilocaloriesPerOccurrence, weekdays: weekdays,
+                                       startDate: startDate, createdAt: createdAt)
+        schedule.foodBrand = foodBrand
+        schedule.foodLine = foodLine
+        schedule.foodSeedID = foodSeedID
+        schedule.foodPhotoKey = foodPhotoKey
+        schedule.portionSource = portionSource.map {
+            PortionSource(sizes: $0.sizes.map(\.model), kilocaloriesPerGram: $0.kilocaloriesPerGram)
+        }
+        schedule.sizeName = sizeName
+        schedule.containersNumerator = containersNumerator
+        schedule.containersDenominator = containersDenominator
+        schedule.grams = grams
+        schedule.isKilocaloriesOverridden = isKilocaloriesOverridden
+        schedule.label = label
+        schedule.endDate = endDate
+        schedule.isPaused = isPaused
+        schedule.lastMaterializedDay = lastMaterializedDay
+        schedule.updatedAt = updatedAt
+        return schedule
     }
 }
 

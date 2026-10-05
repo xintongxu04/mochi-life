@@ -22,6 +22,7 @@ extension EnvironmentValues {
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [CatProfile]
     @State private var selectedTab = AppTab.weight
     /// A backup file opened from Files, AirDrop or the share sheet.
@@ -44,6 +45,16 @@ struct ContentView: View {
         .environment(\.openTab, OpenTabAction(selection: $selectedTab))
         .environment(\.catName, catName)
         .task { LaunchMaintenance.run(in: modelContext) }
+        // Scheduled feedings catch up whenever the app comes back and when the day or clock changes.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { ScheduleMaterializer(context: modelContext).materialize() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in
+            ScheduleMaterializer(context: modelContext).materialize()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            ScheduleMaterializer(context: modelContext).materialize()
+        }
         .onOpenURL { url in
             guard url.pathExtension.lowercased() == BackupFormat.fileExtension else { return }
             selectedTab = .mochi
@@ -57,5 +68,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self], inMemory: true)
+        .modelContainer(for: [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self, FeedingSchedule.self], inMemory: true)
 }

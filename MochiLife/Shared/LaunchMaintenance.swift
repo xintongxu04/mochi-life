@@ -8,6 +8,7 @@ enum LaunchMaintenance {
         _ = CatProfile.current(in: context)
         FoodLibraryLoader.updateBundledLibraries(in: context)
         deriveMissingFractions(in: context)
+        ScheduleMaterializer(context: context).materialize()
     }
 
     /// Entries logged by can or pouch before exact fractions were stored get one when their

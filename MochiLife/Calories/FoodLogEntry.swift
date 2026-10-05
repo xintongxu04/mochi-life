@@ -33,6 +33,9 @@ final class FoodLogEntry {
     var carryDay: Int = 0
     /// For carried entries: when the can or pouch was opened.
     var openedAt: Date?
+    /// The feeding schedule that made this entry, if any. Kept after the schedule is deleted.
+    /// Nil for entries logged by hand. (V4)
+    var scheduleID: UUID?
 
     init(foodName: String, kilocalories: Double, loggedAt: Date, createdAt: Date = .now) {
         self.foodName = foodName
@@ -89,6 +92,9 @@ final class FoodLogEntry {
     }
 
     var isCarriedForward: Bool { carryGroupID != nil && carryDay > 0 }
+
+    /// Made automatically by a feeding schedule.
+    var isScheduled: Bool { scheduleID != nil }
 
     /// "can" or "pouch", from the size it was logged with.
     var containerName: String {
