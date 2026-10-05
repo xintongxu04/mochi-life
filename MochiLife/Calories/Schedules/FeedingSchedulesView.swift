@@ -124,9 +124,14 @@ private struct ScheduleRow: View {
                     .accessibilityLabel([schedule.amountDescription, Weekdays.spokenDescription(schedule.weekdays)]
                         .compactMap(\.self).joined(separator: ", "))
                 if schedule.isPaused {
-                    Label("Paused", systemImage: "pause.circle")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
+                    HStack(spacing: 4) {
+                        Image(systemName: "pause.circle")
+                            .frame(width: 16)
+                            .accessibilityHidden(true)
+                        Text("Paused")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
                 } else if let endDate = schedule.endDate {
                     Text("Until \(endDate.formatted(date: .abbreviated, time: .omitted))")
                         .font(.caption2)
@@ -138,6 +143,7 @@ private struct ScheduleRow: View {
                 .monospacedDigit()
                 .foregroundStyle(schedule.isPaused ? .secondary : .primary)
         }
+        .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
         .accessibilityElement(children: .combine)
     }
 }

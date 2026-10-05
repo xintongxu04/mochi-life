@@ -543,6 +543,7 @@ struct FoodEditorView: View {
                         Text("kcal").foregroundStyle(.secondary)
                     }
                 }
+                .rowSeparatorAligned()
             }
             .onDelete { sizes.remove(atOffsets: $0) }
             .onMove { sizes.move(fromOffsets: $0, toOffset: $1) }

@@ -21,6 +21,7 @@ struct AddWeightView: View {
                     Text(unit.rawValue)
                         .foregroundStyle(.secondary)
                 }
+                .rowSeparatorAligned()
                 if !weightText.isEmpty && weight == nil {
                     Text("Enter a weight like 4.25, with up to two decimal places.")
                         .font(.footnote)

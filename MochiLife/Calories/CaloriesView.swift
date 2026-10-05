@@ -357,8 +357,7 @@ private struct CalorieProgressView: View {
 private struct LogEntryRow: View {
     let entry: FoodLogEntry
 
-    nonisolated static let thumbnailSize: CGFloat = 44
-    nonisolated static let spacing: CGFloat = 12
+    static let spacing: CGFloat = 12
     /// Width of the icon slot in the "From a can opened…" and "Scheduled" lines.
     static let iconSlotWidth: CGFloat = 16
 
@@ -393,11 +392,9 @@ private struct LogEntryRow: View {
             Text("\(Portion.formatKilocalories(entry.kilocalories)) kcal")
                 .monospacedDigit()
         }
-        // One separator for every row, set explicitly: from the text column to the trailing edge.
-        // (A `Label` in the row used to set its own separator start from its title, past its icon,
-        // so carried and scheduled rows got a separator that started further in than the others.)
-        .alignmentGuide(.listRowSeparatorLeading) { _ in Self.thumbnailSize + Self.spacing }
-        .alignmentGuide(.listRowSeparatorTrailing) { dimensions in dimensions[.trailing] }
+        // One separator for every row, set explicitly at the text column (carried and scheduled
+        // rows included).
+        .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
     }
 
     /// A small icon in a fixed-width slot, centred on its caption line, then the caption.
@@ -429,8 +426,13 @@ private struct ScheduledPreviewRow: View {
                     Text(amount)
                         .font(.caption)
                 }
-                Label("Scheduled", systemImage: "repeat")
-                    .font(.caption2)
+                HStack(spacing: 4) {
+                    Image(systemName: "repeat")
+                        .frame(width: 16)
+                        .accessibilityHidden(true)
+                    Text("Scheduled")
+                }
+                .font(.caption2)
             }
             .foregroundStyle(.secondary)
             Spacer()
@@ -439,6 +441,7 @@ private struct ScheduledPreviewRow: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Scheduled preview: \(schedule.title), \(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal, not counted yet")
     }

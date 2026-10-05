@@ -587,6 +587,20 @@ closes via an `onFinish` closure instead of `dismiss`.
 - **Wording** — short, plain owner language; nothing is presented as veterinary advice. The
   only advice-style disclaimer is on the calorie settings screen.
 - **Previews** — `#Preview` blocks use `.modelContainer(for:…, inMemory: true)`.
+- **Row separators** — rows that start with a non-text element, or contain an icon `Label`, set
+  their separator explicitly with `rowSeparatorAligned(leading:)` (`Shared/RowSeparatorAlignment.swift`),
+  never by inference. The modifier sets `.listRowSeparatorLeading` and
+  `.listRowSeparatorTrailing` (the row's trailing edge).
+  - `leading` is 0 for plain rows, or `thumbnailRowSeparatorLeading` (56 pt) for rows with a
+    44 pt picture.
+  - Small status lines inside rows ("From a can opened…", "Scheduled", "Paused") are an icon in
+    a fixed 16 pt slot plus a caption, not `Label`s.
+  - Used by the day log rows, scheduled previews, the Schedules list, the "Your own target" row
+    (Daily Calories), the Add Weight value row, Food editor size rows, and the portion picker's
+    quick-amount grid.
+  - *Why (2026-10-05):* SwiftUI infers a row's separator start from its text. A row beginning
+    with a `TextField` took it from the unit or hint `Text` partway across, and a `Label` moved
+    it past its icon, so those separators started further in than their neighbours.
 - **Controls stay visible** — a screen's controls are never collapsed into menus, overflow ("More")
   buttons or nested groups. Every action stays directly visible as its own button with its icon
   and label. If a bar can't fit everything, plain icon buttons move to the other side, still
@@ -1042,9 +1056,9 @@ fallbacks.
   less width than that label, so the capsule was drawn at the narrower size and the fixed-size text
   spilled past it.
 
-Day log rows (`LogEntryRow`) set their separator explicitly
-(`.alignmentGuide(.listRowSeparatorLeading)` at the text column, after the 44 pt thumbnail and
-12 pt spacing; trailing at the row's trailing edge). That keeps every row's separator identical.
+Day log rows (`LogEntryRow`) set their separator explicitly with `rowSeparatorAligned(leading:)`
+(§8) at the text column, after the 44 pt thumbnail and 12 pt spacing. That keeps every row's
+separator identical.
 The "From a can opened…" and "Scheduled" lines are a fixed 16 pt icon slot plus a caption, not
 `Label`s. *(Fixed 2026-10-05: a `Label` in a row set that row's separator start from its own
 title, past its icon, so carried rows' separators didn't line up with the others.)*

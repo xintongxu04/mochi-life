@@ -35,6 +35,7 @@ struct CalorieTargetSettingsView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .rowSeparatorAligned()
                     Button("Save Target") {
                         if let typedTarget { ownTarget = typedTarget }
                     }

@@ -172,6 +172,7 @@ struct PortionPicker: View {
             }
         }
         .padding(.vertical, 4)
+        .rowSeparatorAligned()
         HStack {
             Text("Other amount")
             TextField("e.g. 1.5", text: $amountText)
