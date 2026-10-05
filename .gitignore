@@ -38,3 +38,8 @@ fastlane/test_output
 
 # R
 .Rhistory
+
+# Mochi Relay (Swift package) build products. Its config, state, logs and secrets live
+# outside the repository (~/Library and the Keychain).
+Relay/.build/
+Relay/.swiftpm/

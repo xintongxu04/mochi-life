@@ -142,6 +142,13 @@ Everything you enter (weights, the kg / lb choice, foods, food log entries and
 Mochi's profile, vaccinations and medical history) stays saved on the phone
 after you close and reopen the app. None of it is sent anywhere.
 
+## Mochi Relay (Mac helper, not connected to the app yet)
+
+The `Relay/` folder holds **Mochi Relay**, a small Mac program that will let the app ask
+this Mac to look up a cat food with Claude over your home network. The Mac side is built;
+the app can't use it yet. Each lookup uses your Claude plan's allowance, with a daily cap
+of 40. See `Relay/README.md` for its commands, the files it creates and how to remove it.
+
 ## How to open the app in the iPhone Simulator
 
 1. Open **Finder** and go to **Developer**, then **MochiLife**.
@@ -169,6 +176,7 @@ own phone. Don't publish them anywhere public.
 
 These are not built yet:
 
+- Looking up a food from the app through Mochi Relay
 - Scheduled or repeating meals
 - Weight-loss plans
 - Reminders and notifications (including for vaccinations)
