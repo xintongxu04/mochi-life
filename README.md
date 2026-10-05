@@ -1,12 +1,13 @@
 # Mochi Life
 
 An iPhone app for keeping track of my cat Mochi's health. Right now it covers
-Mochi's weight, a library of the foods Mochi eats with their calories, and a
-daily log of what Mochi eats.
+Mochi's weight, a library of the foods Mochi eats with their calories, a daily
+log of what Mochi eats, and Mochi's profile with her vaccinations and medical
+history. Nothing in the app is veterinary advice.
 
 ## What it can do today
 
-The app has two tabs at the bottom: **Weight** and **Calories**.
+The app has three tabs at the bottom: **Weight**, **Calories** and **Mochi**.
 
 ### Weight
 
@@ -71,8 +72,27 @@ The Calories tab opens on **Today**.
 - Edit or delete any food, including the built-in Tiki Cat ones. The app warns
   you about numbers that are far too high for any cat food.
 
-Everything you enter (weights, the kg / lb choice, foods and food log entries)
-stays saved after you close and reopen the app.
+### Mochi (her profile)
+
+- Basic facts at the top, all optional, changed with the **Edit** button:
+  - a photo in a circle, chosen from your photo library or taken with the
+    camera (on a real iPhone; the simulator has no camera)
+  - name (starts as "Mochi")
+  - birthday, with her age worked out beside it (like "3 years, 4 months").
+    The birthday can be marked as rough, or entered as just a year.
+  - breed, color and markings, sex, and spayed or neutered (yes, no or not sure)
+  - microchip number and a notes box
+- Her latest weight, taken from the Weight tab (shown here, changed there).
+- Vaccinations: vaccine name, date given, optional next-due date and notes,
+  newest first. Entries whose next-due date has passed say "Overdue", and ones
+  due within the next 30 days say "Due soon". Tap to edit, swipe to delete.
+- Medical history: date, what happened, a type (vet visit, illness, injury,
+  surgery, medication or other), vet or clinic, and notes, newest first. Tap to
+  edit, swipe to delete.
+
+Everything you enter (weights, the kg / lb choice, foods, food log entries and
+Mochi's profile, vaccinations and medical history) stays saved on the phone
+after you close and reopen the app. None of it is sent anywhere.
 
 ## How to open the app in the iPhone Simulator
 
@@ -102,6 +122,6 @@ own phone. Don't publish them anywhere public.
 These are not built yet:
 
 - Scheduled or repeating meals
-- Calorie goals
+- Calorie goals and recommendations
 - Charts of what Mochi eats
-- Reminders
+- Reminders and notifications (including for vaccinations)

@@ -10,11 +10,14 @@ struct ContentView: View {
             Tab("Calories", systemImage: "fork.knife") {
                 CaloriesView()
             }
+            Tab("Mochi", systemImage: "pawprint") {
+                MochiView()
+            }
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [WeightEntry.self, Food.self], inMemory: true)
+        .modelContainer(for: [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self], inMemory: true)
 }
