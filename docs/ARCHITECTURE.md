@@ -51,7 +51,7 @@ Targets:
 |---|---|
 | `MochiLifeApp.swift` | App entry point; creates the `ModelContainer` from `SchemaV4` and `MochiLifeMigrationPlan`. |
 | `ContentView.swift` | The single-screen shell: `CaloriesView` with the `RadialActionMenu` overlay above everything; owns `MochiHome`; provides `catName`, `openScreen` (`OpenScreenAction`), `foodLogged`; runs `LaunchMaintenance`, schedule catch-up triggers, and backup opening. |
-| `Assets.xcassets` | Accent color, an empty app icon slot, and the `Mochi` folder (namespace) of 64 sprite frames (§15). |
+| `Assets.xcassets` | Accent color; the app icon (`AppIcon`, below); the `Mochi` folder (namespace) of 112 sprite frames (§15); the `FoodKind` folder of default food pictures (§16). |
 
 **`Home/`** (the single-screen shell and Mochi, §15)
 | File | Purpose |
@@ -437,6 +437,14 @@ API keys for AI lookup are **not** in UserDefaults: they are Keychain generic pa
 4. Save through `Persistence.save`; only on success store the new version.
 
 Food log entries are snapshots and are never changed by an update.
+### App icon
+`Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png`, copied unchanged from the owner's
+`Mochi Life Resources/app-icon/AppIcon-1024.png`: 1024 × 1024 px, RGB with no alpha, square
+corners, pixel-art Mochi on flat yellow (#FBD05C). It's the single-size iOS configuration (one
+universal "Any Appearance" 1024 entry; no Dark or Tinted variants); the system applies the mask.
+The target's `ASSETCATALOG_COMPILER_APPICON_NAME` is `AppIcon` in Debug and Release, and no
+Info.plist key overrides it. Added 2026-10-05.
+
 ## 5. Navigation and view hierarchy
 
 ```
