@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// Five Liquid Glass buttons in a ring around Mochi: Eat, Play, Settings, Weight, Profile,
-/// clockwise from the top (−90°, −18°, 54°, 126°, 198°). Drawn over everything. The buttons share
+/// Five Liquid Glass buttons around Mochi: Eat, Play, Settings, Weight, Profile, clockwise. The
+/// ring is always centred on her: with room all round they sit at 72° steps from the top; near an
+/// edge or corner they fan across the largest free arc (`RadialMenuGeometry`). Positions are
+/// worked out once per opening, after the captions are measured. Drawn over everything. The buttons share
 /// one `GlassEffectContainer` and emerge from (and return to) a small glass seed at Mochi's centre
 /// with the glass morph; under Reduce Motion they simply fade. There's no dimming: an invisible
 /// tap catcher (with a hole over Mochi, so she can still be tapped or dragged) closes the ring.
@@ -12,49 +14,59 @@ struct RadialActionMenu: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var glassNamespace
     @State private var isShown = false
+    /// Measured caption sizes, by action.
+    @State private var labelSizes: [String: CGSize] = [:]
+    @State private var placement: RadialMenuGeometry.Placement?
 
     struct Action: Identifiable {
         var id: String { title }
         var title: String
         var symbol: String
-        var angle: Double
     }
 
+    /// Clockwise order.
     static let actions = [
-        Action(title: "Eat", symbol: "fork.knife", angle: -90),
-        Action(title: "Play", symbol: "tennisball.fill", angle: -18),
-        Action(title: "Settings", symbol: "gearshape.fill", angle: 54),
-        Action(title: "Weight", symbol: "scalemass.fill", angle: 126),
-        Action(title: "Profile", symbol: "pawprint.fill", angle: 198),
+        Action(title: "Eat", symbol: "fork.knife"),
+        Action(title: "Play", symbol: "tennisball.fill"),
+        Action(title: "Settings", symbol: "gearshape.fill"),
+        Action(title: "Weight", symbol: "scalemass.fill"),
+        Action(title: "Profile", symbol: "pawprint.fill"),
     ]
-    static let preferredRadius: CGFloat = 118
-    static let minimumRadius: CGFloat = 72
     static let buttonDiameter: CGFloat = 56
-    /// The caption capsule's centre, below the button's centre.
-    static let labelOffset: CGFloat = 42
-    /// From the button's centre to the bottom of its caption.
-    static let labelBottom: CGFloat = 54
+    /// Gap between a button and its caption.
+    static let labelGap: CGFloat = 4
     static let margin: CGFloat = 8
     static let seedDiameter: CGFloat = 28
 
     var body: some View {
         GeometryReader { proxy in
-            let sprite = CGPoint(x: home.spriteFrame.midX, y: home.spriteFrame.midY)
-            let layout = Self.layout(around: sprite, in: proxy.size, safeArea: proxy.safeAreaInsets)
+            let center = CGPoint(x: home.spriteFrame.midX, y: home.spriteFrame.midY)
             ZStack(alignment: .topLeading) {
                 Color.clear
                     .contentShape(TapCatcher(hole: home.spriteFrame), eoFill: true)
                     .onTapGesture { close() }
                     .accessibilityHidden(true)
+                // Invisible copies of the captions, to measure their real size.
+                ForEach(Self.actions) { action in
+                    labelText(action)
+                        .fixedSize()
+                        .hidden()
+                        .onGeometryChange(for: CGSize.self) { $0.size } action: { size in
+                            labelSizes[action.id] = size
+                            placeIfReady(center: center, screen: proxy.size, safeArea: proxy.safeAreaInsets)
+                        }
+                }
+                .accessibilityHidden(true)
                 GlassEffectContainer(spacing: 0) {
                     ZStack(alignment: .topLeading) {
-                        if isShown {
-                            ForEach(Self.actions) { action in
-                                let point = layout.position(for: action.angle)
+                        if isShown, let placement {
+                            ForEach(Array(Self.actions.enumerated()), id: \.element.id) { index, action in
+                                let point = placement.points[index]
+                                let labelHeight = labelSizes[action.id]?.height ?? 0
                                 button(action)
                                     .position(point)
                                 label(action)
-                                    .position(x: point.x, y: point.y + Self.labelOffset)
+                                    .position(x: point.x, y: point.y + Self.buttonDiameter / 2 + Self.labelGap + labelHeight / 2)
                             }
                         } else if !reduceMotion {
                             Circle()
@@ -62,7 +74,7 @@ struct RadialActionMenu: View {
                                 .frame(width: Self.seedDiameter, height: Self.seedDiameter)
                                 .glassEffect(.regular, in: .circle)
                                 .glassEffectID("seed", in: glassNamespace)
-                                .position(layout.center)
+                                .position(center)
                                 .accessibilityHidden(true)
                         }
                     }
@@ -74,10 +86,26 @@ struct RadialActionMenu: View {
             .accessibilityAction(.escape) { close() }
         }
         .ignoresSafeArea()
-        .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.2)) {
-                isShown = true
-            }
+    }
+
+    /// Once every caption is measured: works out the positions (once per opening) and opens.
+    private func placeIfReady(center: CGPoint, screen: CGSize, safeArea: EdgeInsets) {
+        guard placement == nil, Self.actions.allSatisfy({ labelSizes[$0.id] != nil }) else { return }
+        let top = max(safeArea.top, home.restingTopLimit) + Self.margin
+        let bounds = CGRect(x: safeArea.leading + Self.margin, y: top,
+                            width: screen.width - safeArea.leading - safeArea.trailing - 2 * Self.margin,
+                            height: screen.height - safeArea.bottom - Self.margin - top)
+        let half = Self.buttonDiameter / 2
+        let footprints = Self.actions.map { action -> CGRect in
+            let label = labelSizes[action.id] ?? .zero
+            let circle = CGRect(x: -half, y: -half, width: Self.buttonDiameter, height: Self.buttonDiameter)
+            let caption = CGRect(x: -label.width / 2, y: half + Self.labelGap, width: label.width, height: label.height)
+            return circle.union(caption)
+        }
+        placement = RadialMenuGeometry.place(center: center, bounds: bounds, footprints: footprints,
+                                             avoiding: home.spriteFrame)
+        withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.2)) {
+            isShown = true
         }
     }
 
@@ -99,12 +127,17 @@ struct RadialActionMenu: View {
         .accessibilityLabel(action.title)
     }
 
-    private func label(_ action: Action) -> some View {
+    /// The caption's text and padding; its size is the footprint used for layout.
+    private func labelText(_ action: Action) -> some View {
         Text(action.title)
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.primary)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
+    }
+
+    private func label(_ action: Action) -> some View {
+        labelText(action)
             .glassEffect(.regular, in: .capsule)
             .glassEffectID("\(action.id).label", in: glassNamespace)
             .glassEffectTransition(reduceMotion ? .identity : .matchedGeometry)
@@ -135,44 +168,6 @@ struct RadialActionMenu: View {
         }
     }
 
-    // MARK: - Layout
-
-    struct Layout {
-        var center: CGPoint
-        var radius: CGFloat
-
-        func position(for angle: Double) -> CGPoint {
-            let radians = angle * .pi / 180
-            return CGPoint(x: center.x + radius * cos(radians), y: center.y + radius * sin(radians))
-        }
-    }
-
-    /// The ring around `sprite`, with its centre moved the minimum distance needed so every
-    /// button and caption is inside the safe area (Mochi herself doesn't move). Only if the
-    /// screen is too small even then does the radius shrink.
-    static func layout(around sprite: CGPoint, in size: CGSize, safeArea: EdgeInsets) -> Layout {
-        let safe = CGRect(x: safeArea.leading + margin, y: safeArea.top + margin,
-                          width: size.width - safeArea.leading - safeArea.trailing - 2 * margin,
-                          height: size.height - safeArea.top - safeArea.bottom - 2 * margin)
-        let half = buttonDiameter / 2
-        var radius = preferredRadius
-        while true {
-            let points = actions.map { Layout(center: .zero, radius: radius).position(for: $0.angle) }
-            let minX = (points.map(\.x).min() ?? 0) - half
-            let maxX = (points.map(\.x).max() ?? 0) + half
-            let minY = (points.map(\.y).min() ?? 0) - half
-            let maxY = (points.map(\.y).max() ?? 0) + labelBottom
-            let fits = safe.maxX - maxX >= safe.minX - minX && safe.maxY - maxY >= safe.minY - minY
-            if fits || radius <= minimumRadius {
-                let xRange = (safe.minX - minX)...max(safe.minX - minX, safe.maxX - maxX)
-                let yRange = (safe.minY - minY)...max(safe.minY - minY, safe.maxY - maxY)
-                let center = CGPoint(x: min(max(sprite.x, xRange.lowerBound), xRange.upperBound),
-                                     y: min(max(sprite.y, yRange.lowerBound), yRange.upperBound))
-                return Layout(center: center, radius: radius)
-            }
-            radius -= 4
-        }
-    }
 }
 
 /// The whole screen with a hole over Mochi (used with even-odd fill), so taps outside the ring

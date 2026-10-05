@@ -1326,20 +1326,36 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 ### Radial action menu (`RadialActionMenu`)
 - **Buttons:** five 56 pt circles with `.glassEffect(.regular.interactive(), in: .circle)`. No
   tint; the SF Symbol is in `.primary`. Each caption (caption2) sits in a small glass capsule
-  below its button, so it stays legible over anything. The order, clockwise from the top:
-  - Eat (`fork.knife`), at −90°
-  - Play (`tennisball.fill`), at −18°
-  - Settings (`gearshape.fill`), at 54°
-  - Weight (`scalemass.fill`), at 126°
-  - Profile (`pawprint.fill`), at 198°
+  4 pt below its button, so it stays legible over anything. The clockwise order is Eat
+  (`fork.knife`), Play (`tennisball.fill`), Settings (`gearshape.fill`), Weight
+  (`scalemass.fill`), Profile (`pawprint.fill`).
 - **Animation:** all glass shapes share one `GlassEffectContainer` and a namespace with
   `glassEffectID`s. Opening morphs a small glass "seed" at Mochi's centre into the buttons and
   captions (`.matchedGeometry` glass transition, spring); closing morphs them back. Under Reduce
   Motion there is no seed, and they fade.
-- **Placement:** drawn in an overlay on `ContentView`, above the navigation bar, centred on
-  Mochi's current frame. If a button or caption would leave the safe area (+8 pt), the ring's
-  **centre** moves the minimum distance needed; Mochi doesn't move. Only on a screen too small
-  even then does the radius shrink (4 pt steps, down to 72 pt).
+- **Placement** (`RadialMenuGeometry.place(center:bounds:footprints:avoiding:)`, pure, no
+  views): drawn in an overlay on `ContentView`, above the navigation bar. **The ring's centre is
+  always Mochi's centre;** it never moves away from her.
+  - Worked out once per opening, from her current position, after the five captions are
+    measured (invisible copies, so the real size at the current text size is used).
+  - **Bounds:** the screen inset by the safe area + 8 pt, with the top at the expanded
+    navigation bar's bottom (`restingTopLimit`) + 8 pt.
+  - **Footprint:** each button's footprint is its 56 pt circle united with its caption capsule.
+    Validity tests use the union of all five, so any button fits at a valid angle.
+
+  The algorithm:
+  1. Start at r = 118 pt.
+  2. Test every whole degree. An angle is valid if the footprint centred at that point lies
+     inside the bounds and doesn't overlap Mochi.
+  3. If every angle is valid, use the full ring: 72° steps from −90° (top).
+  4. Otherwise, find the largest contiguous valid arc (wrapping past 0°). Spread the five
+     buttons evenly across it, the first and last on its ends, in clockwise order.
+  5. Accept if neighbouring centres are at least 68 pt apart and no two footprints overlap.
+     Otherwise, increase r by 8 pt (up to 190 pt) and repeat. If nothing passes, keep the best
+     try: no overlaps first, then the widest spacing.
+
+  The result is a full ring with room all round, a fan of about 180° opening away from one edge,
+  or a wider-radius fan of about 90° in a corner.
 - **Closing:** there's no dimming. While the ring is open, an invisible full-screen tap catcher
   (with an even-odd hole over Mochi, so she stays tappable and draggable) closes it on a tap
   outside. Tapping Mochi again or starting a drag also closes it, and so does VoiceOver's escape
