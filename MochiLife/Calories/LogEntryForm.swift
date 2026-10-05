@@ -282,6 +282,8 @@ struct LogEntryForm: View {
             let before = EntrySnapshot(entry)
             entry.loggedAt = loggedAt
             entry.kind = kind
+            // A scheduled day the owner edited stays as they left it.
+            if entry.isScheduled { entry.isScheduleOverridden = true }
             if entry.isQuickEntry {
                 entry.foodName = trimmedName
                 entry.kilocalories = quickCalories ?? entry.kilocalories

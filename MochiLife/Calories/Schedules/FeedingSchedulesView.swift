@@ -74,32 +74,29 @@ struct FeedingSchedulesView: View {
             presenting: scheduleBeingDeleted
         ) { schedule in
             Button("Delete Schedule", role: .destructive) {
+                ScheduleMaterializer(context: modelContext).removeUpcomingEntries(of: schedule)
                 modelContext.delete(schedule)
                 Persistence.save(modelContext)
             }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
-            Text("No more entries will be added. Entries already in the food log stay there.")
+            Text("Its entries from today on are removed. Past entries stay in the food log.")
         }
     }
 
-    /// Paused days are skipped, not filled in later: resuming starts from today (or tomorrow,
-    /// if today's entry was already added).
+    /// Pausing removes the entries from today on (except days you changed). Resuming fills in
+    /// from today on again; the days that passed while paused stay empty.
     private func togglePause(_ schedule: FeedingSchedule) {
-        let calendar = Calendar.current
+        let materializer = ScheduleMaterializer(context: modelContext)
         if schedule.isPaused {
-            let yesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: .now))
-            if let yesterday, schedule.lastMaterializedDay.map({ $0 < yesterday }) ?? true,
-               calendar.startOfDay(for: schedule.startDate) <= yesterday {
-                schedule.lastMaterializedDay = yesterday
-            }
-            schedule.isPaused = false
+            materializer.resume(schedule)
         } else {
             schedule.isPaused = true
+            materializer.removeUpcomingEntries(of: schedule)
         }
         schedule.updatedAt = .now
         guard Persistence.save(modelContext) else { return }
-        ScheduleMaterializer(context: modelContext).materialize()
+        materializer.materialize()
     }
 }
 

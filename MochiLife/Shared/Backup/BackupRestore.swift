@@ -69,7 +69,7 @@ enum BackupReader {
         }
     }
 
-    /// One explicit step per older format version. Version 3 is the current format.
+    /// One explicit step per older format version. Version 4 is the current format.
     static func upgrade(_ data: Data, from formatVersion: Int) throws -> BackupEnvelope {
         switch formatVersion {
         case 1:
@@ -87,8 +87,12 @@ enum BackupReader {
             var envelope = try BackupCoding.decoder().decode(BackupEnvelope.self, from: data)
             envelope.formatVersion = 3
             return envelope
-        case 3:
-            return try BackupCoding.decoder().decode(BackupEnvelope.self, from: data)
+        case 3, 4:
+            // Format 3 had no scheduled-day keys, overrides or tombstones (they decode as nil);
+            // ScheduleUpgrade fills them in after the restore.
+            var envelope = try BackupCoding.decoder().decode(BackupEnvelope.self, from: data)
+            envelope.formatVersion = 4
+            return envelope
         default:
             throw BackupError.invalidValue("format version \(formatVersion)")
         }
@@ -247,6 +251,9 @@ enum BackupRestorer {
         // Backups from before kinds: give foods, entries and schedules their kind (same rules as
         // the V4 → V5 migration).
         FoodKindBackfill.run(in: context)
+        // Backups from before tombstones: give scheduled entries their day key and keep deleted
+        // days deleted (same rules as the V5 → V6 migration).
+        ScheduleUpgrade.run(in: context)
         try? Persistence.saveOrThrow(context)
         // Restored schedules catch up from their own last day; existing entries aren't duplicated.
         ScheduleMaterializer(context: context).materialize()

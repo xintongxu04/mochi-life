@@ -109,17 +109,18 @@ The app opens on the Calories screen for **Today**.
   Mochi gets on a routine, like morning kibble. Pick a food from your saved
   foods, choose the amount (by can, pouch or grams, or type your own calories),
   an optional label, which days (every day, or chosen weekdays), a start date
-  and an optional end date. Each chosen day gets an entry in the food log
-  automatically, marked "Scheduled", and it counts in the day's total, the
-  progress bar and the chart like anything you log yourself. To skip a day,
-  delete that day's entry; it won't come back.
-  - A schedule that starts in the past fills in the past days right away (up to
-    the last 60 days), and asks first how many entries that adds.
-  - Swipe a schedule to pause or resume it (paused days are skipped) or to
-    delete it. Editing or deleting a schedule never changes entries already in
-    the log.
-  - Future days show upcoming scheduled food as a dimmed preview, not counted
-    until the day arrives.
+  and an optional end date.
+  - When you save, the meal is logged straight away on **every chosen day** in
+    the range, in the past, today and the future, marked "Scheduled". There's no
+    confirmation, and it counts in each day's calories. A schedule with no end
+    date is kept filled in 60 days ahead, and further as you go forward.
+  - To skip a day, delete that day's entry; it won't come back. If you change one
+    day's entry, later schedule edits leave it alone.
+  - Editing a schedule updates its entries from today on, removes days no longer
+    in range and fills in new ones; past entries stay as they were.
+  - Deleting a schedule removes its entries from today on and keeps past ones.
+  - Swipe to pause (its entries from today on are removed) or resume (it fills in
+    from today again).
 - Log a one-off treat with **Quick Entry**: just a name and a calorie number.
 - Tap an entry to change its amount, calories or time, and swipe left to
   delete it.

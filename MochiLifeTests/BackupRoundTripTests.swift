@@ -8,7 +8,7 @@ import Testing
 @MainActor
 struct BackupRoundTripTests {
     @Test func exportAndRestoreKeepEveryRecordAndPhoto() async throws {
-        let schema = Schema(versionedSchema: SchemaV5.self)
+        let schema = Schema(versionedSchema: SchemaV6.self)
         let source = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let target = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let work = URL.temporaryDirectory.appending(path: "backup-test-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -68,7 +68,8 @@ struct BackupRoundTripTests {
         schedule.record(Portion(measure: .containers, size: aiFood.sizes[0], containers: 0.5,
                                 exactContainers: Fraction(1, 2), calculatedKilocalories: 36.15))
         schedule.label = "Morning"
-        schedule.endDate = Calendar.current.date(byAdding: .year, value: 1, to: Calendar.current.startOfDay(for: date))
+        // One day (a Friday) so the restore's fill-in has nothing new to add: no duplicates.
+        schedule.endDate = Calendar.current.startOfDay(for: date)
         schedule.lastMaterializedDay = Calendar.current.startOfDay(for: .now)
         context.insert(schedule)
         context.insert(schedule.makeEntry(for: date))
@@ -116,7 +117,7 @@ struct BackupRoundTripTests {
         #expect(exported.payload.foods.count == 3)
         #expect(exported.payload.foodLog.count == 4)
         #expect(exported.payload.schedules.count == 1)
-        #expect(exported.formatVersion == 3)
+        #expect(exported.formatVersion == 4)
         #expect(exported.payload.vaccinations.count == 1)
         #expect(exported.payload.medicalRecords.count == 1)
         #expect(exported.payload.profile != nil)

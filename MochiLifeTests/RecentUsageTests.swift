@@ -12,7 +12,7 @@ struct RecentUsageTests {
     private let now = Date(timeIntervalSinceReferenceDate: 812_000_000)
 
     init() throws {
-        container = try ModelContainer(for: Schema(versionedSchema: SchemaV5.self),
+        container = try ModelContainer(for: Schema(versionedSchema: SchemaV6.self),
                                        configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     }
 

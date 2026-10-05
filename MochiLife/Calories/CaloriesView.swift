@@ -34,6 +34,7 @@ struct CaloriesView: View {
 struct DayLogView: View {
     @State private var day = Calendar.current.startOfDay(for: .now)
     @Environment(MochiHome.self) private var home
+    @Environment(\.modelContext) private var modelContext
     /// The entry with the latest date, to know how far forward days can be shown.
     @Query private var latestEntries: [FoodLogEntry]
 
@@ -136,6 +137,12 @@ struct DayLogView: View {
               newDay <= lastDay
         else { return }
         day = newDay
+        // Scheduled meals beyond the 60-day horizon are logged on demand, one day ahead of the
+        // day shown, so forward navigation never reaches an empty scheduled day.
+        if days > 0, let next = calendar.date(byAdding: .day, value: 1, to: newDay),
+           next > ScheduleMaterializer(context: modelContext).horizon() {
+            ScheduleMaterializer(context: modelContext).materialize(through: next)
+        }
     }
 }
 
@@ -151,9 +158,6 @@ private struct DayEntriesList<Controls: View>: View {
     @Environment(\.catName) private var catName
     @Environment(MochiHome.self) private var home
     @Query private var entries: [FoodLogEntry]
-    /// For future days: schedules shown as previews (never saved, never counted).
-    @Query(filter: #Predicate<FeedingSchedule> { !$0.isPaused }, sort: [SortDescriptor(\FeedingSchedule.createdAt)])
-    private var activeSchedules: [FeedingSchedule]
     @State private var entryBeingEdited: FoodLogEntry?
     /// An entry with carried days after it, waiting for the owner to say what to remove.
     @State private var entryBeingDeleted: FoodLogEntry?
@@ -173,10 +177,6 @@ private struct DayEntriesList<Controls: View>: View {
 
     private var total: Double { entries.reduce(0) { $0 + $1.kilocalories } }
 
-    /// Schedules that would add an entry on this future day.
-    private var upcomingSchedules: [FeedingSchedule] {
-        activeSchedules.filter { $0.applies(on: day) }
-    }
 
     var body: some View {
         CalorieTargetReader { target in
@@ -225,18 +225,6 @@ private struct DayEntriesList<Controls: View>: View {
                 }
             }
 
-            if isFuture, !upcomingSchedules.isEmpty {
-                Section {
-                    ForEach(upcomingSchedules) { schedule in
-                        ScheduledPreviewRow(schedule: schedule)
-                    }
-                } header: {
-                    Text("Scheduled")
-                } footer: {
-                    Text("Added to the log on the day. Not counted in the total until then.")
-                }
-            }
-
             Section("Daily Calories") {
                 CalorieChartView(target: target)
             }
@@ -255,10 +243,12 @@ private struct DayEntriesList<Controls: View>: View {
         ) { entry in
             Button(entry.isCarriedForward ? "Remove This and Later Days" : "Remove All", role: .destructive) {
                 entry.laterCarriedEntries(in: modelContext).forEach(modelContext.delete)
+                ScheduleMaterializer.recordDeletion(of: entry, in: modelContext)
                 modelContext.delete(entry)
                 Persistence.save(modelContext)
             }
             Button(entry.isCarriedForward ? "Remove Only This Day" : "Remove Only This Entry") {
+                ScheduleMaterializer.recordDeletion(of: entry, in: modelContext)
                 modelContext.delete(entry)
                 Persistence.save(modelContext)
             }
@@ -277,6 +267,8 @@ private struct DayEntriesList<Controls: View>: View {
     /// Deletes an entry, first asking about any days carried forward after it.
     private func delete(_ entry: FoodLogEntry) {
         if entry.laterCarriedEntries(in: modelContext).isEmpty {
+            // Deleting a scheduled day skips it for good (a tombstone on its schedule).
+            ScheduleMaterializer.recordDeletion(of: entry, in: modelContext)
             modelContext.delete(entry)
             Persistence.save(modelContext)
         } else {
@@ -399,38 +391,3 @@ private struct LogEntryRow: View {
     }
 }
 
-/// A schedule on a future day: shown dimmed and dashed, not saved and not counted.
-private struct ScheduledPreviewRow: View {
-    let schedule: FeedingSchedule
-
-    var body: some View {
-        HStack(spacing: 12) {
-            FoodThumbnail(libraryIdentifier: schedule.foodPhotoKey, kind: schedule.kind, size: 44)
-                .opacity(0.5)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(schedule.title)
-                    .lineLimit(2)
-                if let amount = schedule.amountDescription {
-                    Text(amount)
-                        .font(.caption)
-                }
-                HStack(spacing: 4) {
-                    Image(systemName: "repeat")
-                        .frame(width: 16)
-                        .accessibilityHidden(true)
-                    Text("Scheduled")
-                }
-                .font(.caption2)
-            }
-            .foregroundStyle(.secondary)
-            Spacer()
-            Text("\(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal")
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, 2)
-        .rowSeparatorAligned(leading: thumbnailRowSeparatorLeading)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Scheduled preview: \(schedule.title), \(schedule.kind.displayName), \(Portion.formatKilocalories(schedule.kilocaloriesPerOccurrence)) kcal, not counted yet")
-    }
-}

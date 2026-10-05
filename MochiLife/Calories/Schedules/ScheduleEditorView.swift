@@ -22,7 +22,6 @@ struct ScheduleEditorView: View {
     @State private var startDate = Calendar.current.startOfDay(for: .now)
     @State private var hasEndDate = false
     @State private var endDate = Calendar.current.startOfDay(for: .now)
-    @State private var pastEntryCount: Int?
 
     init(mode: Mode, onFinish: @escaping () -> Void) {
         self.mode = mode
@@ -137,16 +136,6 @@ struct ScheduleEditorView: View {
                     .disabled(!canSave)
             }
         }
-        .confirmationDialog(
-            "Add \(pastEntryCount ?? 0) past \((pastEntryCount ?? 0) == 1 ? "entry" : "entries")?",
-            isPresented: Binding(get: { pastEntryCount != nil }, set: { if !$0 { pastEntryCount = nil } }),
-            titleVisibility: .visible
-        ) {
-            Button("Save and Add Them") { store() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This schedule starts in the past, so \(pastEntryCount ?? 0) \((pastEntryCount ?? 0) == 1 ? "entry is" : "entries are") added to the food log now, up to today (at most the last \(ScheduleMaterializer.catchUpLimit) days).")
-        }
     }
 
     private var isEditing: Bool {
@@ -155,8 +144,8 @@ struct ScheduleEditorView: View {
 
     private var footerText: String {
         isEditing
-            ? "Changes apply from the next day not yet in the food log. Entries already logged stay as they are."
-            : "Calories count at the start of each chosen day. Delete a day's entry to skip that day."
+            ? "Changes update this schedule's entries from today on and fill in any days newly in range. Past entries, and any day you changed yourself, stay as they are."
+            : "The meal is logged on every chosen day in the range, past, today and future, and counts in that day's calories. Delete a day's entry to skip that day."
     }
 
     @ViewBuilder
@@ -183,25 +172,11 @@ struct ScheduleEditorView: View {
 
     // MARK: - Saving
 
-    /// Asks first when saving would add past entries.
+    /// Saves and logs the meal on every chosen day in the range straight away: past, today and
+    /// future (no confirmation).
     private func save() {
         guard canSave else { return }
-        let preview = draftSchedule()
-        let count = ScheduleMaterializer.pendingDays(for: preview, through: .now, calendar: calendar).days.count
-        if count > 0 {
-            pastEntryCount = count
-        } else {
-            store()
-        }
-    }
-
-    /// A schedule with the form's values (not inserted), to count the entries saving would add.
-    private func draftSchedule() -> FeedingSchedule {
-        let schedule = FeedingSchedule(foodName: "", measureRawValue: "grams", kilocaloriesPerOccurrence: 0,
-                                       weekdays: weekdays, startDate: calendar.startOfDay(for: startDate))
-        schedule.endDate = hasEndDate ? calendar.startOfDay(for: endDate) : nil
-        if case let .edit(existing) = mode { schedule.lastMaterializedDay = existing.lastMaterializedDay }
-        return schedule
+        store()
     }
 
     private func store() {
@@ -222,8 +197,9 @@ struct ScheduleEditorView: View {
         schedule.weekdays = weekdays
         schedule.startDate = calendar.startOfDay(for: startDate)
         schedule.endDate = hasEndDate ? calendar.startOfDay(for: endDate) : nil
+        // Entries from today on match the schedule; days newly in range are filled in.
+        ScheduleMaterializer(context: modelContext).scheduleChanged(schedule)
         guard Persistence.save(modelContext) else { return }
-        ScheduleMaterializer(context: modelContext).materialize()
         onFinish()
     }
 }

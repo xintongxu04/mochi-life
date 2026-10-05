@@ -17,11 +17,13 @@ enum BackupFormat {
     /// 3: adds `kind` to log entries and schedules, and foods use the V5 kinds (kibble, wetFood,
     /// treat, supplement, topper). Older files are read as is and `FoodKindBackfill` assigns the
     /// missing kinds after restoring.
-    static let currentFormatVersion = 3
+    /// 4: adds `scheduledDay` and `isScheduleOverridden` to log entries and `skippedDays` to
+    /// schedules. Older files read as is; `ScheduleUpgrade` fills them in after restoring.
+    static let currentFormatVersion = 4
     static let fileExtension = "mochibackup"
     static let maximumFileSize = 100 * 1024 * 1024
     /// The SwiftData schema version the app writes.
-    static var currentSchemaVersion: Schema.Version { SchemaV5.versionIdentifier }
+    static var currentSchemaVersion: Schema.Version { SchemaV6.versionIdentifier }
 }
 
 struct BackupEnvelope: Codable, Sendable, Equatable {
@@ -136,6 +138,10 @@ struct FoodLogEntryDTO: Codable, Sendable, Equatable {
     var scheduleID: UUID?
     /// `FoodKind` raw value (format 3); missing in older files.
     var kind: String?
+    /// Scheduled entries: the day the schedule made it for (format 4).
+    var scheduledDay: Date?
+    /// Scheduled entries the owner edited (format 4); nil in older files means false.
+    var isScheduleOverridden: Bool?
 }
 
 struct FeedingScheduleDTO: Codable, Sendable, Equatable {
@@ -165,6 +171,8 @@ struct FeedingScheduleDTO: Codable, Sendable, Equatable {
     var updatedAt: Date
     /// The food's `FoodKind` raw value (format 3); missing in older files.
     var kind: String?
+    /// Tombstones: days never to fill in (format 4); nil in older files.
+    var skippedDays: [Date]?
 }
 
 struct ProfileDTO: Codable, Sendable, Equatable {

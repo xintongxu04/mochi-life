@@ -74,7 +74,8 @@ extension FoodLogEntryDTO {
             containersDenominator: entry.containersDenominator, kilocalories: entry.kilocalories,
             isCustomKilocalories: entry.isCustomKilocalories, createdAt: entry.createdAt,
             carryGroupID: entry.carryGroupID, carryDay: entry.carryDay, openedAt: entry.openedAt,
-            scheduleID: entry.scheduleID, kind: entry.kindRawValue
+            scheduleID: entry.scheduleID, kind: entry.kindRawValue,
+            scheduledDay: entry.scheduledDay, isScheduleOverridden: entry.isScheduleOverridden
         )
     }
 
@@ -98,6 +99,8 @@ extension FoodLogEntryDTO {
         entry.openedAt = openedAt
         entry.scheduleID = scheduleID
         entry.kindRawValue = kind
+        entry.scheduledDay = scheduledDay
+        entry.isScheduleOverridden = isScheduleOverridden ?? false
         return entry
     }
 }
@@ -116,7 +119,8 @@ extension FeedingScheduleDTO {
             isKilocaloriesOverridden: schedule.isKilocaloriesOverridden, label: schedule.label,
             weekdays: schedule.weekdays, startDate: schedule.startDate, endDate: schedule.endDate,
             isPaused: schedule.isPaused, lastMaterializedDay: schedule.lastMaterializedDay,
-            createdAt: schedule.createdAt, updatedAt: schedule.updatedAt, kind: schedule.foodKindRawValue
+            createdAt: schedule.createdAt, updatedAt: schedule.updatedAt, kind: schedule.foodKindRawValue,
+            skippedDays: schedule.skippedDaysStorage
         )
     }
 
@@ -142,6 +146,8 @@ extension FeedingScheduleDTO {
         schedule.lastMaterializedDay = lastMaterializedDay
         schedule.updatedAt = updatedAt
         schedule.foodKindRawValue = kind
+        // Nil (an older backup) is converted by ScheduleUpgrade after the restore.
+        schedule.skippedDaysStorage = skippedDays
         return schedule
     }
 }

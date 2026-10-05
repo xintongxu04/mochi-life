@@ -8,7 +8,7 @@ struct MochiLifeApp: App {
     init() {
         do {
             modelContainer = try ModelContainer(
-                for: Schema(versionedSchema: SchemaV5.self),
+                for: Schema(versionedSchema: SchemaV6.self),
                 migrationPlan: MochiLifeMigrationPlan.self
             )
         } catch {

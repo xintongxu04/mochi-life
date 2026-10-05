@@ -208,9 +208,15 @@ A failure to open the store calls `fatalError`.
   other models are the live types.
 - `SchemaV4` (4.0.0) — adds the `FeedingSchedule` model and `FoodLogEntry.scheduleID`
   (optional). FoodLogEntry and FeedingSchedule are frozen nested copies (they changed in V5).
-- `SchemaV5` (5.0.0, current) — adds `FoodLogEntry.kindRawValue` and
+- `SchemaV5` (5.0.0) — adds `FoodLogEntry.kindRawValue` and
   `FeedingSchedule.foodKindRawValue` (both optional), and splits the foods' old "food" kind into
-  kibble and wet food. Its `models` are the live types.
+  kibble and wet food. FoodLogEntry and FeedingSchedule are frozen nested copies (they changed in
+  V6).
+- `SchemaV6` (6.0.0, current) — adds `FoodLogEntry.scheduledDay` (optional),
+  `FoodLogEntry.isScheduleOverridden` (default false) and `FeedingSchedule.skippedDaysStorage`
+  (optional). Stage V5 → V6 is **`.custom`**: `didMigrate` runs `ScheduleUpgrade` (see §14) and
+  saves. Checked on 2026-10-05 on the simulator's real store: all data kept, new columns added.
+  Its `models` are the live types.
 - Stage V1 → V2: `.lightweight` (only additive). Stage V2 → V3: `.lightweight` (two optional
   properties). Stage V3 → V4: `.lightweight` (a new model and one optional property; existing
   entries get `scheduleID = nil`, meaning logged by hand). Stage V4 → V5: **`.custom`**. The
@@ -301,6 +307,8 @@ details when logged, so later edits or deletion of a `Food` never change history
 | `carryDay` | `Int` = `0` | 0 = the entry the can was opened with; 1, 2, … = following days. |
 | `openedAt` | `Date?` | For carried entries: when the can was opened. |
 | `scheduleID` | `UUID?` | The `FeedingSchedule` that made the entry (`isScheduled`); kept after the schedule is deleted. Nil = logged by hand (all entries before V4). Scheduled entries are dated at the start of their day. (V4) |
+| `scheduledDay` | `Date?` | Scheduled entries: the start of the day the schedule made it for. With `scheduleID`, the idempotency key (one entry per schedule per day). (V6) |
+| `isScheduleOverridden` | `Bool` = `false` | The owner edited this scheduled entry; schedule edits never update or remove it. (V6) |
 | `kindRawValue` | `String?` | `FoodKind`: copied from the food when logged (or its schedule, or the entry it's carried from), or chosen for a quick entry; changeable when editing. Nil only until `FoodKindBackfill` runs. (V5) |
 
 ### `FeedingSchedule` (`Calories/Schedules/FeedingSchedule.swift`) (V4)
@@ -324,7 +332,8 @@ no relationship to `Food`, so deleting or editing the food never changes it.
 | `weekdays` | `Int` | Bitmask of `Calendar` weekdays: bit 0 = Sunday (1) … bit 6 = Saturday (7); 127 = every day. |
 | `startDate`, `endDate` | `Date`, `Date?` | Starts of the first and last days (`Calendar.current`). |
 | `isPaused` | `Bool` = `false` | |
-| `lastMaterializedDay` | `Date?` | Start of the last day entries were made up to; only moves forward. |
+| `lastMaterializedDay` | `Date?` | The day entries have been made through (the rolling horizon). Before V6 it also meant "deleted days before this are skips"; `ScheduleUpgrade` turned that into tombstones. |
+| `skippedDaysStorage` | `[Date]?` | Tombstones (`skippedDays`): days whose entry the owner deleted, or that passed while paused. Never refilled. Nil only until `ScheduleUpgrade` runs. (V6) |
 | `createdAt`, `updatedAt` | `Date` | |
 
 `PortionSource` (`Calories/Portion.swift`): `sizes: [FoodSize]`, `kilocaloriesPerGram: Double`.
@@ -1008,8 +1017,8 @@ free-provisioned build. Reached from Settings ("Back Up and Restore", via the ri
 ### Format
 - One file, extension `.mochibackup`, UTType `com.xintongxu.mochilife.backup` (conforms to
   `public.data`, `public.json`), exported and registered as a document type in `MochiLife/Info.plist`.
-- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (3), `schemaVersion` (the SwiftData version,
-  "5.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
+- UTF-8 JSON, one `BackupEnvelope`: `formatVersion` (4), `schemaVersion` (the SwiftData version,
+  "6.0.0"), `appVersion`, `createdAt`, `deviceName`, `payload`, `files` (`name`, `role`
   = `foodThumbnail` | `profilePhoto`, `base64`).
 - Dates are ISO 8601 UTC with milliseconds, written from a rounded whole number of milliseconds so
   they read back and re-encode identically. Numbers are plain JSON numbers (the app has no
@@ -1043,7 +1052,9 @@ and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cance
    ("update the app"); decode through `upgrade(_:from:)` (one explicit step per older format
    version: v1 → v2 adds an empty `schedules` list, and missing `scheduleID`s decode as nil; v2 →
    v3 reads as is (entries' and schedules' `kind` decode as nil, and foods may say "food");
-   after the restore `FoodKindBackfill` assigns kinds with the migration's rules; v3 is current;
+   after the restore `FoodKindBackfill` assigns kinds with the migration's rules; v3 → v4 reads
+   as is (`scheduledDay`, `isScheduleOverridden`, `skippedDays` decode as nil) and after the
+   restore `ScheduleUpgrade` fills them in with the V5 → V6 rules; v4 is current;
    kinds are validated as V5 kinds, with "food" also accepted for foods); validate (also schedules: food name, weekdays 1–127, kcal 0–100,000, amounts,
    end ≥ start, unique IDs; weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
    denominators > 0, carry day ≥ 0, target ≤ 5,000, safe file names, valid base64), with distinct
@@ -1195,62 +1206,92 @@ or queries.
 Food fed on a fixed routine (for example dry kibble every morning) is added to the food log
 automatically, one entry per chosen day, without logging it by hand.
 
-### Decisions (differences from the original spec)
+### Decisions
 - **No relationship to the saved food** (convention §3): the schedule keeps a snapshot (name,
-  brand, line, seed ID, photo key, `PortionSource`), so it survives the food being deleted.
+  brand, line, seed ID, photo key, `PortionSource`, kind), so it survives the food being deleted.
 - **Doubles, not Decimal**, like every other amount in the app; part-cans use exact fractions.
 - **Log entries had no origin field**: `scheduleID` itself marks an entry as scheduled.
 - **Day-level entries** are dated at the start of the day (`Calendar.current.startOfDay`); their
-  rows show no time.
-- **Paused days are skipped**: resuming sets `lastMaterializedDay` to yesterday (if it was
-  earlier), so catch-up starts today.
+  rows show no time. There is no time-of-day gate.
 - **Editing can't change the food**; the owner adds a new schedule instead.
 
-### Materialization (`ScheduleMaterializer`, main-actor `ModelContext`)
-- `materialize(through: .now)`: for each schedule that isn't paused, the pending days are from
-  max(start, `lastMaterializedDay` + 1 day) through min(today, end), selected weekdays only.
-  Before inserting, it fetches the schedule's entries (`scheduleID == id`) and skips days that
-  already have one. Then `lastMaterializedDay` = today (it only moves forward). Saves through
-  `Persistence.save`.
-- **Catch-up cap:** at most the last 60 calendar days; earlier days are skipped and logged
-  (`os.Logger`, category `schedules`, a count only).
-- **Skip a day:** delete that day's scheduled entry. It isn't made again, because
-  `lastMaterializedDay` has moved past it.
-- Never makes entries for future days.
-- All day arithmetic uses `Calendar.current` (`startOfDay`, `date(byAdding: .day)`), never
-  86,400-second steps, so time-zone and daylight-saving changes are handled.
-- **Triggers:** app launch (`LaunchMaintenance.run`), `scenePhase` becoming `.active`,
-  `NSCalendarDayChanged`, and `UIApplication.significantTimeChangeNotification` (all in
-  `ContentView`); after saving or pausing/resuming a schedule; and once after a restore.
+### What the old "hold" was (fixed 2026-10-05, schema V6)
+There was no pending or status field. Schedules used to:
+- create entries only **up to today**; future days showed dimmed, unsaved, uncounted preview
+  rows;
+- ask **"Add N past entries?"** before backfilling a past start, at most 60 days;
+- skip a day only implicitly: a deleted entry wasn't remade because `lastMaterializedDay` had
+  moved past it.
 
-### Edit semantics
-- Editing a schedule affects only days after `lastMaterializedDay`; existing entries are snapshots
-  and stay unchanged.
-- Deleting a schedule keeps its past entries (they keep `scheduleID`), and the confirmation says
-  so.
-- Editing or deleting a scheduled entry affects only that entry (the normal entry form).
-- A schedule whose start is in the past fills in its backlog right away (60-day cap). The editor
-  first counts the days with `pendingDays` and asks "Add N past entries?".
+All of that is replaced by the rules below.
+
+### Materialization (`ScheduleMaterializer`, main-actor `ModelContext`)
+- **Every chosen day in the range** gets an ordinary entry: start date through end date
+  inclusive, selected weekdays only, past, today and future alike. They're visible, marked
+  "Scheduled", and counted in that day's total. There's no confirmation, time gate or backfill
+  cap.
+- **Rolling horizon:** entries are made through today + **60 days** (or the end date, if
+  sooner), re-extended at every trigger. Moving forward to a day past the horizon materializes
+  through the next day (`DayLogView.move`), so a scheduled day is never empty.
+- **Idempotency key:** (`scheduleID`, `scheduledDay`). Before inserting, the schedule's entries
+  are fetched and days that already have one are skipped. Re-running, relaunching, restoring or
+  editing never duplicates. (Enforced in code, not as a database constraint, because SwiftData
+  replaces rows on unique conflicts.)
+- **Overrides win:**
+  - Deleting a scheduled entry records its day in `skippedDays` (a tombstone,
+    `recordDeletion`); it's never recreated.
+  - Editing one sets `isScheduleOverridden`; schedule edits never touch it.
+- All day arithmetic uses `Calendar.current` (`startOfDay`, `date(byAdding: .day)`), so time
+  zones and daylight saving are handled.
+- **Triggers:** app launch (`LaunchMaintenance.run`), `scenePhase` becoming `.active`,
+  `NSCalendarDayChanged`, `UIApplication.significantTimeChangeNotification`, saving, pausing or
+  resuming a schedule, forward navigation past the horizon, and once after a restore.
+- **Upgrade from before V6** (`ScheduleUpgrade`; the migration, at launch, and after restoring
+  an older backup):
+  - Scheduled entries get `scheduledDay` = the start of their `loggedAt` day.
+  - Each schedule gets a tombstone for every chosen day from its start through its old
+    `lastMaterializedDay` that has no entry (deleted, paused, or beyond the old 60-day cap).
+    Nothing removed under the old rules comes back.
+
+### Edit semantics (`scheduleChanged`, `removeUpcomingEntries`, `resume`)
+- **Editing a schedule** (amount, kcal, dates, weekdays, label):
+  - Its entries **from today on** (not overridden) are updated to match.
+  - Entries from today on that are no longer in range are removed.
+  - Days newly in range are filled in, past ones too (unless tombstoned).
+  - Past entries otherwise keep what was logged.
+- **Deleting a schedule** removes its entries from today on (not overridden). Past entries stay
+  and keep `scheduleID`; the confirmation says so.
+- **Pausing** removes its entries from today on (not overridden). **Resuming** tombstones the
+  days that passed while paused and fills in from today.
+- Editing or deleting a single scheduled entry affects only that entry, and makes it an override
+  or a tombstone.
+- Scheduled entries never trigger Mochi's eating animation; carry-forward is unchanged.
 
 ### Screens
 - **Calories toolbar** (secondary, beside Saved Foods): "Schedules" (`calendar.badge.clock`).
-- **Schedules list**: rows show thumbnail, label (or food name), amount · day pattern ("Every
-  day", "Weekdays", "Weekends" or "Mon, Wed, Fri"; full day names for VoiceOver), end date or
-  "Paused", and kcal. Swipe right to pause or resume; swipe left to delete. Empty state with "Add a
-  Schedule".
+- **Schedules list**: each row shows the thumbnail, the label (or food name), the amount · day
+  pattern ("Every day", "Weekdays", "Weekends" or "Mon, Wed, Fri"; full day names for
+  VoiceOver), the end date or "Paused", and the kcal. Swipe right to pause or resume; swipe left
+  to delete. There's an empty state with "Add a Schedule".
 - **Add**: the saved-foods browser and search (all origins) in `.schedule` mode, then
   `ScheduleEditorView`.
-- **Editor**: food header; `PortionPicker` (grams by default for gram-only foods; calorie override
-  as in logging); optional label; "Every day" switch and one row per weekday; start date; "Ends"
-  switch with last day. Save is disabled with a red footer while there is no amount (greater than
-  zero), no day, or the end is before the start.
-- **Day view**: scheduled entries look like other entries with a "Scheduled" (`repeat`) label,
-  like the carried-can label. On a future day, a "Scheduled" section previews the schedules that
-  would apply there (dimmed). These rows aren't saved and aren't counted.
+- **Editor**:
+  - food header
+  - `PortionPicker` (grams by default for gram-only foods; calorie override as in logging)
+  - optional label
+  - "Every day" switch and one row per weekday
+  - start date, and an "Ends" switch with last day
+
+  Save is disabled with a red footer while there is no amount (greater than zero), no day, or
+  the end is before the start. Saving logs straight away; there's no confirmation.
+- **Day view**: scheduled entries look like other entries, with a "Scheduled" (`repeat`) label.
+  Future days show them as real entries (in the day's "planned" total, like any future-dated
+  entry). There are no more preview rows.
 
 ### Totals
-Materialized entries are ordinary `FoodLogEntry` rows, so they count in the day total, the
-eaten-versus-target progress and the calories chart. Preview rows never count.
+Scheduled entries are ordinary `FoodLogEntry` rows, so they count in their day's total. Today and
+past days count toward the progress and the calories chart. Future days show their total as
+"planned" (the app's rule for any future-dated entry), and the chart covers past days only.
 
 ---
 

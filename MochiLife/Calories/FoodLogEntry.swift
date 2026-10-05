@@ -36,6 +36,11 @@ final class FoodLogEntry {
     /// The feeding schedule that made this entry, if any. Kept after the schedule is deleted.
     /// Nil for entries logged by hand. (V4)
     var scheduleID: UUID?
+    /// For scheduled entries: the start of the day the schedule made it for. With `scheduleID`
+    /// it's the key that keeps one entry per schedule per day. (V6)
+    var scheduledDay: Date?
+    /// The owner edited this scheduled entry, so schedule changes leave it alone. (V6)
+    var isScheduleOverridden: Bool = false
     /// The `FoodKind` raw value: copied from the food when logged, or chosen for a quick entry.
     /// Nil only before `FoodKindBackfill` has run on an older entry. (V5)
     var kindRawValue: String?

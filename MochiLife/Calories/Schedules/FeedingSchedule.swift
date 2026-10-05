@@ -41,9 +41,13 @@ final class FeedingSchedule {
     /// Start of the last day, if it ends.
     var endDate: Date?
     var isPaused: Bool = false
-    /// Start of the last day entries were made up to. Only ever moves forward, so a scheduled
-    /// entry the owner deletes isn't made again.
+    /// The last day entries have been made through (the rolling horizon). Before V6 it also
+    /// stood for "skipped": deleted days before it weren't made again; `ScheduleUpgrade`
+    /// turned those into tombstones.
     var lastMaterializedDay: Date?
+    /// Tombstones: days whose scheduled entry the owner deleted (or that passed while the
+    /// schedule was paused). Never recreated. Nil only until `ScheduleUpgrade` has run. (V6)
+    var skippedDaysStorage: [Date]?
     var createdAt: Date
     var updatedAt: Date
 
@@ -57,6 +61,7 @@ final class FeedingSchedule {
         self.startDate = startDate
         self.createdAt = createdAt
         self.updatedAt = createdAt
+        self.skippedDaysStorage = []
     }
 
     /// Copies the food's details.
@@ -84,6 +89,12 @@ final class FeedingSchedule {
 
     var kind: FoodKind {
         FoodKind.stored(foodKindRawValue, hasContainerSizes: !(portionSource?.sizes.isEmpty ?? true))
+    }
+
+    /// Days never to fill in (see `skippedDaysStorage`).
+    var skippedDays: [Date] {
+        get { skippedDaysStorage ?? [] }
+        set { skippedDaysStorage = newValue }
     }
 
     var exactContainers: Fraction? {
@@ -128,6 +139,15 @@ final class FeedingSchedule {
     func makeEntry(for day: Date, calendar: Calendar = .current) -> FoodLogEntry {
         let entry = FoodLogEntry(foodName: foodName, kilocalories: kilocaloriesPerOccurrence,
                                  loggedAt: calendar.startOfDay(for: day))
+        entry.scheduledDay = calendar.startOfDay(for: day)
+        update(entry)
+        return entry
+    }
+
+    /// Copies this schedule's food, amount, calories and kind into one of its entries.
+    func update(_ entry: FoodLogEntry) {
+        entry.foodName = foodName
+        entry.kilocalories = kilocaloriesPerOccurrence
         entry.foodBrand = foodBrand
         entry.foodLine = foodLine
         entry.foodLibraryIdentifier = foodPhotoKey
@@ -141,7 +161,6 @@ final class FeedingSchedule {
         entry.isCustomKilocalories = isKilocaloriesOverridden
         entry.scheduleID = id
         entry.kindRawValue = kind.rawValue
-        return entry
     }
 }
 
