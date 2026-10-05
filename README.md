@@ -38,7 +38,9 @@ The Calories tab opens on **Today**.
   the progress bar or in the chart until the day arrives.
 - Tap the big **Log Food** button at the bottom (it's there on every day, and
   logs to the day you're looking at). The Log Food screen shows your **Recent**
-  and **Frequent** foods (tap one to log it again with the same portion), and a
+  and **Frequent** foods (tap one to log it again with the same portion; a food
+  is never listed twice, and foods you've since deleted, or quick entries, still
+  work and are marked "not in saved foods"), and a
   search box that finds your saved foods as you type, even with a typo.
 - Or tap the **camera** button next to the search box and point it at the front
   of the package (or choose a photo). The app reads the label on the iPhone and

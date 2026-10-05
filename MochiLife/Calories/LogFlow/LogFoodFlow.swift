@@ -8,7 +8,10 @@ enum LogRoute: Hashable {
     case portion(Food, Portion?, autoMatch: AutoMatch?)
     /// Two or three possible foods to choose from.
     case candidates(CandidateChoice)
-    case quickEntry(String)
+    /// Quick entry, prefilled with a name (and calories, when repeating an earlier quick entry).
+    case quickEntry(String, kilocalories: Double? = nil)
+    /// Log again from an earlier entry whose saved food no longer exists, using its own copy.
+    case snapshot(FoodLogEntry)
     case browse
     /// Find a food on the web with the AI lookup, then log it.
     case web(String)
@@ -204,8 +207,10 @@ struct LogFoodFlowView: View {
             )
         case let .candidates(choice):
             CandidateListView(choice: choice, model: model) { manualAddName = choice.text }
-        case let .quickEntry(name):
-            LogEntryForm(mode: .quickEntry, initialName: name, onFinish: { dismiss() })
+        case let .quickEntry(name, kilocalories):
+            LogEntryForm(mode: .quickEntry, initialName: name, initialKilocalories: kilocalories, onFinish: { dismiss() })
+        case let .snapshot(entry):
+            LogEntryForm(mode: .logSnapshot(entry), onFinish: { dismiss() })
         case .browse:
             SavedFoodsView(mode: .pick(onFinish: { dismiss() }))
         case let .web(query):
@@ -316,63 +321,51 @@ private struct LogFoodHomeView: View {
 
     // MARK: Recent and frequent
 
-    private struct Usage {
-        var food: Food
-        var portion: Portion?
-        var description: String?
-    }
-
-    /// The saved food a log entry was made from: by product ID or photo key, else by
-    /// brand + line + name (entries are snapshots and don't link to foods).
-    private func food(for entry: FoodLogEntry, keyed: [String: Food], byID: [String: Food]) -> Food? {
-        if let identifier = entry.foodLibraryIdentifier, let food = byID[identifier] { return food }
-        return keyed[FoodMatching.key(brand: entry.foodBrand, line: entry.foodLine, name: entry.foodName)]
-    }
-
-    private var usage: (recent: [Usage], frequent: [Usage]) {
-        let keyed = Dictionary(foods.map { (FoodMatching.key(brand: $0.brand, line: $0.line, name: $0.name), $0) }) { first, _ in first }
-        var byID: [String: Food] = [:]
-        for food in foods {
-            for key in [food.seedID, food.libraryIdentifier, food.thumbnailKey].compactMap({ $0 }) where byID[key] == nil {
-                byID[key] = food
-            }
-        }
-        var recent: [Usage] = []
-        var counts: [PersistentIdentifier: (count: Int, usage: Usage)] = [:]
-        let monthAgo = Calendar.current.date(byAdding: .day, value: -30, to: .now) ?? .distantPast
-        for entry in entries where !entry.isQuickEntry && !entry.isCarriedForward {
-            guard let food = food(for: entry, keyed: keyed, byID: byID) else { continue }
-            let item = Usage(food: food, portion: entry.portion, description: entry.amountDescription)
-            if recent.count < 8 && !recent.contains(where: { $0.food == food }) { recent.append(item) }
-            if entry.loggedAt >= monthAgo {
-                let existing = counts[food.persistentModelID]
-                counts[food.persistentModelID] = ((existing?.count ?? 0) + 1, existing?.usage ?? item)
-            }
-        }
-        let frequent = counts.values.sorted { $0.count > $1.count }.prefix(5).map(\.usage)
-        return (recent, Array(frequent))
-    }
-
     @ViewBuilder
     private var recentSections: some View {
-        let usage = usage
-        if !usage.recent.isEmpty {
+        let lists = RecentUsage.lists(entries: entries, foods: foods)
+        if !lists.recent.isEmpty {
             Section("Recent") {
-                ForEach(usage.recent, id: \.food) { item in usageRow(item) }
+                ForEach(lists.recent) { item in usageRow(item, section: .recent) }
             }
         }
-        if !usage.frequent.isEmpty {
+        if !lists.frequent.isEmpty {
             Section("Frequent") {
-                ForEach(usage.frequent, id: \.food) { item in usageRow(item) }
+                ForEach(lists.frequent) { item in usageRow(item, section: .frequent) }
             }
         }
     }
 
-    private func usageRow(_ item: Usage) -> some View {
-        NavigationLink(value: LogRoute.portion(item.food, item.portion, autoMatch: nil)) {
-            FoodChoiceRow(food: item.food, detail: item.description)
+    /// A plain button covering the whole row: one tap always opens something.
+    private func usageRow(_ item: RecentUsage.Item, section: RecentUsage.Section) -> some View {
+        Button {
+            open(item, section: section)
+        } label: {
+            UsageRow(item: item)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
         }
-        .simultaneousGesture(TapGesture().onEnded { LogFlowLog.logger.info("path=recent") })
+        .buttonStyle(.plain)
+        .accessibilityHint(item.isInSavedFoods ? "Logs this food" : "Logs this again; it isn't in saved foods")
+    }
+
+    /// Pushes the one screen for the item onto the sheet's navigation path.
+    private func open(_ item: RecentUsage.Item, section: RecentUsage.Section) {
+        let route: LogRoute
+        let action: String
+        switch item.target {
+        case let .food(food):
+            route = .portion(food, item.portion, autoMatch: nil)
+            action = "portion"
+        case let .snapshot(entry):
+            route = .snapshot(entry)
+            action = "snapshot_portion"
+        case let .quickEntry(name, kilocalories):
+            route = .quickEntry(name, kilocalories: kilocalories)
+            action = "quick_entry"
+        }
+        LogFlowLog.logger.info("path=recent section=\(section.rawValue, privacy: .public) resolved=\(item.isInSavedFoods) action=\(action, privacy: .public)")
+        model.path.append(route)
     }
 
     // MARK: Results
@@ -424,6 +417,49 @@ struct FoodChoiceRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A Recent or Frequent item: photo, name, brand · line · last amount, and a subtle note when
+/// it isn't in saved foods.
+private struct UsageRow: View {
+    let item: RecentUsage.Item
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if case .quickEntry = item.target {
+                Image(systemName: "bolt")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(.fill.tertiary, in: .rect(cornerRadius: 8))
+            } else {
+                FoodThumbnail(libraryIdentifier: item.photoKey, size: 44)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                Text([item.brand, item.line, item.detail].compactMap { $0 }.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if !item.isInSavedFoods {
+                    Text(item.target.isQuickEntry ? "Quick entry · not in saved foods" : "Not in saved foods")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private extension RecentUsage.Target {
+    var isQuickEntry: Bool {
+        if case .quickEntry = self { true } else { false }
     }
 }
 

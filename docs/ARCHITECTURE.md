@@ -106,7 +106,8 @@ Targets:
 | `FoodMatcher.swift` | Pure, synchronous library matcher: normalization, IDF-weighted token scoring with fuzzy matches, classification, thresholds, size detection. |
 | `MatchJudge.swift` | Optional on-device Apple Intelligence judge (Foundation Models, guided generation) with a 5-second timeout; `MatchJudgement`; `LogFlowLog`. |
 | `PackageCaptureView.swift` | Live text scanning (VisionKit `DataScannerViewController`) with a shutter, photo capture fallback, and PhotosPicker. |
-| `LogFoodFlow.swift` | `LogRoute`, `LogFlowModel` (index, text and camera decisions), `LogFoodFlowView` (the sheet), home (search, Recent, Frequent), candidate list, web fallback. |
+| `RecentUsage.swift` | Works out Recent and Frequent from log entries: items resolve to a saved food, an entry snapshot (food gone) or a quick entry; row ids include the section; Frequent excludes Recent. |
+| `LogFoodFlow.swift` | `LogRoute`, `LogFlowModel` (index, text and camera decisions), `LogFoodFlowView` (the sheet), home (search, Recent, Frequent rows), candidate list, web fallback. |
 | `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions, number formatting, `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
 | `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick/schedule modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
@@ -972,7 +973,7 @@ and offered with `ShareLink`. The date is recorded in `backup.lastExport`. Cance
    ("update the app"); decode through `upgrade(_:from:)` (one explicit step per older format
    version: v1 → v2 adds an empty `schedules` list, and missing `scheduleID`s decode as nil; v2
    is current); validate (also schedules: food name, weekdays 1–127, kcal 0–100,000, amounts,
-   end ≥ start, unique IDs; (weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
+   end ≥ start, unique IDs; weights 0–200 kg, kcal/g 0–100, sizes, non-negative amounts,
    denominators > 0, carry day ≥ 0, target ≤ 5,000, safe file names, valid base64), with distinct
    messages; stage photo files in a temporary folder.
 2. `RestoreFlowView` shows the backup's date, device and app version, and per-type counts next to
@@ -1004,14 +1005,39 @@ The Calories day view has one primary action: a centered "Log Food" button pinne
 bar with `safeAreaInset(edge: .bottom)` (`.borderedProminent`, `.large`, ≥ 44 pt, bar material
 behind it; the list is inset so its last row isn't hidden). It shows on every day and logs to the
 day being viewed (at the current time) via the `logDay` environment value. Saved Foods and Daily
-Calories stay as secondary toolbar items; the old "+" was removed. There are no feeding schedules.
+Calories stay as secondary toolbar items; the old "+" was removed. Schedules (§14) is a third
+secondary toolbar item.
 
 The sheet (`LogFoodFlowView`, its own `NavigationStack(path:)`) shows a focused search field with a
-camera button; **Recent** (up to 8 distinct foods, newest first) and **Frequent** (top 5 by count
-in the last 30 days) from the food log, each opening the portion picker prefilled with the last
-size and portion; live library results while typing; and Quick Entry / Browse Saved Foods. Log
-entries don't link to foods, so they're matched to saved foods by product ID or photo key, else
-by `FoodMatching.key`; quick entries, carried entries and deleted foods are skipped.
+camera button; **Recent** and **Frequent** from the food log; live library results while typing;
+and Quick Entry / Browse Saved Foods.
+
+**Recent and Frequent** (`RecentUsage`):
+- **Recent** holds up to 8 distinct items, newest first.
+- **Frequent** holds the top 5 by count in the last 30 days, **excluding anything already in
+  Recent**.
+- Carried-forward days are left out. Scheduled entries count like any other.
+
+Log entries don't link to foods, so each entry is resolved to a saved food by product ID or photo
+key, else by `FoodMatching.key`. Every entry yields an item:
+- **Saved food** → the portion picker, prefilled with the last size and portion.
+- **Saved food gone** (deleted or renamed) → `LogRoute.snapshot(entry)`. This is
+  `LogEntryForm(.logSnapshot)`, which logs from the entry's own copy (name, brand, line, photo key,
+  `PortionSource`, last amount, carry-forward available). The row is labelled "Not in saved
+  foods".
+- **Quick entry** → `LogRoute.quickEntry(name, kilocalories:)`, prefilled, and labelled "Quick
+  entry · not in saved foods".
+
+Items are keyed `food-…` / `snapshot-<matching key>` / `quick-<name>`, and row ids add the
+section (`recent-…`, `frequent-…`), so every id is unique across both sections. Each row is a
+`Button` with `.buttonStyle(.plain)` and a full-row `contentShape(Rectangle())`, with no extra
+gestures. Its action logs and appends one route to the stack's `path`, the sheet's single
+navigation mechanism.
+
+*Fixed 2026-10-05:* these rows were `NavigationLink`s with a `simultaneousGesture(TapGesture)`
+used only for logging. The extra tap gesture competed with the link's own tap, so taps were
+intermittently swallowed (no highlight, no navigation). Diagnostic logging moved into the
+button action.
 
 ### FoodMatcher
 Pure and synchronous over an in-memory index (`Sendable`; built and run off the main actor;
@@ -1063,7 +1089,9 @@ cap or "not found" offer Quick Entry (prefilled) and adding the food by hand (`F
 picker, own calories, date and time, carry-forward); saving dismisses the whole sheet.
 
 ### Logging
-`LogFlowLog` (category `logFlow`): path (recent, text, camera), matcher classification, whether the
+`LogFlowLog` (category `logFlow`): path (recent, text, camera); for a Recent/Frequent tap, the
+section, whether the saved food was resolved and the action (portion, snapshot_portion,
+quick_entry); matcher classification, whether the
 model was used, its latency and certainty, and whether the web fallback ran. Never recognized text
 or queries.
 

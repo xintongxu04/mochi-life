@@ -5,6 +5,9 @@ import SwiftUI
 struct LogEntryForm: View {
     enum Mode {
         case logFood(Food, startingFrom: Portion?)
+        /// Log again from an earlier entry whose saved food no longer exists, using the entry's
+        /// own copy of the food's details and its last amount.
+        case logSnapshot(FoodLogEntry)
         case quickEntry
         case edit(FoodLogEntry)
     }
@@ -12,6 +15,8 @@ struct LogEntryForm: View {
     let mode: Mode
     /// Prefills a quick entry's name (e.g. the text that wasn't found).
     var initialName: String?
+    /// Prefills a quick entry's calories (repeating an earlier quick entry).
+    var initialKilocalories: Double?
     /// For a food matched automatically: shows "Not this one", which goes back to the choices.
     var notThisOne: (() -> Void)?
     /// Called after saving or cancelling, to close the screen this form is in.
@@ -29,13 +34,18 @@ struct LogEntryForm: View {
     @State private var isConfirmingLongPlan = false
     @State private var isAskingAboutCarriedEntries = false
 
-    init(mode: Mode, initialName: String? = nil, notThisOne: (() -> Void)? = nil, onFinish: @escaping () -> Void) {
+    init(mode: Mode, initialName: String? = nil, initialKilocalories: Double? = nil, notThisOne: (() -> Void)? = nil,
+         onFinish: @escaping () -> Void) {
         self.mode = mode
         self.initialName = initialName
+        self.initialKilocalories = initialKilocalories
         self.notThisOne = notThisOne
         self.onFinish = onFinish
         if case .quickEntry = mode, let initialName {
             _name = State(initialValue: initialName)
+        }
+        if case .quickEntry = mode, let initialKilocalories {
+            _caloriesText = State(initialValue: Portion.formatKilocalories(initialKilocalories))
         }
         if case let .edit(entry) = mode {
             _loggedAt = State(initialValue: entry.loggedAt)
@@ -48,6 +58,7 @@ struct LogEntryForm: View {
     private var portionSource: PortionSource? {
         switch mode {
         case let .logFood(food, _): PortionSource(food)
+        case let .logSnapshot(entry): entry.portionSource
         case .quickEntry: nil
         case let .edit(entry): entry.portionSource
         }
@@ -56,6 +67,7 @@ struct LogEntryForm: View {
     private var startingPortion: Portion? {
         switch mode {
         case let .logFood(_, portion): portion
+        case let .logSnapshot(entry): entry.portion
         case .quickEntry: nil
         case let .edit(entry): entry.portion
         }
@@ -73,7 +85,10 @@ struct LogEntryForm: View {
     }
 
     private var isLoggingNewFood: Bool {
-        if case .logFood = mode { true } else { false }
+        switch mode {
+        case .logFood, .logSnapshot: true
+        case .quickEntry, .edit: false
+        }
     }
 
     /// What's left of the can or pouch after this portion, as portions for the following days.
@@ -95,7 +110,7 @@ struct LogEntryForm: View {
 
     private var title: String {
         switch mode {
-        case .logFood: "Log Food"
+        case .logFood, .logSnapshot: "Log Food"
         case .quickEntry: "Quick Entry"
         case .edit: "Edit Entry"
         }
@@ -196,6 +211,9 @@ struct LogEntryForm: View {
         switch mode {
         case let .logFood(food, _):
             foodHeader(name: food.name, brand: food.brandTitle, line: food.line, libraryIdentifier: food.libraryIdentifier)
+        case let .logSnapshot(entry):
+            foodHeader(name: entry.foodName, brand: entry.foodBrand ?? Food.noBrandTitle, line: entry.foodLine,
+                       libraryIdentifier: entry.foodLibraryIdentifier, note: "Not in saved foods · logged from an earlier entry")
         case let .edit(entry) where !entry.isQuickEntry:
             foodHeader(name: entry.foodName, brand: entry.foodBrand ?? Food.noBrandTitle, line: entry.foodLine, libraryIdentifier: entry.foodLibraryIdentifier)
         default:
@@ -203,7 +221,8 @@ struct LogEntryForm: View {
         }
     }
 
-    private func foodHeader(name: String, brand: String, line: String?, libraryIdentifier: String?) -> some View {
+    private func foodHeader(name: String, brand: String, line: String?, libraryIdentifier: String?,
+                            note: String? = nil) -> some View {
         Section {
             HStack(spacing: 12) {
                 FoodThumbnail(libraryIdentifier: libraryIdentifier, size: 56)
@@ -213,6 +232,11 @@ struct LogEntryForm: View {
                     Text([brand, line].compactMap(\.self).joined(separator: " · "))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if let note {
+                        Text(note)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
         }
@@ -221,7 +245,7 @@ struct LogEntryForm: View {
     private func save() {
         guard canSave else { return }
         switch mode {
-        case .logFood:
+        case .logFood, .logSnapshot:
             let carries = carriesRestForward && !carryPlan.isEmpty
             if carries && carryPlan.count > CarryForward.daysBeforeAsking {
                 isConfirmingLongPlan = true
@@ -262,9 +286,21 @@ struct LogEntryForm: View {
     }
 
     private func logFood(carryingForward: Bool) {
-        guard case let .logFood(food, _) = mode else { return }
-        let entry = FoodLogEntry(foodName: food.name, kilocalories: 0, loggedAt: loggedAt)
-        entry.record(food, portion: portion)
+        let entry: FoodLogEntry
+        switch mode {
+        case let .logFood(food, _):
+            entry = FoodLogEntry(foodName: food.name, kilocalories: 0, loggedAt: loggedAt)
+            entry.record(food, portion: portion)
+        case let .logSnapshot(source):
+            entry = FoodLogEntry(foodName: source.foodName, kilocalories: 0, loggedAt: loggedAt)
+            entry.foodBrand = source.foodBrand
+            entry.foodLine = source.foodLine
+            entry.foodLibraryIdentifier = source.foodLibraryIdentifier
+            entry.portionSource = source.portionSource
+            entry.record(portion)
+        default:
+            return
+        }
         modelContext.insert(entry)
         if carryingForward {
             entry.makeCarriedEntries().forEach(modelContext.insert)
