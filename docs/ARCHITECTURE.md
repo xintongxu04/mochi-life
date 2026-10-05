@@ -628,8 +628,21 @@ offers Update Existing or Save as New. Saved foods get `origin = .aiLookup`, `so
 
 ### Keys, limits and errors
 - `AILookupSettingsView`: SecureFields for both keys (Keychain only, see §3), Test Keys (Brave:
-  one 1-result search; DeepSeek: `GET /models`, no tokens), today's count, and what is sent
-  where. A lookup started without a key opens this screen.
+  one 1-result search; DeepSeek: `GET https://api.deepseek.com/models` with
+  `Authorization: Bearer <key>`, no tokens), today's count, and what is sent where. A lookup
+  started without a key opens this screen.
+- **Key cleaning** (`AIKeychain.normalize`, on save and on every read): removes all whitespace,
+  line breaks and invisible characters (control characters, zero-width spaces/joiners, BOM, soft
+  hyphen) anywhere in the key, a pasted "Bearer " prefix, and surrounding quotes. Keys never
+  contain spaces, so this can't damage a valid key. Saving shows the cleaned value in the field.
+- **Test Keys tests the values in the fields** (saved or not) and says when they aren't saved
+  yet. On 401/403 it shows the service's own error message and, for the key sent, only its
+  length and first three characters (DeepSeek keys start with "sk-"); nothing about the key is
+  logged.
+- **API calls don't follow redirects** (`HTTPCheck.apiSession`, used by Brave, DeepSeek and the
+  key test), so an `Authorization` / `X-Subscription-Token` header can't be dropped or sent to
+  another host; a redirect surfaces as its 3xx status. Page and image downloads still follow
+  redirects (`HTTPCheck.session`).
 - `AILookupLimit`: 50 lookups a day (counted when a lookup starts), remaining shown on the input
   screen.
 - `LookupFailure` messages: offline, timeout, key rejected (401/403, names the service), no

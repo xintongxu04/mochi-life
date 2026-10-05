@@ -4,8 +4,10 @@ import SwiftUI
 struct AILookupSettingsView: View {
     @State private var braveKey = AIKeychain.key(for: .brave) ?? ""
     @State private var deepSeekKey = AIKeychain.key(for: .deepSeek) ?? ""
-    @State private var braveResult: String?
-    @State private var deepSeekResult: String?
+    @State private var braveResult: KeyTestResult?
+    @State private var deepSeekResult: KeyTestResult?
+    /// The fields' values that were tested, and whether they matched what's saved.
+    @State private var testedUnsavedKeys = false
     @State private var isTesting = false
     @State private var savedMessage: String?
 
@@ -27,7 +29,7 @@ struct AILookupSettingsView: View {
                 Text(savedMessage ?? "Keys are stored only in this iPhone's Keychain.")
             }
 
-            Section("Check") {
+            Section {
                 Button {
                     Task { await testKeys() }
                 } label: {
@@ -39,11 +41,15 @@ struct AILookupSettingsView: View {
                 }
                 .disabled(isTesting)
                 if let braveResult {
-                    LabeledContent("Brave Search", value: braveResult)
+                    resultRow("Brave Search", braveResult)
                 }
                 if let deepSeekResult {
-                    LabeledContent("DeepSeek", value: deepSeekResult)
+                    resultRow("DeepSeek", deepSeekResult)
                 }
+            } footer: {
+                Text(testedUnsavedKeys
+                     ? "Tested the keys in the fields above. They aren't saved yet — tap Save Keys."
+                     : "Tests the keys in the fields above.")
             }
 
             Section("Today") {
@@ -62,7 +68,27 @@ struct AILookupSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    private func resultRow(_ service: String, _ result: KeyTestResult) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledContent(service, value: result.summary)
+            if let message = result.serviceMessage {
+                Text("\(service) says: \(message)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            if let hint = result.keyHint {
+                Text(hint)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     private func saveKeys() {
+        braveKey = AIKeychain.normalize(braveKey)
+        deepSeekKey = AIKeychain.normalize(deepSeekKey)
+        testedUnsavedKeys = false
         let braveSaved = AIKeychain.setKey(braveKey, for: .brave)
         let deepSeekSaved = AIKeychain.setKey(deepSeekKey, for: .deepSeek)
         savedMessage = braveSaved && deepSeekSaved ? "Saved in this iPhone's Keychain." : "The Keychain couldn't save a key. Try again."
@@ -70,11 +96,13 @@ struct AILookupSettingsView: View {
         deepSeekResult = nil
     }
 
+    /// Tests exactly what's in the fields, saved or not.
     private func testKeys() async {
-        saveKeys()
+        testedUnsavedKeys = AIKeychain.normalize(braveKey) != (AIKeychain.key(for: .brave) ?? "")
+            || AIKeychain.normalize(deepSeekKey) != (AIKeychain.key(for: .deepSeek) ?? "")
         isTesting = true
-        async let brave = AIKeyTester.test(.brave)
-        async let deepSeek = AIKeyTester.test(.deepSeek)
+        async let brave = AIKeyTester.test(.brave, key: braveKey)
+        async let deepSeek = AIKeyTester.test(.deepSeek, key: deepSeekKey)
         (braveResult, deepSeekResult) = await (brave, deepSeek)
         isTesting = false
     }

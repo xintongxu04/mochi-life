@@ -63,12 +63,30 @@ enum HTTPCheck {
     }
 
     static func session(timeout: TimeInterval) -> URLSession {
+        URLSession(configuration: configuration(timeout: timeout))
+    }
+
+    /// For Brave and DeepSeek API calls: redirects aren't followed, so a key header can never be
+    /// dropped or sent elsewhere by one; a redirect shows up as its 3xx status instead.
+    static func apiSession(timeout: TimeInterval) -> URLSession {
+        URLSession(configuration: configuration(timeout: timeout), delegate: NoRedirects(), delegateQueue: nil)
+    }
+
+    private static func configuration(timeout: TimeInterval) -> URLSessionConfiguration {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = timeout
         configuration.timeoutIntervalForResource = timeout
         configuration.httpCookieStorage = nil
         configuration.urlCache = nil
-        return URLSession(configuration: configuration)
+        return configuration
+    }
+
+    private final class NoRedirects: NSObject, URLSessionTaskDelegate {
+        func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                        newRequest request: URLRequest) async -> URLRequest? {
+            AILog.logger.notice("api_redirect_refused http_status=\(response.statusCode)")
+            return nil
+        }
     }
 }
 
@@ -99,7 +117,7 @@ struct BraveSearchClient: WebSearchClient {
         request.setValue(apiKey, forHTTPHeaderField: "X-Subscription-Token")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         do {
-            let session = HTTPCheck.session(timeout: 15)
+            let session = HTTPCheck.apiSession(timeout: 15)
             defer { session.finishTasksAndInvalidate() }
             let (data, response) = try await session.data(for: request)
             try HTTPCheck.validate(response, service: .brave, purpose: "brave_search")
@@ -181,7 +199,7 @@ struct DeepSeekClient: ChatCompletionClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONEncoder().encode(Body(messages: messages, max_tokens: maxTokens))
         do {
-            let session = HTTPCheck.session(timeout: DeepSeekModelConfig.requestTimeout)
+            let session = HTTPCheck.apiSession(timeout: DeepSeekModelConfig.requestTimeout)
             defer { session.finishTasksAndInvalidate() }
             let (data, response) = try await session.data(for: request)
             try Self.checkModelAvailable(response, data: data, purpose: purpose)

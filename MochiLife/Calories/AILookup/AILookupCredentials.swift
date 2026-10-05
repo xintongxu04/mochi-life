@@ -17,10 +17,33 @@ enum AIKeychain {
         var result: AnyObject?
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let data = result as? Data,
-              let key = String(data: data, encoding: .utf8), !key.isEmpty
+              let stored = String(data: data, encoding: .utf8)
         else { return nil }
-        return key
+        // Clean on read too, so a key saved by an earlier version is fixed without re-entering it.
+        let key = normalize(stored)
+        return key.isEmpty ? nil : key
     }
+
+    /// Cleans a pasted API key. Keys never contain spaces, so every whitespace, line break and
+    /// invisible character is removed — not just at the ends — along with surrounding quotes and
+    /// a pasted "Bearer " prefix.
+    static func normalize(_ key: String) -> String {
+        var text = key.trimmingCharacters(in: .whitespacesAndNewlines.union(invisibleCharacters))
+        if text.lowercased().hasPrefix("bearer ") { text = String(text.dropFirst("bearer ".count)) }
+        text = String(text.unicodeScalars.filter {
+            !CharacterSet.whitespacesAndNewlines.contains($0) && !invisibleCharacters.contains($0)
+        }.map(Character.init))
+        let quotes = CharacterSet(charactersIn: "\"'“”‘’`")
+        return text.trimmingCharacters(in: quotes)
+    }
+
+    /// Control and format characters that can ride along when copying text: zero-width spaces
+    /// and joiners, the byte-order mark, soft hyphens, and so on.
+    private static let invisibleCharacters: CharacterSet = {
+        var set = CharacterSet.controlCharacters
+        set.insert(charactersIn: "\u{00AD}\u{200B}\u{200C}\u{200D}\u{200E}\u{200F}\u{2060}\u{FEFF}")
+        return set
+    }()
 
     /// Saves the key, or removes it when `key` is empty. Returns false if the Keychain refused.
     @discardableResult
@@ -31,7 +54,7 @@ enum AIKeychain {
             kSecAttrAccount as String: account(service),
         ]
         SecItemDelete(match as CFDictionary)
-        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = normalize(key)
         guard !trimmed.isEmpty else { return true }
         var item = match
         item[kSecValueData as String] = Data(trimmed.utf8)
@@ -76,38 +99,79 @@ enum AILookupLimit {
     }
 }
 
-/// "Test keys": one minimal request to each service, reporting success or the HTTP status.
+/// The outcome of testing one key, with enough detail to spot a wrong, cut-off or stale key
+/// without showing the key itself.
+struct KeyTestResult: Sendable, Equatable {
+    var summary: String
+    /// The service's own error message, on a rejected key.
+    var serviceMessage: String?
+    /// Length and first three characters of the key that was sent, on a rejected key.
+    var keyHint: String?
+}
+
+/// "Test keys": one minimal request to each service with the given key (the value in the field,
+/// not necessarily the saved one), reporting success or the HTTP status.
 enum AIKeyTester {
-    static func test(_ service: AIService) async -> String {
-        guard let key = AIKeychain.key(for: service) else { return "No key saved" }
+    static func test(_ service: AIService, key rawKey: String) async -> KeyTestResult {
+        let key = AIKeychain.normalize(rawKey)
+        guard !key.isEmpty else { return KeyTestResult(summary: "No key entered") }
         var request: URLRequest
         switch service {
         case .brave:
             request = URLRequest(url: URL(string: "https://api.search.brave.com/res/v1/web/search?q=cat%20food&count=1")!)
             request.setValue(key, forHTTPHeaderField: "X-Subscription-Token")
         case .deepSeek:
-            // Listing models checks the key without using any tokens.
+            // Same request as `curl https://api.deepseek.com/models -H "Authorization: Bearer <key>"`;
+            // listing models checks the key without using any tokens.
             request = URLRequest(url: URL(string: "https://api.deepseek.com/models")!)
+            request.httpMethod = "GET"
             request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        let session = HTTPCheck.session(timeout: 15)
+        let session = HTTPCheck.apiSession(timeout: 15)
         defer { session.finishTasksAndInvalidate() }
         do {
-            let (_, response) = try await session.data(for: request)
+            let (data, response) = try await session.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             AILog.logger.info("key_test service=\(service.rawValue, privacy: .public) http_status=\(status)")
             switch status {
-            case 200..<300: return "Working"
-            case 401, 403: return "Key rejected (HTTP \(status))"
-            case 402: return "No balance left (HTTP 402)"
-            case 429: return "Rate limited (HTTP 429)"
-            default: return "HTTP \(status)"
+            case 200..<300:
+                return KeyTestResult(summary: "Working")
+            case 401, 403:
+                return KeyTestResult(
+                    summary: "Key rejected (HTTP \(status))",
+                    serviceMessage: errorMessage(in: data),
+                    keyHint: hint(for: key, service: service)
+                )
+            case 300..<400:
+                return KeyTestResult(summary: "Redirected (HTTP \(status)); the request wasn't sent on")
+            case 402: return KeyTestResult(summary: "No balance left (HTTP 402)")
+            case 429: return KeyTestResult(summary: "Rate limited (HTTP 429)")
+            default: return KeyTestResult(summary: "HTTP \(status)", serviceMessage: errorMessage(in: data))
             }
         } catch let error as URLError where [.notConnectedToInternet, .networkConnectionLost].contains(error.code) {
-            return "Offline"
+            return KeyTestResult(summary: "Offline")
         } catch {
-            return "Couldn't connect"
+            return KeyTestResult(summary: "Couldn't connect")
         }
+    }
+
+    /// "Key sent: 35 characters, starting “sk-”" — never more of the key than that.
+    static func hint(for key: String, service: AIService) -> String {
+        var text = "Key sent: \(key.count) characters, starting “\(key.prefix(3))”."
+        if service == .deepSeek && !key.hasPrefix("sk-") {
+            text += " DeepSeek keys start with “sk-”."
+        }
+        return text
+    }
+
+    /// The service's error message from a JSON error body, if any (DeepSeek uses
+    /// {"error": {"message": …}}; Brave uses {"error": {"detail": …}}).
+    private static func errorMessage(in data: Data) -> String? {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        if let error = object["error"] as? [String: Any] {
+            return (error["message"] as? String) ?? (error["detail"] as? String)
+        }
+        return (object["message"] as? String) ?? (object["detail"] as? String)
     }
 }
