@@ -51,6 +51,7 @@ enum FoodLibraryLoader {
                     let food = Food(name: "", kilocaloriesPerGram: 0)
                     product.apply(to: food, brand: file.brand)
                     food.seedID = product.id
+                    food.origin = .seed
                     food.libraryIdentifier = "\(library)/\(product.name)"
                     context.insert(food)
                     inserted += 1
@@ -101,14 +102,11 @@ enum FoodLibraryLoader {
     }
 
     private static func matchKey(brand: String?, line: String?, name: String) -> String {
-        [brand ?? "", line ?? "", name].map(normalize).joined(separator: "|")
+        FoodMatching.key(brand: brand, line: line, name: name)
     }
 
-    /// Lowercased, without accents, with single spaces: "Grill  Tuna & Prawn Pâté" → "grill tuna & prawn pate".
     private static func normalize(_ text: String) -> String {
-        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
-            .split(whereSeparator: \.isWhitespace)
-            .joined(separator: " ")
+        FoodMatching.normalize(text)
     }
 }
 
@@ -195,27 +193,9 @@ private struct Product: Decodable {
 
     private var analysisRows: [GuaranteedAnalysisRow] {
         let analysis = guaranteedAnalysis
-        let main: [(String, Double?, String)] = [
-            ("Crude protein", analysis.crudeProteinMinPct, "min"),
-            ("Crude fat", analysis.crudeFatMinPct, "min"),
-            ("Crude fiber", analysis.crudeFiberMaxPct, "max"),
-            ("Moisture", analysis.moistureMaxPct, "max"),
-        ]
-        let mainRows = main.compactMap { nutrient, value, limit in
-            value.map { GuaranteedAnalysisRow(nutrient: nutrient, amount: "\($0.formatted())% \(limit)") }
-        }
-        return mainRows + analysis.other.map(Self.analysisRow)
-    }
-
-    /// Splits text like "Taurine (min) 0.2%" into "Taurine" and "0.2% min".
-    private static func analysisRow(from text: String) -> GuaranteedAnalysisRow {
-        let pattern = /^(?<nutrient>.+?)(?: \((?<limit>min|max)\))?(?<dryMatter> DM)? (?<amount>[\d.,]+ ?(?:%|mg\/kg|IU\/kg))$/
-        guard let match = text.wholeMatch(of: pattern) else {
-            return GuaranteedAnalysisRow(nutrient: text, amount: "")
-        }
-        var amount = String(match.amount)
-        if let limit = match.limit { amount += " \(limit)" }
-        if match.dryMatter != nil { amount += " (dry matter)" }
-        return GuaranteedAnalysisRow(nutrient: String(match.nutrient), amount: amount)
+        return GuaranteedAnalysisRow.rows(
+            proteinMin: analysis.crudeProteinMinPct, fatMin: analysis.crudeFatMinPct,
+            fiberMax: analysis.crudeFiberMaxPct, moistureMax: analysis.moistureMaxPct, other: analysis.other
+        )
     }
 }

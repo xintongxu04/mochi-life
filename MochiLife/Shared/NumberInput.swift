@@ -72,6 +72,8 @@ extension NumberInput {
     /// Calories per gram or per 100 g as typed on the food form (sanity limits are checked
     /// separately so the form can explain them).
     static let foodCalories = Field(range: 0.001...99_999, maximumFractionDigits: 3)
+    /// A guaranteed-analysis percentage.
+    static let percent = Field(range: 0...100, maximumFractionDigits: 2)
     /// The owner's own daily calorie target.
     static let dailyTarget = Field(range: 50...1_000, maximumFractionDigits: 0)
 }

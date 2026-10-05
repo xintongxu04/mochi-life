@@ -5,10 +5,10 @@ import SwiftData
 // MochiLifeMigrationPlan. Earlier versions keep frozen copies of their models so old stores can
 // still be recognized and upgraded. The live model types are always the latest version's.
 
-/// Version 2 (current): Food gains `seedID` (unique) and `isUserModified`; CatProfile gains
-/// `createdAt`. The live model types (WeightEntry, Food, …) are this version.
-enum SchemaV2: VersionedSchema {
-    static let versionIdentifier = Schema.Version(2, 0, 0)
+/// Version 3 (current): Food gains `originRawValue` (seed, manual or AI lookup) and
+/// `thumbnailKey` (a photo saved by the app). The live model types are this version.
+enum SchemaV3: VersionedSchema {
+    static let versionIdentifier = Schema.Version(3, 0, 0)
 
     static var models: [any PersistentModel.Type] {
         [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self]
@@ -17,7 +17,7 @@ enum SchemaV2: VersionedSchema {
 
 enum MochiLifeMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self]
     }
 
     static var stages: [MigrationStage] {
@@ -25,7 +25,45 @@ enum MochiLifeMigrationPlan: SchemaMigrationPlan {
             // Only adds optional or defaulted properties, so no data has to be transformed here.
             // Data fixes that need the bundled food file run at launch (see LaunchMaintenance).
             .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
+            // Only adds two optional Food properties.
+            .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
         ]
+    }
+}
+
+/// Version 2: Food gained `seedID` (unique) and `isUserModified`; CatProfile gained `createdAt`.
+/// Food is a frozen copy (it changed in V3); the other models are unchanged since V2, so the
+/// live types are used. Don't change the frozen copy.
+enum SchemaV2: VersionedSchema {
+    static let versionIdentifier = Schema.Version(2, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        [WeightEntry.self, Food.self, FoodLogEntry.self, CatProfile.self, Vaccination.self, MedicalRecord.self]
+    }
+
+    @Model
+    final class Food {
+        var name: String
+        var kilocaloriesPerGram: Double
+        var createdAt: Date
+        var brand: String?
+        var line: String?
+        var kindRawValue: String = "food"
+        var sizes: [FoodSize] = []
+        var calorieStatement: String?
+        var ingredients: String?
+        var guaranteedAnalysis: [GuaranteedAnalysisRow] = []
+        var notes: [String] = []
+        var sourceURL: URL?
+        var libraryIdentifier: String?
+        @Attribute(.unique) var seedID: String?
+        var isUserModified: Bool = false
+
+        init(name: String, kilocaloriesPerGram: Double, createdAt: Date) {
+            self.name = name
+            self.kilocaloriesPerGram = kilocaloriesPerGram
+            self.createdAt = createdAt
+        }
     }
 }
 

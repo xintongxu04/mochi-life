@@ -97,6 +97,15 @@ The Calories tab opens on **Today**.
 - Each Tiki Cat food shows a small product photo next to it in lists and search
   results. The photos are stored inside the app, so they work offline. Foods
   without a photo (such as ones you add yourself) show a simple placeholder icon.
+- **Add with AI** (the sparkles button in Saved Foods): type a food's name, or take or
+  choose a photo of the package front (its text is read on the iPhone; the photo is never
+  uploaded). The app searches the web with Brave Search, has DeepSeek pick the
+  manufacturer's page and copy the label details, works out the calorie maths itself, and
+  fetches a product photo. You review and edit everything before saving; if the food is
+  already saved you can update it or save a new one. If nothing is found, you can enter it
+  by hand with the name filled in. This needs your own Brave Search and DeepSeek API keys
+  (entered in AI Lookup settings, stored only in the iPhone's Keychain), and is limited to
+  50 lookups a day.
 - Search by brand, line and product name together. Search updates as you type,
   ignores capital letters and accents, and matches words in any order
   ("tuna pate" finds "Grill Tuna & Prawn Pâté").
@@ -140,7 +149,9 @@ change, instead of failing silently.
 
 Everything you enter (weights, the kg / lb choice, foods, food log entries and
 Mochi's profile, vaccinations and medical history) stays saved on the phone
-after you close and reopen the app. None of it is sent anywhere.
+after you close and reopen the app. Nothing is sent anywhere, except what "Add with AI"
+sends when you use it: the food name to Brave Search, and the name, search results and the
+product page's text to DeepSeek.
 
 ## How to open the app in the iPhone Simulator
 

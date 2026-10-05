@@ -259,7 +259,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mochi Life";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo of Mochi for her profile.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -291,7 +291,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mochi Life";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo of Mochi for her profile.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

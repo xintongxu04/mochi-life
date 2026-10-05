@@ -1,7 +1,8 @@
 # Mochi Life — Architecture
 
 A single-user iPhone app for tracking one cat's (Mochi's) weight, food, calories and
-health records. Everything is stored on the device; nothing is sent off the phone.
+health records. Everything is stored on the device. The only network use is the optional
+"Add with AI" food lookup (§11), which calls Brave Search and DeepSeek with the owner's own keys.
 
 This document describes the code as it exists. Keep it current: any change that affects
 something described here must update this file in the same commit (see `CLAUDE.md`).
@@ -17,11 +18,12 @@ something described here must update this file in the same commit (see `CLAUDE.m
 | Minimum iOS | `IPHONEOS_DEPLOYMENT_TARGET = 27.0` (app and UI test targets) |
 | Devices | iPhone only (`TARGETED_DEVICE_FAMILY = 1`); Mac Catalyst, "Designed for iPhone" on Mac and visionOS all off |
 | UI | SwiftUI (`TabView` with `Tab`, `NavigationStack`, `Form`/`List`, `.searchable`, `ContentUnavailableView`) |
-| Persistence | SwiftData with versioned schemas: `ModelContainer(for: Schema(versionedSchema: SchemaV2.self), migrationPlan: MochiLifeMigrationPlan.self)` created in `MochiLifeApp.init()`; views use the environment `modelContext` (main context). All saves go through `Persistence.save(_:)`. `UserDefaults` / `@AppStorage` for small settings. |
+| Persistence | SwiftData with versioned schemas: `ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: MochiLifeMigrationPlan.self)` created in `MochiLifeApp.init()`; views use the environment `modelContext` (main context). All saves go through `Persistence.save(_:)`. `UserDefaults` / `@AppStorage` for small settings. |
 | Charts | Swift Charts (`Charts`): `LineMark`, `PointMark`, `BarMark`, `RuleMark` |
-| Other Apple frameworks | Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), os (`Logger`), XCTest (UI tests) |
+| Other Apple frameworks | Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
+| Network services | Optional, owner-supplied keys: Brave Search Web Search API and DeepSeek chat completions (§11). No other networking. |
 | Third-party dependencies | None. No Swift packages, CocoaPods or Carthage. |
-| Info.plist | Generated (`GENERATE_INFOPLIST_FILE = YES`). Keys set via build settings: display name "Mochi Life", `NSCameraUsageDescription` ("Take a photo of Mochi for her profile."), generated launch screen and scene manifest. |
+| Info.plist | Generated (`GENERATE_INFOPLIST_FILE = YES`). Keys set via build settings: display name "Mochi Life", `NSCameraUsageDescription` ("Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded."), generated launch screen and scene manifest. |
 | Bundle IDs | `com.xintongxu.MochiLife`, `com.xintongxu.MochiLifeUITests` |
 
 Simulator used for development: **iPhone 18 Pro** (iOS 27.0).
@@ -84,7 +86,22 @@ Targets:
 | `LogEntryForm.swift` | Log a food, quick entry, or edit an entry; carry-forward switch and dialogs. Also `LogFoodSheet` (the "+" flow). |
 | `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions, number formatting, `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
-| `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick modes; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
+| `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
+| `FoodThumbnailStore.swift` | Photos the app saves for foods (`user/<uuid>` keys, JPEG files in Application Support/FoodThumbnails) and the shared ImageIO thumbnail maker. |
+
+**`Calories/AILookup/`** ("Add with AI", §11)
+| File | Purpose |
+|---|---|
+| `AILookupModels.swift` | `AIService`, `SearchResult`, `LookupStage`, `LookupFailure` (user messages), `ExtractedFood` (DeepSeek target shape), `PageChoice`, `FoodDraft`. |
+| `AIClients.swift` | Protocols `WebSearchClient`, `ChatCompletionClient`, `WebFetcher`; `BraveSearchClient`, `DeepSeekClient`, `URLSessionWebFetcher`; `HTTPCheck` (status/error mapping); `AILog`. |
+| `CandidateRanker.swift` | Deterministic pre-ranking of search results (brand-host boost, marketplace/review demotion), top 6. |
+| `HTMLReducer.swift` | Title, og/twitter images, JSON-LD Product, visible text, keyword-window trimming, entity decoding. |
+| `FoodLookupService.swift` | The pipeline actor; `Prompts` (DeepSeek system messages); `FoodDerivation` (app-side calorie maths and sanity ranges). |
+| `AILookupCredentials.swift` | `AIKeychain` (keys), `AILookupLimit` (50/day), `AIKeyTester`. |
+| `AILookupSettingsView.swift` | "AI Lookup" settings: keys, Test Keys, today's count, what is sent where. |
+| `PackageTextReader.swift` | Vision text recognition of a package photo, on device. |
+| `AddWithAIView.swift` | `AILookupSession` (state, Task, cancel) and the input / progress / not-found / failure screens. |
+| `FoodReviewView.swift` | Editable review form, duplicate check, Save. |
 
 **`Profile/`**
 | File | Purpose |
@@ -132,9 +149,14 @@ A failure to open the store calls `fatalError`.
   additive changes (new optional or defaulted properties, new models) and `.custom` when
   existing data must be transformed.
 - `SchemaV1` (1.0.0) — the shape shipped before versioning: frozen copies of all six models.
-- `SchemaV2` (2.0.0, current) — adds `Food.seedID` (unique), `Food.isUserModified` and
-  `CatProfile.createdAt`. Its `models` are the live types.
-- Stage V1 → V2: `.lightweight` (only additive). Data fixes that need the bundled food file or
+- `SchemaV2` (2.0.0) — adds `Food.seedID` (unique), `Food.isUserModified` and
+  `CatProfile.createdAt`. Food is a frozen nested copy; the other models are the live types
+  (unchanged since V2).
+- `SchemaV3` (3.0.0, current) — adds `Food.originRawValue` and `Food.thumbnailKey` (both
+  optional). Its `models` are the live types.
+- Stage V1 → V2: `.lightweight` (only additive). Stage V2 → V3: `.lightweight` (two optional
+  properties). V2 → V3 was checked on 2026-10-04 with a copy of a real V2 store (everything kept,
+  new columns added). Data fixes that need the bundled food file or
   apply to old entries (seed-ID backfill, missing fractions) run as repeat-safe launch tasks
   (`LaunchMaintenance`), not in the stage.
 - Verified on 2026-10-04 with a copy of a real V1 store (4 weights, 100 foods plus one added
@@ -167,7 +189,7 @@ General facts that apply to every model:
 | `createdAt` | `Date` | |
 | `brand` | `String?` | `nil` → shown under "My foods". |
 | `line` | `String?` | `nil` → "Other" group (or listed directly if the brand has no lines). |
-| `kindRawValue` | `String` = `"food"` | `FoodKind`: `food`, `topper`, `supplement`. |
+| `kindRawValue` | `String` = `"food"` | `FoodKind`: `food`, `topper`, `supplement`, `treat`. |
 | `sizes` | `[FoodSize]` = `[]` | Cans/pouches. Empty for gram-only foods (all user-added foods). |
 | `calorieStatement` | `String?` | Brand's wording, verbatim. |
 | `ingredients` | `String?` | |
@@ -176,7 +198,9 @@ General facts that apply to every model:
 | `sourceURL` | `URL?` | |
 | `libraryIdentifier` | `String?` | `"<library>/<original product name>"` for imported foods; log entries copy it to find the thumbnail. `nil` for user-added foods. |
 | `seedID` | `String?`, **unique** | The bundled file's stable product `id`. `nil` for user-added foods. (V2) |
-| `isUserModified` | `Bool` = `false` | Set when the owner saves an edit to a seeded food; seed updates then leave it alone. (V2) |
+| `isUserModified` | `Bool` = `false` | Set when the owner saves an edit to a seeded food (including "Update Existing" from AI lookup); seed updates then leave it alone. (V2) |
+| `originRawValue` | `String?` | `FoodOrigin`: `seed`, `manual`, `aiLookup`. Nil for foods saved before V3; `origin` then reports `seed` if there's a seed ID, else `manual`. (V3) |
+| `thumbnailKey` | `String?` | `user/<uuid>` key of a photo the app saved (`FoodThumbnailStore`). Takes priority over the bundled photo. (V3) |
 
 `FoodSize`: `name` ("5.5 oz can"), `grams`, `kilocalories` (per whole container),
 `kilocaloriesPerGram`, `isCalculated` (brand didn't state that size's calories);
@@ -191,7 +215,7 @@ details when logged, so later edits or deletion of a `Food` never change history
 | `loggedAt` | `Date` | Date and time eaten. Day grouping uses `Calendar.current.startOfDay`. |
 | `foodName` | `String` | Copied from the food (or typed, for quick entries). |
 | `foodBrand`, `foodLine` | `String?` | Copied. |
-| `foodLibraryIdentifier` | `String?` | Copied; used only to show the thumbnail. |
+| `foodLibraryIdentifier` | `String?` | The food's `photoKey` when logged (`thumbnailKey ?? seedID ?? libraryIdentifier`); used only to show the thumbnail. |
 | `portionSource` | `PortionSource?` | Copy of the food's sizes and kcal/g, so the amount can be edited later. **`nil` means a quick entry.** |
 | `measureRawValue` | `String?` | `"containers"` or `"grams"` (literal strings). |
 | `sizeName` | `String?` | Which size was used. |
@@ -245,6 +269,11 @@ so a profile always exists; views read it with `@Query` + `profiles.current` (ol
 | `foodLibraryVersion.<library>` | `Int` | Last imported `data_version` (`FoodLibraryLoader`) |
 | `loadedFoodLibrary.<library>` | `Bool` | Legacy (pre-versioning) "version 1 imported" flag; read only, treated as version 1 |
 | `deletedSeedIDs` | `[String]` | Seed IDs of seeded foods the owner deleted, so updates don't re-add them |
+| `aiLookup.date`, `aiLookup.count` | `String`, `Int` | Today's AI lookup count (`AILookupLimit`) |
+
+API keys for AI lookup are **not** in UserDefaults: they are Keychain generic passwords (service
+`com.xintongxu.MochiLife.ailookup`, accounts `brave_search` and `deepseek`,
+`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`).
 
 ### Unit conventions
 - **Weight:** always stored in **kilograms** (`WeightEntry.kilograms`). Pounds use
@@ -273,6 +302,10 @@ so a profile always exists; views read it with `@Query` + `profiles.current` (ol
   (used by log entries saved with that form). Photos came from each product page's main image,
   shrunk to 200 px wide JPEGs; they belong to Tiki Cat and are for personal use only. Products
   added by a future data version have no photo until one is added to the map.
+- Photos the app saves at runtime (AI lookup, or "Replace" on the review form) can't go in the
+  bundle: `FoodThumbnailStore` writes them as JPEGs (same format, ≤ 200 px long edge, quality
+  0.72) to Application Support/FoodThumbnails/<uuid>.jpg and they're keyed `user/<uuid>`. They
+  are never deleted, because log entries may point at them.
 
 **Update** (`FoodLibraryLoader.updateBundledLibraries`, run by `LaunchMaintenance` from
 `ContentView`'s `.task` each launch, on the main context):
@@ -321,6 +354,9 @@ MochiLifeApp
    │      Food → FoodDetailView
    │        sheet: FoodFormView (edit) ; sheet: NavigationStack → LogEntryForm(.logFood, startingFrom: portion)
    │      sheet: FoodFormView (add)
+   │      sheet: AddWithAIView (own NavigationStack): input → progress → FoodReviewView,
+   │        or not found / failure; pushes AILookupSettingsView; sheet FoodFormView
+   │        (manual, name prefilled); fullScreenCover CameraPicker
    │
    │    LogFoodSheet (sheet): NavigationStack → SavedFoodsView(mode: .pick)
    │      + .savedFoodsDestinations(mode: .pick)
@@ -357,7 +393,7 @@ closes via an `onFinish` closure instead of `dismiss`.
   fine at this data size.
 - **`@State`** — local UI state and form fields. Forms copy model values into `@State` in
   `init` and write them back only on Save (Cancel leaves the model untouched).
-- **`@Observable`** — not used anywhere.
+- **`@Observable`** — only `AILookupSession` (`@MainActor`), which owns the lookup `Task`.
 - **`@AppStorage`** — the settings listed in §3 (`weightUnit`, `calorieTarget.*`). The
   library-import flag uses `UserDefaults` directly.
 - **Environment values** (declared with `@Entry`):
@@ -391,6 +427,7 @@ closes via an `onFinish` closure instead of `dismiss`.
 | Daily calorie target (estimate or own) | `CalorieTarget.swift`, `CalorieTargetSettingsView.swift` | Past days are compared with today's target (no history of targets). Own target must be a whole number 50–1,000 kcal; Save Target is disabled otherwise. |
 | Calories vs target on Today | `CaloriesView.swift` (`CalorieProgressView`) | — |
 | Daily calories chart (7/30 days) | `CalorieChartView.swift` | Uses the current target for the line. |
+| Add with AI (search, page choice, extraction, review, save) | `Calories/AILookup/*`, `FoodThumbnailStore.swift` | Needs the owner's Brave Search and DeepSeek keys; 50 lookups a day; only pages that serve HTML without scripts can be read; never exercised against the live services yet. |
 | Profile, vaccinations, medical history | `Profile/*` | Exactly one profile (enforced at launch). Camera unavailable in the simulator. The camera permission text (Info.plist) says "Mochi" and can't follow the profile name. No reminders. |
 
 ---
@@ -420,6 +457,11 @@ closes via an `onFinish` closure instead of `dismiss`.
 - **Cat's name** — never hard-code "Mochi" in user-facing text; use the `catName`
   environment value (or `CatProfile.displayName`).
 - **Schema changes** — follow the rule in §3 (new `VersionedSchema` + `MigrationStage`).
+- **Secrets** — API keys only in the Keychain (`AIKeychain`), never in source, UserDefaults,
+  logs or the repository. Logs (`AILog`, category `aiLookup`) record stage durations, HTTP
+  statuses and DeepSeek token usage only — never keys, query text or page content.
+- **Network work off the main actor** — the pipeline is an actor; text recognition runs in a
+  detached task; every network step is cancellable through the calling `Task`.
 - **Number formatting** — Foundation `FormatStyle` (locale-aware): weights 2 decimals;
   kcal 0–1 decimals (`Portion.formatKilocalories`); kcal/g 2–3 decimals; amounts 0–3
   decimals without grouping (`Portion.formatAmount`); exact fractions as "1/4".
@@ -473,6 +515,10 @@ closes via an `onFinish` closure instead of `dismiss`.
 ---
 - **No local-network relay** — a macOS relay ("Mochi Relay", running Claude Code for
   lookups) was built and then removed (reverted) in favor of the app calling web APIs directly.
+- **AI lookup uses search + one page + a cheap model, with maths in app code** — the model
+  only copies what the page says (JSON output, temperature 0, thinking off); kcal/g, grams
+  from ounces, calculated per-container calories and sanity ranges are computed in
+  `FoodDerivation`, so numbers are reproducible and checkable.
 
 ## 10. Known issues and technical debt
 
@@ -492,9 +538,81 @@ closes via an `onFinish` closure instead of `dismiss`.
   the screen shows the previous day until the owner taps "Back to Today".
 - **Saving an edit of a seeded food marks it user-modified even if nothing changed.**
 - **No app icon image** in `AppIcon.appiconset`.
+- **AI lookup has not been run against the live services**, and has no automated tests. Brave's
+  error statuses aren't documented on its overview page; they're mapped like DeepSeek's.
+- **Pages that build their content with JavaScript** reduce to little text and may come back
+  "not found".
+- **Saved AI photos are never cleaned up** (log entries may reference them).
 
 Resolved in the stabilization pass (2026-10-04): schema versioning, updatable seed data,
 silent save failures, the silent 5,000 kcal own-target limit, unreachable future carried
 entries, four separate number parsers, hard-coded "Mochi", unenforced single profile,
 first-size-only kcal/g on the detail page, brand/food links not opening from Saved Foods when
 reached from Today, the two broken tests (removed), untracked `.Rhistory`.
+
+---
+
+## 11. Add with AI (`Calories/AILookup/`)
+
+Entry: the sparkles button in Saved Foods (browse mode) opens `AddWithAIView`. The owner types a
+name, or picks/takes a photo of the package front: `PackageTextReader` recognizes the text on
+device (`VNRecognizeTextRequest`, `.accurate`, language correction on) and fills the field for
+editing. The photo never leaves the phone.
+
+### Pipeline (`FoodLookupService`, an actor)
+Clients are injected as protocols: `WebSearchClient` (`BraveSearchClient`),
+`ChatCompletionClient` (`DeepSeekClient`), `WebFetcher` (`URLSessionWebFetcher`).
+1. **Search** — `GET https://api.search.brave.com/res/v1/web/search`, header
+   `X-Subscription-Token`, `Accept: application/json`, `q` = "<text> cat food ingredients
+   guaranteed analysis calorie content" (trimmed to 400 characters), `count=10`; decodes
+   `web.results[].title/url/description` (HTML stripped).
+2. **Rank** — `CandidateRanker`: +10 when the host contains a brand token from the query
+   (≥ 3 letters, common food words removed), −10 for marketplaces and review/database sites;
+   ties keep Brave's order; top 6.
+3. **Select** — DeepSeek returns `{ "choice": Int|null, "alternates": [Int], "reason": String }`.
+4. **Fetch** — https only (also after redirects), 15 s, 2 MB cap, desktop Safari User-Agent,
+   HTML only; on failure the alternates are tried in order.
+5. **Reduce** — `HTMLReducer`: `<title>`, og:title, og:image, twitter:image, JSON-LD `Product`
+   (name, brand, image, description); script/style/nav/footer/head and tags removed, entities
+   decoded, whitespace collapsed; over 24,000 characters → first 6,000 plus 3,000-character
+   windows around kcal, calorie, metabolizable, ingredients, guaranteed analysis, crude protein.
+6. **Extract** — DeepSeek returns `ExtractedFood` (found, brand, line, name, type, form, sizes
+   [label, ounces, grams, kcal_per_container], kcal_per_kg, calorie_statement, ingredients,
+   guaranteed_analysis, confidence, notes). Decoded with Codable; on a decoding error the error
+   is appended to the conversation and asked once more, then it fails.
+7. **Derive** (`FoodDerivation`, app code) — kcal/g = kcal/kg ÷ 1000; grams from ounces ×
+   28.3495; per-container kcal = kcal/g × grams when not stated, tagged calculated; stated vs
+   calculated differing by > 8 % keeps the stated value and adds a note; kcal/g outside
+   0.2–6.0 and percentages outside 0–100 are dropped with a note.
+8. **Thumbnail** — og:image, then twitter:image, then JSON-LD image (resolved against the page
+   URL): https, 10 s, 5 MB, `image/*`, shrunk by `FoodThumbnailStore.thumbnailJPEG`.
+Select returning null, `found: false`, or every candidate failing ends in "not found", which
+offers manual entry (`FoodFormView` with the name prefilled).
+
+### DeepSeek requests (`DeepSeekClient`)
+`POST https://api.deepseek.com/chat/completions`, `Authorization: Bearer <key>`, model
+`deepseek-flash`, `temperature: 0`, `response_format: {"type": "json_object"}`,
+`thinking: {"type": "disabled"}` (thinking mode is on by default and ignores temperature),
+`max_tokens` 400 (select) / 4,000 (extract). The system messages contain the word "json" and an
+example of the shape, as DeepSeek's JSON mode requires, and say page text and search results are
+untrusted data. Token usage (`usage.prompt_tokens`, `completion_tokens`, `total_tokens`,
+`prompt_cache_hit_tokens`) is logged.
+
+### Review and save (`FoodReviewView`)
+Editable identity, sizes (with "calculated" tags), kcal/g, calorie statement, ingredients,
+guaranteed analysis, photo (Replace with PhotosPicker, Remove), source link, confidence and
+notes. Save needs a name and kcal/g (typed, or from a complete size). Sizes need grams and
+calories to be saved. Duplicate check by `FoodMatching.key` (normalized brand + line + name)
+offers Update Existing or Save as New. Saved foods get `origin = .aiLookup`, `sourceURL`,
+`thumbnailKey`, and a first note with confidence and form; they work everywhere other foods do.
+
+### Keys, limits and errors
+- `AILookupSettingsView`: SecureFields for both keys (Keychain only, see §3), Test Keys (Brave:
+  one 1-result search; DeepSeek: `GET /models`, no tokens), today's count, and what is sent
+  where. A lookup started without a key opens this screen.
+- `AILookupLimit`: 50 lookups a day (counted when a lookup starts), remaining shown on the input
+  screen.
+- `LookupFailure` messages: offline, timeout, key rejected (401/403, names the service), no
+  balance (402), rate limited (429), server error (5xx), blocked or empty page, unreadable
+  answer, not found, missing key, daily limit.
+

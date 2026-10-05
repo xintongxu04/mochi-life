@@ -24,8 +24,12 @@ struct FoodFormView: View {
     @State private var sizeCaloriesTexts: [String] = []
     @State private var originalSizeCaloriesTexts: [String] = []
 
-    init(food: Food?) {
+    /// - Parameter initialName: Prefills the name of a new food (e.g. after an AI lookup found nothing).
+    init(food: Food?, initialName: String? = nil) {
         self.food = food
+        if food == nil, let initialName {
+            _name = State(initialValue: initialName)
+        }
         if let food {
             let text = food.kilocaloriesPerGram.formatted(.number.precision(.fractionLength(0...3)).grouping(.never))
             let sizeTexts = food.sizes.map { Portion.formatKilocalories($0.kilocalories) }
@@ -206,12 +210,14 @@ struct FoodFormView: View {
                 food.kilocaloriesPerGram = updatedSizes.first?.kilocaloriesPerGram ?? food.kilocaloriesPerGram
             }
         } else if let kilocaloriesPerGram {
-            modelContext.insert(Food(
+            let food = Food(
                 name: trimmedName,
                 kilocaloriesPerGram: kilocaloriesPerGram,
                 brand: optional(brand),
                 line: optional(line)
-            ))
+            )
+            food.origin = .manual
+            modelContext.insert(food)
         }
         if Persistence.save(modelContext) { dismiss() }
     }

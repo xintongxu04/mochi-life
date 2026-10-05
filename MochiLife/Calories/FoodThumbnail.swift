@@ -9,7 +9,7 @@ struct FoodThumbnail: View {
     let size: CGFloat
 
     init(food: Food, size: CGFloat) {
-        self.init(libraryIdentifier: food.seedID ?? food.libraryIdentifier, size: size)
+        self.init(libraryIdentifier: food.photoKey, size: size)
     }
 
     /// - Parameter libraryIdentifier: A seed ID, or an older "<library>/<name>" identifier
@@ -58,9 +58,11 @@ enum FoodThumbnails {
     }()
 
     static func image(forLibraryIdentifier identifier: String?) -> UIImage? {
-        guard let identifier,
-              let fileName = fileNames[identifier]
-        else { return nil }
+        guard let identifier else { return nil }
+        if FoodThumbnailStore.isStoredKey(identifier) {
+            return FoodThumbnailStore.image(forKey: identifier)
+        }
+        guard let fileName = fileNames[identifier] else { return nil }
         return UIImage(named: fileName)
     }
 }

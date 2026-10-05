@@ -36,6 +36,7 @@ struct SavedFoodsView: View {
     @Query private var foods: [Food]
     @State private var searchText = ""
     @State private var isAddingFood = false
+    @State private var isAddingWithAI = false
 
     private var brands: [(brand: String?, count: Int)] {
         let grouped = Dictionary(grouping: foods, by: \.brand)
@@ -120,6 +121,11 @@ struct SavedFoodsView: View {
             switch mode {
             case .browse:
                 ToolbarItem(placement: .primaryAction) {
+                    Button("Add with AI", systemImage: "sparkles") {
+                        isAddingWithAI = true
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
                     Button("Add Food", systemImage: "plus") {
                         isAddingFood = true
                     }
@@ -132,6 +138,9 @@ struct SavedFoodsView: View {
         }
         .sheet(isPresented: $isAddingFood) {
             FoodFormView(food: nil)
+        }
+        .sheet(isPresented: $isAddingWithAI) {
+            AddWithAIView()
         }
     }
 }

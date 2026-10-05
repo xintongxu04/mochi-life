@@ -9,7 +9,8 @@ final class FoodLogEntry {
     var foodName: String
     var foodBrand: String?
     var foodLine: String?
-    /// Used only to show the food's photo.
+    /// Used only to show the food's photo: the food's `photoKey` when logged (a seed ID, an
+    /// older "<library>/<name>" identifier, or a "user/<uuid>" photo the app saved).
     var foodLibraryIdentifier: String?
     /// The food's sizes and calories when it was logged, for editing the amount later.
     /// Nil for quick entries, which are just a name and a calorie number.
@@ -47,7 +48,7 @@ final class FoodLogEntry {
         foodName = food.name
         foodBrand = food.brand
         foodLine = food.line
-        foodLibraryIdentifier = food.libraryIdentifier
+        foodLibraryIdentifier = food.photoKey
         portionSource = PortionSource(food)
         record(portion)
     }
