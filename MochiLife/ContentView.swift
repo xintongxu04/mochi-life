@@ -29,6 +29,12 @@ struct ContentView: View {
 
     var body: some View {
         CaloriesView()
+            // Floating Mochi: a full-screen root layer in screen points, so scrolling can't move her.
+            .overlay {
+                if !home.isSpriteHidden {
+                    FloatingMochiView(home: home)
+                }
+            }
             .overlay {
                 if home.isMenuOpen {
                     RadialActionMenu(home: home)

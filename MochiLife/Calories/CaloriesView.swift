@@ -64,12 +64,11 @@ struct DayLogView: View {
     var body: some View {
         @Bindable var home = home
         DayEntriesList(day: day, isFuture: isFuture, dayControls: dayControls, onSwipe: move(by:))
-            // Mochi floats above the list (not in it), only while nothing covers this screen.
-            .overlay {
-                if !home.isSpriteHidden {
-                    FloatingMochiView(home: home)
-                }
-            }
+            // The expanded bar's bottom at rest: the fixed top of floating Mochi's area. Values
+            // seen while the bar collapses are smaller and are ignored.
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.frame(in: .global).minY + proxy.safeAreaInsets.top
+            } action: { home.noteRestingTopLimit($0) }
             .navigationTitle(title)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {

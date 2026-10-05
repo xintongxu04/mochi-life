@@ -1225,9 +1225,27 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   playing frames include the ball.
 
 ### Floating overlay (`FloatingMochiView`)
-- **Placement:** an `.overlay` on the Calories root view inside the `NavigationStack`, not in
-  the list, so it changes no layout.
-- **Hit testing:** a `GeometryReader` with no background, so only her own 132 × 126 rectangle
+- **Coordinate space:** a full-screen root layer, an `.overlay` on `ContentView` above the
+  `NavigationStack`, with a `GeometryReader` that `.ignoresSafeArea()`. Positions are screen
+  points. Nothing that happens while the list scrolls (the large title collapsing, the bar, the
+  scroll-edge effect, safe-area changes inside the stack) can move her.
+  *(Fixed 2026-10-05: she used to be an overlay on the Calories root view inside the stack, and
+  her point was re-derived every render from the saved fractions times a safe-area frame that
+  shrank as the large title collapsed. So she drifted while scrolling.)*
+- **Live position:** an absolute `origin` (`@State`). It's converted from the saved fractions
+  only when she's first placed (once the top limit is known) or if the screen size really
+  changes. It's converted back to fractions only at drag end. It's never re-clamped or
+  re-derived in response to scroll-driven geometry.
+- **Clamp region:** the screen inset 8 pt, using the side and bottom safe-area insets read from
+  the root `GeometryReader`. The top is a **fixed limit**: the bottom of the expanded navigation
+  bar, `MochiHome.restingTopLimit`. `DayLogView` reports its frame top plus safe-area top with
+  `onGeometryChange`, and only the largest value (at rest, title expanded) is kept, so it doesn't
+  follow the bar as it collapses. That keeps her below the bar and clear of the Log Food button.
+- **Animation:** her offset has no implicit animation (`.transaction` clears it). The only
+  animated move is the explicit spring when she's released outside the region. The lift on
+  pick-up (scale 1.06 and a soft shadow) uses a scoped `.animation { }` that covers only those
+  two modifiers. The ground shadow is part of the sprite view, so it moves only with her.
+- **Hit testing:** the layer has no background, so only her own 132 × 126 rectangle
   (`contentShape(Rectangle())`, moved with `.offset`) takes touches. The list underneath scrolls
   normally everywhere else.
 - **Gestures:**
@@ -1235,22 +1253,20 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   - **Drag:** once the finger moves 8 pt it's a drag, and she follows 1:1 in both axes.
   - **Tap:** if the finger lifts before moving 8 pt, the drag fails and the tap fires, toggling
     the ring.
-  - **Feedback:** starting a drag closes the ring, scales her to 1.06, adds a soft shadow and a
-    light haptic. Her animation keeps running while dragged.
-- **Bounds:** the overlay's safe area (below the navigation bar, so clear of the Log Food button,
-  and above the home indicator), inset 8 pt. She stays exactly where she's dropped (no
-  edge-snapping). Dropped outside the bounds, she springs back to the nearest point inside.
-- **Persistence:** her top-left corner is stored as fractions 0…1 of the allowed range in
-  `@AppStorage("mochi.position.x"/".y")` (−1 = never moved). On launch and on size changes it's
-  mapped back and clamped. The default is bottom-trailing, 16 pt from the edges.
-- **Visibility:** she shows only on the Calories root with nothing presented over it.
-  - Pushed screens (Weight, Profile, Settings, Saved Foods…) cover the root, so she's hidden and
-    her clock stops (`onDisappear`).
-  - She's also removed while the Log Food sheet, an entry's edit sheet or a restore sheet is up
-    (`MochiHome.isSpriteHidden`).
-- **Known effect:** the bar's height changes as the large title collapses, so a position in the
-  middle of the screen can shift by a few points while scrolling. Positions at the bottom stay
-  put.
+  - **Feedback:** starting a drag closes the ring and gives a light haptic. Her animation keeps
+    running while dragged.
+- **Persistence:** her top-left corner is stored as fractions 0…1 of the clamp region in
+  `@AppStorage("mochi.position.x"/".y")` (−1 = never moved). The default is bottom-trailing, 16 pt
+  from the safe edges. She stays exactly where she's dropped (no edge-snapping).
+- **Visibility:** she shows only on the Calories root with nothing presented over it
+  (`MochiHome.isSpriteHidden`). She's hidden whenever:
+  - a screen is pushed (`path` isn't empty), or
+  - the Log Food sheet, an entry's edit sheet or a restore sheet is up.
+
+  Hidden means removed, so her clock stops; she's placed again from the saved fractions when
+  she returns.
+- **The radial menu** is centred on her reported global frame (`MochiHome.spriteFrame`), so it
+  stays anchored to her.
 
 ### `MochiState`, `MochiAnimator`, `MochiSpriteView`
 - `MochiState`: 16 frames at 8 fps for every state, so one loop lasts 2 s.

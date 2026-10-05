@@ -26,7 +26,15 @@ final class MochiHome {
     /// Mochi's sprite in global coordinates, for placing the ring.
     var spriteFrame: CGRect = .zero
     /// Floating Mochi shows only on the Calories screen with nothing presented over it.
-    var isSpriteHidden: Bool { isLoggingFood || isEditingEntry || isRestoring }
+    var isSpriteHidden: Bool { isLoggingFood || isEditingEntry || isRestoring || !path.isEmpty }
+    /// The bottom of the expanded navigation bar on the Calories screen, in screen points: the
+    /// fixed top of Mochi's area. Only ever grows, so the bar collapsing while scrolling never
+    /// moves it.
+    private(set) var restingTopLimit: CGFloat = 0
+
+    func noteRestingTopLimit(_ value: CGFloat) {
+        if value > restingTopLimit { restingTopLimit = value }
+    }
 
     static let playLoops = 10
     static let eatingLoops = 6
