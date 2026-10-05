@@ -83,7 +83,7 @@ final class FoodLogEntry {
         )
     }
 
-    /// Like "1/2 of a 2.8 oz can" or "20 g". Nil for quick entries.
+    /// Like "2.8 oz can" (exactly one), "1/2 of a 2.8 oz can" or "20 g". Nil for quick entries.
     var amountDescription: String? { portion?.amountDescription }
 
     var exactContainers: Fraction? {

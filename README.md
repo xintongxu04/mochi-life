@@ -201,7 +201,7 @@ The app opens on the Calories screen for **Today**.
   - a guaranteed analysis table
   - any notes, and a link to the source page
 - Work out calories for a portion on the food's page: choose the size, then
-  tap 1/4, 1/3, 1/2, 2/3, 3/4 or 1 whole, or type any other amount (such as
+  tap 1/4, 1/3, 1/2, 2/3, 3/4 or 1, or type any other amount (such as
   1.5). You can switch to grams instead, and you can type your own calorie
   number over the worked-out one. "Log This" logs that portion straight away.
 - Add your own foods with a name, an optional brand and line, and calories

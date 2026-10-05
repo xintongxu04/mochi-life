@@ -119,7 +119,7 @@ Targets:
 | `PackageCaptureView.swift` | Live text scanning (VisionKit `DataScannerViewController`) with a shutter, photo capture fallback, and PhotosPicker. |
 | `RecentUsage.swift` | Works out Recent and Frequent from log entries: items resolve to a saved food, an entry snapshot (food gone) or a quick entry; row ids include the section; Frequent excludes Recent. |
 | `LogFoodFlow.swift` | `LogRoute`, `LogFlowModel` (index, text and camera decisions), `LogFoodFlowView` (the sheet), home (search, Recent, Frequent rows), candidate list, web fallback. |
-| `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions, number formatting, `PortionSource`. |
+| `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions (the full can shows "1", spoken "1 whole"), number formatting, `amountDescription` (the one portion-text formatter), `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
 | `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick/schedule modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
 | `FoodThumbnailStore.swift` | Photos the app saves for foods (one file per food, `user/<name>` keys, JPEG files in Application Support/FoodThumbnails), the "none" marker, the shared ImageIO thumbnail maker, and `ThumbnailRevision` (redraw on change). |
@@ -572,6 +572,12 @@ closes via an `onFinish` closure instead of `dismiss`.
 - **Number formatting** — Foundation `FormatStyle` (locale-aware): weights 2 decimals;
   kcal 0–1 decimals (`Portion.formatKilocalories`); kcal/g 2–3 decimals; amounts 0–3
   decimals without grouping (`Portion.formatAmount`); exact fractions as "1/4".
+- **Portion text** — one formatter, `Portion.amountDescription`, used through
+  `FoodLogEntry.amountDescription` and `FeedingSchedule.amountDescription` by the day log
+  (including carried and scheduled entries, which show the portion counted that day), Recent
+  and Frequent, the schedule list and future-day previews. Exactly one of a size (exact
+  fraction 1/1, or within 0.0001 of 1) is just the size's name as stored ("3 oz can", "1
+  Stick"). Fractions read "1/2 of a 2.8 oz can", other amounts "1.5 × 5.5 oz can", grams "20 g".
 - **Dates** — `Date.FormatStyle` (`.dateTime…`, `.abbreviated`), day boundaries from
   `Calendar.current`.
 - **Units** — labels "kg", "lb", "kcal", "g", "kcal/g" are hard-coded English text.

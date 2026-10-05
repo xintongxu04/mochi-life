@@ -167,6 +167,7 @@ struct PortionPicker: View {
                 .tint(isSelected ? .accentColor : .secondary)
                 .fontWeight(isSelected ? .semibold : .regular)
                 .frame(maxWidth: .infinity)
+                .accessibilityLabel(fraction.spokenLabel)
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }

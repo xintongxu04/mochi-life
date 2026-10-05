@@ -24,9 +24,11 @@ struct Portion: Hashable {
 
     var kilocalories: Double? { customKilocalories ?? calculatedKilocalories }
 
-    static let quickFractions: [(label: String, value: Double, fraction: Fraction)] = [
-        ("1/4", 1.0 / 4, Fraction(1, 4)), ("1/3", 1.0 / 3, Fraction(1, 3)), ("1/2", 1.0 / 2, Fraction(1, 2)),
-        ("2/3", 2.0 / 3, Fraction(2, 3)), ("3/4", 3.0 / 4, Fraction(3, 4)), ("1 whole", 1, .one),
+    /// The picker's quick amounts. The full can shows as "1" and is read by VoiceOver as "1 whole".
+    static let quickFractions: [(label: String, spokenLabel: String, value: Double, fraction: Fraction)] = [
+        ("1/4", "1/4", 1.0 / 4, Fraction(1, 4)), ("1/3", "1/3", 1.0 / 3, Fraction(1, 3)),
+        ("1/2", "1/2", 1.0 / 2, Fraction(1, 2)), ("2/3", "2/3", 2.0 / 3, Fraction(2, 3)),
+        ("3/4", "3/4", 3.0 / 4, Fraction(3, 4)), ("1", "1 whole", 1, .one),
     ]
 
     static func formatKilocalories(_ value: Double) -> String {
@@ -37,14 +39,16 @@ struct Portion: Hashable {
         value.formatted(.number.precision(.fractionLength(0...3)).grouping(.never))
     }
 
-    /// Describes the amount in plain words, like "1/2 of a 2.8 oz can", "1.5 × 5.5 oz can"
-    /// or "20 g".
+    /// The one formatter for a portion shown as text (day log rows, carried and scheduled
+    /// entries, Recent/Frequent, schedules): like "3 oz can" for exactly one, "1/2 of a 2.8 oz
+    /// can", "1.5 × 5.5 oz can", or "20 g". Exactly one of a size is just the size's own name,
+    /// as stored (so "1 Stick" stays "1 Stick", never "1 1 Stick").
     var amountDescription: String? {
         switch measure {
         case .containers:
             guard let size, let containers else { return nil }
-            if abs(containers - 1) < 0.0001 {
-                return "1 whole \(size.name)"
+            if exactContainers == .one || (exactContainers == nil && abs(containers - 1) < 0.0001) {
+                return size.name
             }
             if let quick = Self.quickFractions.first(where: { abs($0.value - containers) < 0.0001 }) {
                 return "\(quick.label) of a \(size.name)"
