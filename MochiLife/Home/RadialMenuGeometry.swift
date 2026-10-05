@@ -1,92 +1,135 @@
 import CoreGraphics
 
-/// Where the ring's five buttons go. Pure geometry, no views: the ring is always centred on
-/// Mochi; near an edge or corner the buttons fan across the largest free arc instead of the ring
-/// moving away from her.
+/// Where the ring's five buttons go, from a few fixed presets. Pure geometry, no views. The ring
+/// is always centred on Mochi; within a preset the buttons' offsets from her centre are
+/// constants, so small moves never shuffle them.
+///
+/// Angles are in degrees: 0 = right, −90 = up, positive = clockwise (screen coordinates). The
+/// actions are always laid out in clockwise order: Eat, Play, Settings, Weight, Profile.
 enum RadialMenuGeometry {
-    static let startRadius: CGFloat = 118
-    static let radiusStep: CGFloat = 8
-    static let maximumRadius: CGFloat = 190
-    /// The smallest distance between neighbouring buttons' centres.
-    static let minimumSpacing: CGFloat = 68
-    /// Full-ring layout: 72° steps from the top.
-    static let fullRingStart: Double = -90
+    static let radius: CGFloat = 96
+    static let buttonDiameter: CGFloat = 48
+    /// An edge becomes "near" when Mochi's centre is closer to it than this…
+    static let nearDistance: CGFloat = radius + 28
+    /// …and stops being near only once she's farther than this (hysteresis).
+    static let farDistance: CGFloat = radius + 52
+    static let fullStep: Double = 72
+    static let edgeSpan: Double = 180
+    static let cornerSpan: Double = 140
+    /// Narrowing step when a preset doesn't fit.
+    static let spanStep: Double = 10
+    /// Neighbouring centres closer than this make the radius grow instead.
+    static let minimumSpacing: CGFloat = 56
+    static let radiusStep: CGFloat = 4
+    static let maximumRadius: CGFloat = 160
+
+    struct Edges: OptionSet, Sendable, Equatable {
+        let rawValue: Int
+        static let left = Edges(rawValue: 1)
+        static let right = Edges(rawValue: 2)
+        static let top = Edges(rawValue: 4)
+        static let bottom = Edges(rawValue: 8)
+    }
+
+    enum Preset: Equatable {
+        case full
+        case edge(Edges)
+        case corner(Edges)
+    }
 
     struct Placement: Equatable {
-        /// Button centres, in the order of the footprints (clockwise: Eat, Play, Settings,
-        /// Weight, Profile).
+        /// Button centres in clockwise action order.
         var points: [CGPoint]
         var radius: CGFloat
+        var preset: Preset
     }
 
-    /// - Parameters:
-    ///   - center: Mochi's centre. The ring is always centred here.
-    ///   - bounds: where buttons and captions may go (the screen inset by the safe area + 8 pt,
-    ///     below the navigation bar).
-    ///   - footprints: each button's circle plus caption, relative to the button's centre.
-    ///   - avoiding: Mochi's rectangle; no footprint may overlap it.
-    static func place(center: CGPoint, bounds: CGRect, footprints: [CGRect], avoiding sprite: CGRect) -> Placement {
-        let count = footprints.count
-        guard count > 0 else { return Placement(points: [], radius: startRadius) }
-        // Validity is tested with the largest footprint so any button fits at a valid angle.
-        let widest = footprints.reduce(footprints[0]) { $0.union($1) }
-        var best: (placement: Placement, spacing: CGFloat, overlaps: Bool)?
-
-        var radius = startRadius
-        while radius <= maximumRadius {
-            let valid = (0..<360).map { degrees in
-                let frame = widest.offsetBy(point(center, radius, Double(degrees)))
-                return bounds.contains(frame) && !frame.intersects(sprite)
-            }
-            if let angles = angles(for: valid, count: count) {
-                let points = angles.map { point(center, radius, $0) }
-                let placement = Placement(points: points, radius: radius)
-                let spacing = minimumNeighbourSpacing(points, isFullRing: valid.allSatisfy { $0 })
-                let overlaps = hasOverlaps(points, footprints)
-                if spacing >= minimumSpacing && !overlaps { return placement }
-                if best == nil || isBetter((spacing, overlaps), than: (best!.spacing, best!.overlaps)) {
-                    best = (placement, spacing, overlaps)
-                }
-            }
-            radius += radiusStep
+    /// The edges Mochi is near, with hysteresis: an edge joins below `nearDistance` and leaves
+    /// only above `farDistance`, so the preset doesn't flip on small moves.
+    static func nearEdges(center: CGPoint, bounds: CGRect, previous: Edges) -> Edges {
+        let distances: [(Edges, CGFloat)] = [
+            (.left, center.x - bounds.minX), (.right, bounds.maxX - center.x),
+            (.top, center.y - bounds.minY), (.bottom, bounds.maxY - center.y),
+        ]
+        var edges: Edges = []
+        for (edge, distance) in distances {
+            let threshold = previous.contains(edge) ? farDistance : nearDistance
+            if distance < threshold { edges.insert(edge) }
         }
-        if let best { return best.placement }
-        // Nowhere fits at any radius (not possible on an iPhone screen): the full ring.
-        return Placement(points: (0..<count).map { point(center, startRadius, fullRingStart + 360 * Double($0) / Double(count)) },
-                         radius: startRadius)
+        return edges
     }
 
-    /// Five angles: the full ring at 72° steps if every angle is valid, else spread evenly over
-    /// the largest contiguous valid arc (circular), first and last on its ends, clockwise.
-    static func angles(for valid: [Bool], count: Int) -> [Double]? {
-        if valid.allSatisfy({ $0 }) {
-            return (0..<count).map { fullRingStart + 360 * Double($0) / Double(count) }
+    /// The preset for a set of near edges. Two opposite edges (not possible in iPhone portrait)
+    /// count as the nearer one.
+    static func preset(for edges: Edges, center: CGPoint, bounds: CGRect) -> Preset {
+        var edges = edges
+        if edges.contains([.left, .right]) {
+            edges.remove(center.x - bounds.minX <= bounds.maxX - center.x ? .right : .left)
         }
-        guard let arc = largestArc(valid) else { return nil }
-        let length = Double(arc.length - 1)
-        return (0..<count).map { index in
-            Double(arc.start) + (count > 1 ? length * Double(index) / Double(count - 1) : 0)
+        if edges.contains([.top, .bottom]) {
+            edges.remove(center.y - bounds.minY <= bounds.maxY - center.y ? .bottom : .top)
+        }
+        switch edges.rawValue.nonzeroBitCount {
+        case 0: return .full
+        case 1: return .edge(edges)
+        default: return .corner(edges)
         }
     }
 
-    /// The longest run of valid angles, wrapping past 359°. Nil if none is valid.
-    static func largestArc(_ valid: [Bool]) -> (start: Int, length: Int)? {
-        let n = valid.count
-        guard let firstInvalid = valid.firstIndex(of: false) else { return (0, n) }
-        var best: (start: Int, length: Int)?
-        var runStart: Int?
-        // Walk once around, starting just after an invalid angle, so runs never split at 0°.
-        for step in 1...n {
-            let index = (firstInvalid + step) % n
-            if valid[index] {
-                if runStart == nil { runStart = firstInvalid + step }
-            } else if let start = runStart {
-                let length = firstInvalid + step - start
-                if best == nil || length > best!.length { best = (start % n, length) }
-                runStart = nil
+    /// The five button centres for `edges` (from `nearEdges`), checked once: if a fan doesn't
+    /// fit inside `bounds`, its span narrows in 10° steps, and only when neighbours would be
+    /// closer than 56 pt does the radius grow, in 4 pt steps. The ring never moves off Mochi.
+    static func place(center: CGPoint, bounds: CGRect, nearEdges edges: Edges, count: Int = 5) -> Placement {
+        let preset = preset(for: edges, center: center, bounds: bounds)
+        guard case let (middle?, initialSpan) = fan(for: preset) else {
+            // Full ring: 72° steps from the top.
+            let angles = (0..<count).map { -90 + fullStep * Double($0) }
+            return Placement(points: angles.map { point(center, radius, $0) }, radius: radius, preset: preset)
+        }
+        var span = initialSpan
+        var currentRadius = radius
+        while true {
+            let angles = fanAngles(middle: middle, span: span, count: count)
+            let points = angles.map { point(center, currentRadius, $0) }
+            let fits = points.allSatisfy { bounds.contains(circle(at: $0)) }
+            if fits || currentRadius >= maximumRadius { return Placement(points: points, radius: currentRadius, preset: preset) }
+            let narrower = span - spanStep
+            if narrower > 0, chord(currentRadius, narrower / Double(count - 1)) >= minimumSpacing {
+                span = narrower
+            } else {
+                currentRadius += radiusStep
             }
         }
-        return best
+    }
+
+    /// The direction a fan opens (its middle angle) and its span; nil middle for the full ring.
+    static func fan(for preset: Preset) -> (Double?, Double) {
+        switch preset {
+        case .full:
+            return (nil, 360)
+        case let .edge(edge):
+            let middle: Double = switch edge {
+            case .left: 0
+            case .right: 180
+            case .top: 90
+            default: -90
+            }
+            return (middle, edgeSpan)
+        case let .corner(edges):
+            let middle: Double = switch (edges.contains(.top), edges.contains(.left)) {
+            case (true, true): 45
+            case (true, false): 135
+            case (false, true): -45
+            case (false, false): -135
+            }
+            return (middle, cornerSpan)
+        }
+    }
+
+    /// Evenly spaced angles across the fan, in clockwise order (increasing angle).
+    static func fanAngles(middle: Double, span: Double, count: Int) -> [Double] {
+        let step = count > 1 ? span / Double(count - 1) : 0
+        return (0..<count).map { middle - span / 2 + step * Double($0) }
     }
 
     // MARK: - Helpers
@@ -96,30 +139,12 @@ enum RadialMenuGeometry {
         return CGPoint(x: center.x + radius * cos(radians), y: center.y + radius * sin(radians))
     }
 
-    private static func minimumNeighbourSpacing(_ points: [CGPoint], isFullRing: Bool) -> CGFloat {
-        guard points.count > 1 else { return .infinity }
-        var pairs = zip(points, points.dropFirst()).map { ($0, $1) }
-        if isFullRing, let first = points.first, let last = points.last { pairs.append((last, first)) }
-        return pairs.map { hypot($0.0.x - $0.1.x, $0.0.y - $0.1.y) }.min() ?? .infinity
+    private static func circle(at point: CGPoint) -> CGRect {
+        CGRect(x: point.x - buttonDiameter / 2, y: point.y - buttonDiameter / 2, width: buttonDiameter, height: buttonDiameter)
     }
 
-    private static func hasOverlaps(_ points: [CGPoint], _ footprints: [CGRect]) -> Bool {
-        let frames = zip(points, footprints).map { $1.offsetBy($0) }
-        for i in frames.indices {
-            for j in frames.indices where j > i && frames[i].intersects(frames[j]) {
-                return true
-            }
-        }
-        return false
+    /// Distance between neighbouring centres `stepDegrees` apart on a circle of `radius`.
+    private static func chord(_ radius: CGFloat, _ stepDegrees: Double) -> CGFloat {
+        2 * radius * CGFloat(sin(stepDegrees * .pi / 360))
     }
-
-    /// No overlaps beats overlaps; then wider spacing.
-    private static func isBetter(_ candidate: (CGFloat, Bool), than current: (CGFloat, Bool)) -> Bool {
-        if candidate.1 != current.1 { return !candidate.1 }
-        return candidate.0 > current.0
-    }
-}
-
-private extension CGRect {
-    func offsetBy(_ point: CGPoint) -> CGRect { offsetBy(dx: point.x, dy: point.y) }
 }

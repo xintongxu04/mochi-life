@@ -25,6 +25,8 @@ final class MochiHome {
     var isRestoring = false
     /// Mochi's sprite in global coordinates, for placing the ring.
     var spriteFrame: CGRect = .zero
+    /// The edges she was near when the ring last opened (memory only), for the ring's hysteresis.
+    var menuNearEdges: RadialMenuGeometry.Edges = []
     /// Floating Mochi shows only on the Calories screen with nothing presented over it.
     var isSpriteHidden: Bool { isLoggingFood || isEditingEntry || isRestoring || !path.isEmpty }
     /// The bottom of the expanded navigation bar on the Calories screen, in screen points: the

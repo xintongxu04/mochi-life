@@ -1324,38 +1324,43 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   frame 08 for 1.5 s, then returns to sitting.
 
 ### Radial action menu (`RadialActionMenu`)
-- **Buttons:** five 56 pt circles with `.glassEffect(.regular.interactive(), in: .circle)`. No
-  tint; the SF Symbol is in `.primary`. Each caption (caption2) sits in a small glass capsule
-  4 pt below its button, so it stays legible over anything. The clockwise order is Eat
-  (`fork.knife`), Play (`tennisball.fill`), Settings (`gearshape.fill`), Weight
-  (`scalemass.fill`), Profile (`pawprint.fill`).
+- **Buttons:** five icon-only 48 pt circles (the hit target is the whole circle) with
+  `.glassEffect(.regular.interactive(), in: .circle)`. No tint; the SF Symbol is 20 pt medium in
+  `.primary`. There are no visible captions.
+  - Each has an accessibility label and hint: Eat (opens Log Food), Play (Mochi plays with her
+    ball), Settings, Weight, Profile.
+  - The clockwise order is always Eat (`fork.knife`), Play (`tennisball.fill`), Settings
+    (`gearshape.fill`), Weight (`scalemass.fill`), Profile (`pawprint.fill`).
 - **Animation:** all glass shapes share one `GlassEffectContainer` and a namespace with
-  `glassEffectID`s. Opening morphs a small glass "seed" at Mochi's centre into the buttons and
-  captions (`.matchedGeometry` glass transition, spring); closing morphs them back. Under Reduce
+  `glassEffectID`s. Opening morphs a small glass "seed" at Mochi's centre into the buttons (`.matchedGeometry` glass transition, spring); closing morphs them back. Under Reduce
   Motion there is no seed, and they fade.
-- **Placement** (`RadialMenuGeometry.place(center:bounds:footprints:avoiding:)`, pure, no
-  views): drawn in an overlay on `ContentView`, above the navigation bar. **The ring's centre is
-  always Mochi's centre;** it never moves away from her.
-  - Worked out once per opening, from her current position, after the five captions are
-    measured (invisible copies, so the real size at the current text size is used).
-  - **Bounds:** the screen inset by the safe area + 8 pt, with the top at the expanded
-    navigation bar's bottom (`restingTopLimit`) + 8 pt.
-  - **Footprint:** each button's footprint is its 56 pt circle united with its caption capsule.
-    Validity tests use the union of all five, so any button fits at a valid angle.
-
-  The algorithm:
-  1. Start at r = 118 pt.
-  2. Test every whole degree. An angle is valid if the footprint centred at that point lies
-     inside the bounds and doesn't overlap Mochi.
-  3. If every angle is valid, use the full ring: 72° steps from −90° (top).
-  4. Otherwise, find the largest contiguous valid arc (wrapping past 0°). Spread the five
-     buttons evenly across it, the first and last on its ends, in clockwise order.
-  5. Accept if neighbouring centres are at least 68 pt apart and no two footprints overlap.
-     Otherwise, increase r by 8 pt (up to 190 pt) and repeat. If nothing passes, keep the best
-     try: no overlaps first, then the widest spacing.
-
-  The result is a full ring with room all round, a fan of about 180° opening away from one edge,
-  or a wider-radius fan of about 90° in a corner.
+- **Placement** (`RadialMenuGeometry`, pure, no views): drawn in an overlay on `ContentView`,
+  above the navigation bar. **The ring's centre is always Mochi's centre** and never moves; the
+  radius is **96 pt**.
+  - **Bounds:** the screen inset by the safe area + 4 pt, with the top at the expanded navigation
+    bar's bottom (`restingTopLimit`) + 4 pt.
+  - **Near edges** (`nearEdges(center:bounds:previous:)`): an edge becomes near when her centre
+    is less than R + 28 = 124 pt from it. It stops being near only beyond R + 52 = 148 pt
+    (hysteresis). The last set is kept in memory (`MochiHome.menuNearEdges`, not saved to disk)
+    and updated each time the ring opens.
+  - **Presets** (`preset(for:center:bounds:)`, `place(center:bounds:nearEdges:)`). Angles are in
+    degrees: 0 = right, −90 = up, clockwise positive. Actions always run in clockwise order
+    (increasing angle) along the fan.
+    - **Full** (no near edge): 72° steps from −90°.
+    - **Edge** (one near edge): a 180° fan opening away from it, at 45° steps.
+      - Left: −90, −45, 0, 45, 90.
+      - Right: 90, 135, 180, 225, 270.
+      - Top: 0, 45, 90, 135, 180.
+      - Bottom: −180, −135, −90, −45, 0.
+    - **Corner** (two adjacent near edges): a 140° fan centred on the inward diagonal (top-left
+      45°, top-right 135°, bottom-left −45°, bottom-right −135°), at 35° steps.
+    - Two opposite near edges (not possible in portrait) count as the nearer one.
+  - **Stability:** within a preset, every button's offset from her centre is a constant, so
+    small moves never shuffle the buttons.
+  - **Fit check**, once per opening: if a fan's 48 pt circles don't all fit inside the bounds,
+    its span narrows in 10° steps. Only when neighbouring centres would be closer than 56 pt does
+    the radius grow instead, in 4 pt steps (capped at 160 pt), for that opening only. The ring is
+    never moved.
 - **Closing:** there's no dimming. While the ring is open, an invisible full-screen tap catcher
   (with an even-odd hole over Mochi, so she stays tappable and draggable) closes it on a tap
   outside. Tapping Mochi again or starting a drag also closes it, and so does VoiceOver's escape
@@ -1383,5 +1388,5 @@ and plays eating for 6 loops.
 ### Accessibility
 - Mochi: one element labelled "Mochi", hint "Opens actions", with the button trait. Its default
   action toggles the ring.
-- Ring buttons: labelled with their names (captions are hidden from VoiceOver as duplicates).
+- Ring buttons: labelled with their names, each with a hint describing its action.
 - The open ring is a modal container that closes with the escape gesture.

@@ -21,13 +21,14 @@ tabs). Messages in the app use the name from her profile (**Mochi** unless you c
 - She lives her own life: she sits for 6–12 seconds, then plays with her ball or
   stretches, then sits again.
 - After you log a food, she eats from her bowl for about 12 seconds.
-- **Tap Mochi** to open a ring of five glass buttons around her:
-  - **Eat** opens Log Food (the same as the Log Food button).
-  - **Play** makes her play with her ball for about 20 seconds (tap again to
+- **Tap Mochi** to open five round glass icon buttons around her (a full ring,
+  or a half or quarter fan when she's near an edge or corner). Clockwise:
+  - **Eat** (fork and knife) opens Log Food (the same as the Log Food button).
+  - **Play** (ball) makes her play with her ball for about 20 seconds (tap again to
     keep going).
-  - **Settings** opens Settings.
-  - **Weight** opens Weight.
-  - **Profile** opens her profile.
+  - **Settings** (gear) opens Settings.
+  - **Weight** (scale) opens Weight.
+  - **Profile** (paw) opens her profile.
 
   Tap outside the ring, or Mochi again, to close it.
 - **Settings** has:
