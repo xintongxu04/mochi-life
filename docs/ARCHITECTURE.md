@@ -437,6 +437,7 @@ API keys for AI lookup are **not** in UserDefaults: they are Keychain generic pa
 4. Save through `Persistence.save`; only on success store the new version.
 
 Food log entries are snapshots and are never changed by an update.
+
 ### App icon
 `Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png`, copied unchanged from the owner's
 `Mochi Life Resources/app-icon/AppIcon-1024.png`: 1024 × 1024 px, RGB with no alpha, square
