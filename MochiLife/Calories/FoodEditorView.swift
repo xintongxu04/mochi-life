@@ -355,18 +355,16 @@ struct FoodEditorView: View {
                 Group {
                     if isProcessingPhoto {
                         ProgressView()
+                            .frame(width: 160, height: 160)
                     } else if let image = displayedPhoto {
                         Image(uiImage: image).resizable().scaledToFit().background(.white)
+                            .frame(width: 160, height: 160)
+                            .clipShape(.rect(cornerRadius: 160 * 0.18))
                     } else {
-                        Image(systemName: "fork.knife")
-                            .font(.system(size: 56))
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(.fill.tertiary)
+                        // No photo: the kind's picture, with no box (as in every list).
+                        FoodKindImage(kind: kind, size: 160)
                     }
                 }
-                .frame(width: 160, height: 160)
-                .clipShape(.rect(cornerRadius: 160 * 0.18))
                 .accessibilityLabel(displayedPhoto == nil ? "No photo" : "Food photo")
 
                 if isReview, case .unchanged = photoChange {

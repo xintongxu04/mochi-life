@@ -1474,14 +1474,19 @@ and plays eating for 6 loops, then grooming for 3.
   scheduled rows), scheduled previews, Recent/Frequent, search results and choices, Saved Foods
   lists, the food page, schedules, and the log and schedule form headers.
   - It shows the photo if there is one.
-  - Otherwise it shows the kind's picture with `.interpolation(.none)`, scaled to fit with 12%
-    padding on the placeholder background (`.fill.tertiary`), at the same size and corner radius
-    as photos.
-  - The lightning-bolt and fork-and-knife placeholders are gone.
+  - Photos sit on a white tile clipped to rounded corners.
+  - Otherwise it shows the kind's picture (`FoodKindImage`) with **no box**: no fill, material,
+    border, shadow or clipping, so the row shows through its transparent pixels. It's in the same
+    frame as photos (so text columns line up), scaled to fit with 4% padding, with
+    `.interpolation(.none)`. The food form's photo area uses the same `FoodKindImage` (160 pt)
+    when there's no photo.
+  - **Legibility (checked 2026-10-05 on white and #1C1C1E):** all five read well. The
+    supplement bottle's black cap is low-contrast on dark backgrounds; no background was added.
+  - The lightning-bolt and fork-and-knife placeholders are gone (including in the food form).
   - The picture is decorative (hidden from VoiceOver); rows add the kind name as their
     accessibility value.
 - **`FoodKindSelector`:** one flat row of five equal-width chips, each the kind's picture (32 pt,
-  `.interpolation(.none)`) above its name in caption2. The selected chip is tinted and outlined;
+  `.interpolation(.none)`, no box of its own) above its name in caption2. The selected chip is tinted and outlined;
   one tap selects. The row is one accessibility container labelled "Kind of food". There's no
   segmented control, menu or nesting. It's used in:
   - Quick Entry (default Kibble)

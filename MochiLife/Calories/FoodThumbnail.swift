@@ -2,8 +2,9 @@ import SwiftUI
 import UIKit
 
 /// The one thumbnail for foods, log entries and schedules everywhere: the product photo
-/// (bundled or saved by the app) if there is one, else the pixel-art picture for its kind, on
-/// the placeholder background at the same size and corner radius.
+/// (bundled or saved by the app) on a white rounded tile, or else the pixel-art picture for its
+/// kind with no box at all (the row shows through its transparent pixels), in the same frame so
+/// text columns line up.
 struct FoodThumbnail: View {
     /// The library food the photo belongs to; nil for foods without one.
     let libraryIdentifier: String?
@@ -12,7 +13,7 @@ struct FoodThumbnail: View {
     let kind: FoodKind
 
     /// Padding around the default picture, as a fraction of the size.
-    static let defaultImageInset: CGFloat = 0.12
+    static let defaultImageInset: CGFloat = 0.04
 
     /// Set when showing a saved food, so its photo is resolved fresh on every draw.
     private var food: Food?
@@ -39,18 +40,12 @@ struct FoodThumbnail: View {
                     .resizable()
                     .scaledToFit()
                     .background(.white)
+                    .frame(width: size, height: size)
+                    .clipShape(.rect(cornerRadius: size * 0.18))
             } else {
-                Image(kind.defaultImageName)
-                    .resizable()
-                    .interpolation(.none)
-                    .scaledToFit()
-                    .padding(size * Self.defaultImageInset)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.fill.tertiary)
+                FoodKindImage(kind: kind, size: size)
             }
         }
-        .frame(width: size, height: size)
-        .clipShape(.rect(cornerRadius: size * 0.18))
         .accessibilityHidden(true)
     }
 
@@ -59,6 +54,22 @@ struct FoodThumbnail: View {
         _ = ThumbnailRevision.shared.value
         if let food { return FoodThumbnails.image(for: food) }
         return FoodThumbnails.image(forLibraryIdentifier: libraryIdentifier)
+    }
+}
+
+/// A kind's pixel-art default picture with no background, border or clipping: crisp pixels
+/// (`.interpolation(.none)`), scaled to fit `size` with 4% padding.
+struct FoodKindImage: View {
+    let kind: FoodKind
+    let size: CGFloat
+
+    var body: some View {
+        Image(kind.defaultImageName)
+            .resizable()
+            .interpolation(.none)
+            .scaledToFit()
+            .padding(size * FoodThumbnail.defaultImageInset)
+            .frame(width: size, height: size)
     }
 }
 
