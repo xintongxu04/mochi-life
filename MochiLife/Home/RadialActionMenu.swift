@@ -32,8 +32,6 @@ struct RadialActionMenu: View {
     ]
     static let buttonDiameter = RadialMenuGeometry.buttonDiameter
     static let iconSize: CGFloat = 20
-    /// Layout bounds: the safe area plus this.
-    static let margin: CGFloat = 4
     static let seedDiameter: CGFloat = 28
 
     var body: some View {
@@ -67,21 +65,26 @@ struct RadialActionMenu: View {
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(.isModal)
             .accessibilityAction(.escape) { close() }
-            .onAppear { open(center: center, screen: proxy.size, safeArea: proxy.safeAreaInsets) }
+            .onAppear { open(center: center) }
         }
         .ignoresSafeArea()
     }
 
-    /// Picks the preset from her position (once per opening) and opens.
-    private func open(center: CGPoint, screen: CGSize, safeArea: EdgeInsets) {
-        // The same top limit as Mochi's own area: just below the toolbar button row.
-        let top = MochiHome.topLimit(safeAreaTop: safeArea.top)
-        let bounds = CGRect(x: safeArea.leading + Self.margin, y: top,
-                            width: screen.width - safeArea.leading - safeArea.trailing - 2 * Self.margin,
-                            height: screen.height - safeArea.bottom - Self.margin - top)
-        let edges = RadialMenuGeometry.nearEdges(center: center, bounds: bounds, previous: home.menuNearEdges)
+    /// Picks the preset from her position (once per opening) and opens. The bounds are Mochi's
+    /// own area (`MochiArea`): inside the safe area, below or beside the toolbar, with a 4 pt
+    /// margin, and trimmed to her side of iPhone Duo's division band; buttons also keep clear of
+    /// the camera and status occlusions.
+    private func open(center: CGPoint) {
+        guard let area = home.mochiArea else {
+            home.isMenuOpen = false
+            return
+        }
+        let bounds = area.menuBounds(around: center)
+        let scale = area.spriteSize.width / MochiSpriteView.compactSize.width
+        let edges = RadialMenuGeometry.nearEdges(center: center, bounds: bounds, previous: home.menuNearEdges, scale: scale)
         home.menuNearEdges = edges
-        placement = RadialMenuGeometry.place(center: center, bounds: bounds, nearEdges: edges, count: Self.actions.count)
+        placement = RadialMenuGeometry.place(center: center, bounds: bounds, nearEdges: edges, count: Self.actions.count,
+                                             scale: scale, obstacles: area.obstacles)
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.2)) {
             isShown = true
         }

@@ -7,6 +7,7 @@ struct AILookupSettingsView: View {
         Form {
             AILookupSettingsSections()
         }
+        .readableContent()
         .navigationTitle("AI Lookup")
         .navigationBarTitleDisplayMode(.inline)
     }

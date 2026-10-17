@@ -20,13 +20,12 @@ struct MochiView: View {
 
     private var profile: CatProfile? { profiles.current }
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var width: CGFloat = 0
+
     var body: some View {
-            List {
-                header
-                detailsSection
-                vaccinationsSection
-                medicalHistorySection
-            }
+            content
+            .onGeometryChange(for: CGFloat.self) { AdaptiveLayout.contentWidth(in: $0) } action: { width = $0 }
             .navigationTitle(profile?.displayName ?? CatProfile.defaultName)
             .toolbar {
                 Button("Edit") { isEditingProfile = true }
@@ -46,6 +45,36 @@ struct MochiView: View {
             .sheet(item: $medicalRecordBeingEdited) { record in
                 MedicalRecordFormView(record: record)
             }
+    }
+
+    /// One list, or with 800 pt of regular width the photo and details beside vaccinations and
+    /// medical history.
+    @ViewBuilder
+    private var content: some View {
+        switch AdaptiveLayout.Columns(sizeClass: sizeClass, width: width) {
+        case .single:
+            List {
+                header
+                detailsSection
+                vaccinationsSection
+                medicalHistorySection
+            }
+            .readableContent()
+        case .two:
+            SplitPanes {
+                List {
+                    header
+                    detailsSection
+                }
+                .readableContent()
+            } secondary: {
+                List {
+                    vaccinationsSection
+                    medicalHistorySection
+                }
+                .readableContent()
+            }
+        }
     }
 
     private var header: some View {

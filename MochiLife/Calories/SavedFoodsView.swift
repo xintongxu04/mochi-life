@@ -39,6 +39,9 @@ struct SavedFoodsView: View {
     @State private var searchText = ""
     @State private var isAddingFood = false
     @State private var isAddingWithAI = false
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    /// The brand shown in the second column (regular width).
+    @State private var selectedBrand: BrandSelection?
 
     private var brands: [(brand: String?, count: Int)] {
         let grouped = Dictionary(grouping: foods, by: \.brand)
@@ -69,40 +72,22 @@ struct SavedFoodsView: View {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// Regular width (iPhone Duo open) browses in two columns: brands, then the chosen brand's
+    /// products grouped by line. Compact width pushes brand → line → product. Search results are
+    /// one list either way.
+    private var showsColumns: Bool { sizeClass == .regular && !isSearching && !foods.isEmpty }
+
+    private var currentBrand: BrandSelection? {
+        if let selectedBrand, brands.contains(where: { $0.brand == selectedBrand.brand }) { return selectedBrand }
+        return brands.first.map { BrandSelection(brand: $0.brand) }
+    }
+
     var body: some View {
-        List {
-            if isSearching {
-                ForEach(searchResults) { food in
-                    FoodRow(food: food, showsBrandAndLine: true)
-                }
-                .onDelete { offsets in
-                    FoodRow.delete(offsets.map { searchResults[$0] })
-                }
-                .deleteDisabled(isPickingFood)
+        Group {
+            if showsColumns {
+                columns
             } else {
-                if case .pick = mode {
-                    Section {
-                        NavigationLink(value: QuickEntrySelection()) {
-                            Label {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Quick Entry")
-                                    Text("Just a name and calories, for one-off treats")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            } icon: {
-                                Image(systemName: "bolt")
-                            }
-                        }
-                        .accessibilityIdentifier("quickEntryRow")
-                    }
-                }
-                ForEach(brands, id: \.brand) { brand in
-                    NavigationLink(value: BrandSelection(brand: brand.brand)) {
-                        LabeledContent(brand.brand ?? Food.noBrandTitle, value: "\(brand.count)")
-                    }
-                    .accessibilityIdentifier("brandRow")
-                }
+                list
             }
         }
         .overlay {
@@ -148,6 +133,82 @@ struct SavedFoodsView: View {
         }
         .sheet(isPresented: $isAddingWithAI) {
             AddWithAIView()
+        }
+    }
+
+    /// The compact-width list: brands to push, or search results.
+    private var list: some View {
+        List {
+            if isSearching {
+                ForEach(searchResults) { food in
+                    FoodRow(food: food, showsBrandAndLine: true)
+                }
+                .onDelete { offsets in
+                    FoodRow.delete(offsets.map { searchResults[$0] })
+                }
+                .deleteDisabled(isPickingFood)
+            } else {
+                quickEntrySection
+                ForEach(brands, id: \.brand) { brand in
+                    NavigationLink(value: BrandSelection(brand: brand.brand)) {
+                        LabeledContent(brand.brand ?? Food.noBrandTitle, value: "\(brand.count)")
+                    }
+                    .accessibilityIdentifier("brandRow")
+                }
+            }
+        }
+        .readableContent()
+    }
+
+    /// Brands beside the chosen brand's products (regular width). Tapping a brand shows its
+    /// products; tapping a product opens it as usual.
+    private var columns: some View {
+        SplitPanes {
+            List {
+                quickEntrySection
+                Section("Brands") {
+                    ForEach(brands, id: \.brand) { brand in
+                        let isSelected = currentBrand?.brand == brand.brand
+                        Button {
+                            selectedBrand = BrandSelection(brand: brand.brand)
+                        } label: {
+                            LabeledContent(brand.brand ?? Food.noBrandTitle, value: "\(brand.count)")
+                                .foregroundStyle(.primary)
+                        }
+                        .listRowBackground(isSelected ? Color.accentColor.opacity(0.15) : nil)
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
+                        .accessibilityIdentifier("brandRow")
+                    }
+                }
+            }
+            .readableContent()
+        } secondary: {
+            if let currentBrand {
+                BrandProductsList(brand: currentBrand.brand)
+                    .readableContent()
+            }
+        }
+    }
+
+    /// "Quick Entry", when picking a food to log.
+    @ViewBuilder
+    private var quickEntrySection: some View {
+        if case .pick = mode {
+            Section {
+                NavigationLink(value: QuickEntrySelection()) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Quick Entry")
+                            Text("Just a name and calories, for one-off treats")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "bolt")
+                    }
+                }
+                .accessibilityIdentifier("quickEntryRow")
+            }
         }
     }
 }
@@ -213,6 +274,7 @@ struct BrandFoodsView: View {
                     }
                     .accessibilityIdentifier("lineRow")
                 }
+                .readableContent()
             }
         }
         .navigationTitle(brand ?? Food.noBrandTitle)
@@ -229,6 +291,54 @@ struct LineFoodsView: View {
     var body: some View {
         FoodsList(foods: allFoods.filter { $0.brand == brand && $0.line == line })
             .navigationTitle(line ?? Food.noLineTitle)
+    }
+}
+
+/// One brand's products, grouped under their lines, for the second column of the regular-width
+/// browser. Foods without a line come last under "Other" (no heading if the brand has no lines).
+private struct BrandProductsList: View {
+    let brand: String?
+
+    @Environment(\.isPickingFood) private var isPickingFood
+    @Query private var allFoods: [Food]
+
+    private var lines: [(line: String?, foods: [Food])] {
+        Dictionary(grouping: allFoods.filter { $0.brand == brand }, by: \.line)
+            .map { (line: $0.key, foods: $0.value.sortedByName()) }
+            .sorted { first, second in
+                switch (first.line, second.line) {
+                case (nil, _): false
+                case (_, nil): true
+                case let (first?, second?): first.localizedStandardCompare(second) == .orderedAscending
+                }
+            }
+    }
+
+    var body: some View {
+        let lines = lines
+        let hasLines = lines.contains { $0.line != nil }
+        List {
+            ForEach(lines, id: \.line) { line in
+                Section {
+                    ForEach(line.foods) { food in
+                        FoodRow(food: food, showsBrandAndLine: false)
+                    }
+                    .onDelete { offsets in
+                        FoodRow.delete(offsets.map { line.foods[$0] })
+                    }
+                    .deleteDisabled(isPickingFood)
+                } header: {
+                    if hasLines {
+                        Text(line.line ?? Food.noLineTitle)
+                    }
+                }
+            }
+        }
+        .overlay {
+            if lines.isEmpty {
+                ContentUnavailableView("No foods here", systemImage: "fork.knife")
+            }
+        }
     }
 }
 
@@ -250,6 +360,7 @@ private struct FoodsList: View {
             }
             .deleteDisabled(isPickingFood)
         }
+        .readableContent()
         .overlay {
             if foods.isEmpty {
                 ContentUnavailableView("No foods here", systemImage: "fork.knife")

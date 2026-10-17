@@ -1,20 +1,29 @@
 import SwiftUI
 
-/// Mochi's animated sprite, 132 × 126 pt (the frames' 352:336 aspect), with a soft ground shadow
-/// at her feet. Frames advance at the current state's rate (8 fps, sleeping 4 fps) only while the
+/// Mochi's animated sprite, 132 × 126 pt on compact width and 160 × 153 pt on regular width (the
+/// frames' 352:336 aspect; every frame in the identical rectangle), with a soft ground shadow at
+/// her feet. Frames advance at the current state's rate (8 fps, sleeping 4 fps) only while the
 /// view is on screen and the app is active. Under Reduce Motion the picture stays still, but the
 /// clock keeps running so the sleep rules and sequence steps still move on.
 struct MochiSpriteView: View {
     let animator: MochiAnimator
+    var size = MochiSpriteView.compactSize
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
     @State private var isVisible = false
 
-    static let size = CGSize(width: 132, height: 126)
+    static let compactSize = CGSize(width: 132, height: 126)
+    static let regularSize = CGSize(width: 160, height: 153)
+
+    static func size(for sizeClass: UserInterfaceSizeClass?) -> CGSize {
+        sizeClass == .regular ? regularSize : compactSize
+    }
+
     /// The feet's baseline: 320 of 336 px from the top of every frame.
-    static let baseline = size.height * 320 / 336
+    private var baseline: CGFloat { size.height * 320 / 336 }
+    private var scale: CGFloat { size.width / Self.compactSize.width }
 
     private var isRunning: Bool { isVisible && scenePhase == .active }
 
@@ -27,9 +36,9 @@ struct MochiSpriteView: View {
         ZStack(alignment: .top) {
             Ellipse()
                 .fill(Color.black.opacity(colorScheme == .dark ? 0.55 : 0.18))
-                .frame(width: Self.size.width * 0.5, height: 9)
-                .blur(radius: 3)
-                .offset(y: Self.baseline - 4.5)
+                .frame(width: size.width * 0.5, height: 9 * scale)
+                .blur(radius: 3 * scale)
+                .offset(y: baseline - 4.5 * scale)
             Group {
                 if let image = animator.currentImage {
                     Image(uiImage: image)
@@ -39,9 +48,9 @@ struct MochiSpriteView: View {
                     Color.clear
                 }
             }
-            .frame(width: Self.size.width, height: Self.size.height)
+            .frame(width: size.width, height: size.height)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
+        .frame(width: size.width, height: size.height)
         .onAppear {
             isVisible = true
             animator.reduceMotion = reduceMotion

@@ -80,6 +80,7 @@ struct ProfileFormView: View {
                     Text("Latest weight comes from the Weight screen.")
                 }
             }
+            .readableContent()
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -77,6 +77,7 @@ struct PhotoCandidatePickerView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
         }
+        .readableContent()
     }
 
     private func cell(_ candidate: ImageCandidate, number: Int, of total: Int) -> some View {

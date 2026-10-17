@@ -67,6 +67,8 @@ struct DayLogView: View {
         DayEntriesList(day: day, isFuture: isFuture, dayControls: dayControls, onSwipe: move(by:))
             .navigationTitle(title)
             .toolbar {
+                // High priority: these stay visible as their own buttons, never in an overflow
+                // menu (conventions, "Controls stay visible").
                 ToolbarItemGroup(placement: .topBarLeading) {
                     NavigationLink(value: CaloriesScreen.savedFoods) {
                         Label("Saved Foods", systemImage: "books.vertical")
@@ -78,7 +80,9 @@ struct DayLogView: View {
                         Label("Daily Calories", systemImage: "slider.horizontal.3")
                     }
                 }
-                // The one primary action: a filled pill, outermost on the right, on every day.
+                .visibilityPriority(.high)
+                // The one primary action: a filled pill, outermost on the right (or at the end of
+                // a vertical bar), on every day. The highest priority of all.
                 ToolbarItem(placement: .topBarTrailing) {
                     // System toolbar styling only, so the glass hugs the whole label.
                     Button("Log Food", systemImage: "plus") { home.openLogFood() }
@@ -90,6 +94,21 @@ struct DayLogView: View {
                         .accessibilityHint(isToday ? "Opens search and camera logging for today"
                                                    : "Opens search and camera logging for \(title)")
                         .accessibilityIdentifier("logFoodButton")
+                }
+                .visibilityPriority(ToolbarItemVisibilityPriority(higherThan: .high))
+            }
+            // Where the toolbar is, for Mochi's layer outside the stack: the content's left and
+            // right safe-area insets (larger when bars are vertical at the side). Only values
+            // that never change while scrolling.
+            .onGeometryChange(for: [CGFloat].self) { proxy in
+                [proxy.safeAreaInsets.leading, proxy.safeAreaInsets.trailing]
+            } action: { insets in
+                home.toolbarPlacement.leadingInset = insets[0]
+                home.toolbarPlacement.trailingInset = insets[1]
+            }
+            .background {
+                if #available(iOS 27.1, *) {
+                    ToolbarVerticalEdgeReader { home.toolbarPlacement.isVertical = $0 }
                 }
             }
             .sheet(isPresented: $home.isLoggingFood) {
@@ -177,58 +196,39 @@ private struct DayEntriesList<Controls: View>: View {
 
     private var total: Double { entries.reduce(0) { $0 + $1.kilocalories } }
 
+    /// The layout for the space this screen gets.
+    private enum Layout: Equatable {
+        /// One list: the iPhone layout (readable width when there's more room).
+        case single
+        /// Regular width of 800 pt or more: date, summary and chart on the leading side, the
+        /// day's foods on the trailing side, each scrolling on its own.
+        case twoColumns
+        /// Regular width under 800 pt with an active division band across the screen (iPhone
+        /// Duo open and turned, partly folded): the same two parts above and below the band.
+        case stacked
 
-    var body: some View {
-        CalorieTargetReader { target in
-            list(target: target)
+        init(sizeClass: UserInterfaceSizeClass?, width: CGFloat, reserved: ReservedAreas) {
+            switch AdaptiveLayout.Columns(sizeClass: sizeClass, width: width) {
+            case .two: self = .twoColumns
+            case .single: self = sizeClass == .regular && reserved.hasHorizontalDivision ? .stacked : .single
+            }
         }
     }
 
-    private func list(target: CalorieTarget) -> some View {
-        List {
-            Section {
-                VStack(spacing: 12) {
-                    dayControls
-                    if isFuture {
-                        PlannedCaloriesView(planned: total)
-                    } else {
-                        CalorieProgressView(eaten: total, target: target)
-                    }
-                }
-                .padding(.vertical, 4)
-                .contentShape(.rect)
-                .gesture(swipeBetweenDays)
-            }
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var width: CGFloat = 0
+    @State private var reserved = ReservedAreas()
 
-            Section {
-                if entries.isEmpty {
-                    ContentUnavailableView(
-                        "Nothing logged",
-                        systemImage: "fork.knife",
-                        description: Text("Tap Log Food to log something \(catName) ate.")
-                    )
-                } else {
-                    ForEach(entries) { entry in
-                        Button {
-                            entryBeingEdited = entry
-                        } label: {
-                            LogEntryRow(entry: entry)
-                        }
-                        .tint(.primary)
-                        .accessibilityIdentifier("logEntry")
-                    }
-                    .onDelete { offsets in
-                        for index in offsets {
-                            delete(entries[index])
-                        }
-                    }
-                }
-            }
+    private var layout: Layout { Layout(sizeClass: sizeClass, width: width, reserved: reserved) }
 
-            Section("Daily Calories") {
-                CalorieChartView(target: target)
-            }
+    var body: some View {
+        CalorieTargetReader { target in
+            content(target: target)
         }
+        // Read on every geometry change (reserved regions can arrive a few passes late).
+        .onGeometryChange(for: CGFloat.self) { AdaptiveLayout.contentWidth(in: $0) } action: { width = $0 }
+        .onGeometryChange(for: ReservedAreas.self) { ReservedAreas.active(in: $0) } action: { reserved = $0 }
+        // Outside the layout switch, so folding, unfolding or turning keeps an open sheet.
         .onChange(of: entryBeingEdited != nil) { _, isEditing in home.isEditingEntry = isEditing }
         .sheet(item: $entryBeingEdited) { entry in
             NavigationStack {
@@ -253,6 +253,85 @@ private struct DayEntriesList<Controls: View>: View {
                 Persistence.save(modelContext)
             }
             Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    @ViewBuilder
+    private func content(target: CalorieTarget) -> some View {
+        switch layout {
+        case .single:
+            // The same list on every iPhone (and iPhone Duo closed or open and turned), so its
+            // scroll position survives a change of width.
+            List {
+                summarySection(target: target)
+                entriesSection
+                chartSection(target: target)
+            }
+            .readableContent()
+        case .twoColumns, .stacked:
+            // ArrangementView (iOS 27.1) puts the two parts on either side of the division band.
+            SplitPanes(axis: layout == .twoColumns ? .horizontal : .vertical) {
+                List {
+                    summarySection(target: target)
+                    chartSection(target: target)
+                }
+                .readableContent()
+            } secondary: {
+                List {
+                    entriesSection
+                }
+                .readableContent()
+            }
+        }
+    }
+
+    /// The day arrows and the day's calories against the target.
+    private func summarySection(target: CalorieTarget) -> some View {
+        Section {
+            VStack(spacing: 12) {
+                dayControls
+                if isFuture {
+                    PlannedCaloriesView(planned: total)
+                } else {
+                    CalorieProgressView(eaten: total, target: target)
+                }
+            }
+            .padding(.vertical, 4)
+            .contentShape(.rect)
+            .gesture(swipeBetweenDays)
+        }
+    }
+
+    private var entriesSection: some View {
+        Section {
+            if entries.isEmpty {
+                ContentUnavailableView(
+                    "Nothing logged",
+                    systemImage: "fork.knife",
+                    description: Text("Tap Log Food to log something \(catName) ate.")
+                )
+            } else {
+                ForEach(entries) { entry in
+                    Button {
+                        entryBeingEdited = entry
+                    } label: {
+                        LogEntryRow(entry: entry)
+                    }
+                    .tint(.primary)
+                    .accessibilityIdentifier("logEntry")
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        delete(entries[index])
+                    }
+                }
+            }
+        }
+    }
+
+    private func chartSection(target: CalorieTarget) -> some View {
+        Section("Daily Calories") {
+            CalorieChartView(target: target)
         }
     }
 
@@ -391,3 +470,16 @@ private struct LogEntryRow: View {
     }
 }
 
+/// Reports whether the toolbar is placed vertically at the side (iOS 27.1: iPhone Duo's outer
+/// display, turned), so Mochi's area doesn't reserve a button row at the top.
+@available(iOS 27.1, *)
+private struct ToolbarVerticalEdgeReader: View {
+    let onChange: (Bool) -> Void
+
+    @Environment(\.toolbarVerticalEdge) private var verticalEdge
+
+    var body: some View {
+        Color.clear
+            .onChange(of: verticalEdge != nil, initial: true) { _, isVertical in onChange(isVertical) }
+    }
+}

@@ -1,39 +1,41 @@
 import PhotosUI
 import SwiftUI
-import VisionKit
 
-/// Reads the text on the front of a food package: live scanning with VisionKit's
-/// DataScannerViewController where supported (a shutter freezes the text currently recognized),
-/// otherwise a photo; choosing a photo from the library always works (also in the simulator).
-/// Images are processed in memory only and never stored or uploaded.
+/// Reads the text on the front of a food package: a live camera preview from the rear
+/// (world-facing) camera with a shutter (`PackageCamera`), whose photo is read like a chosen one;
+/// choosing a photo from the library always works (also in the simulator). Images are processed
+/// in memory only and never stored or uploaded.
+///
+/// The preview and the controls keep out of the safe area and of any active reserved region
+/// (iPhone Duo's camera and status occlusions, and its division band).
 struct PackageCaptureView: View {
     /// Called with the recognized lines (and their letter heights), or not at all on Cancel.
     let onRecognized: ([PackageTextReader.Line]) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var scanner = ScannerState()
+    @State private var camera = PackageCameraController()
     @State private var photoItem: PhotosPickerItem?
-    @State private var isTakingPhoto = false
     @State private var isReading = false
     @State private var message: String?
 
-    private var canScanLive: Bool {
-        DataScannerViewController.isSupported && DataScannerViewController.isAvailable
-    }
+    private var hasCamera: Bool { PackageCamera.isAvailable }
+
+    private var isCameraRunning: Bool { camera.status == .running }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                if canScanLive {
-                    LiveTextScanner(state: scanner)
-                        .ignoresSafeArea()
+                if hasCamera, case let .unavailable(reason) = camera.status {
+                    unavailable(reason)
+                } else if hasCamera {
+                    PackageCameraPreview(controller: camera)
+                        .avoidingReservedRegions()
                         .accessibilityLabel("Camera view. Point at the front of the package.")
+                        .overlay {
+                            if camera.status == .starting { ProgressView() }
+                        }
                 } else {
-                    ContentUnavailableView {
-                        Label("Read a Package", systemImage: "text.viewfinder")
-                    } description: {
-                        Text("Take or choose a photo of the front of the package. It's read on this iPhone and never stored or uploaded.")
-                    }
+                    unavailable("Choose a photo of the front of the package. It's read on this iPhone and never stored or uploaded.")
                 }
                 VStack {
                     Spacer()
@@ -49,6 +51,7 @@ struct PackageCaptureView: View {
                     controls
                 }
                 .padding()
+                .avoidingReservedRegions()
             }
             .navigationTitle("Read Package")
             .navigationBarTitleDisplayMode(.inline)
@@ -57,12 +60,10 @@ struct PackageCaptureView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .fullScreenCover(isPresented: $isTakingPhoto) {
-                CameraPicker { image in
-                    if let data = image.jpegData(compressionQuality: 0.9) { read(data) }
-                }
-                .ignoresSafeArea()
+            .task {
+                if hasCamera { await camera.start() }
             }
+            .onDisappear { camera.stop() }
             .onChange(of: photoItem) {
                 guard let photoItem else { return }
                 Task {
@@ -73,6 +74,14 @@ struct PackageCaptureView: View {
         }
     }
 
+    private func unavailable(_ description: String) -> some View {
+        ContentUnavailableView {
+            Label("Read a Package", systemImage: "text.viewfinder")
+        } description: {
+            Text(description)
+        }
+    }
+
     private var controls: some View {
         HStack(spacing: 24) {
             PhotosPicker(selection: $photoItem, matching: .images) {
@@ -80,34 +89,32 @@ struct PackageCaptureView: View {
             }
             .buttonStyle(.bordered)
             .accessibilityHint("Reads the text on a photo from your library")
-            if canScanLive {
+            if hasCamera {
                 Button {
-                    finishLiveScan()
+                    takePhoto()
                 } label: {
                     Image(systemName: "circle.inset.filled")
                         .font(.system(size: 64))
                         .frame(minWidth: 72, minHeight: 72)
                 }
-                .accessibilityLabel("Use the recognized text")
-                .accessibilityHint("Freezes the text the camera is reading and looks for the food")
-            } else if CameraPicker.isAvailable {
-                Button("Take Photo", systemImage: "camera") { isTakingPhoto = true }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityHint("Takes a photo of the package to read its text")
+                .disabled(!isCameraRunning)
+                .accessibilityLabel("Take Photo")
+                .accessibilityHint("Takes a photo of the package and reads its text")
             }
         }
         .controlSize(.large)
         .disabled(isReading)
     }
 
-    private func finishLiveScan() {
-        let lines = scanner.freeze()
-        guard !lines.isEmpty else {
-            message = "No text recognized yet. Hold the package steady and try again."
-            return
+    private func takePhoto() {
+        message = nil
+        Task {
+            guard let data = await camera.capturePhoto() else {
+                message = "The photo couldn't be taken. Hold the package steady and try again."
+                return
+            }
+            read(data)
         }
-        onRecognized(lines)
-        dismiss()
     }
 
     private func read(_ data: Data) {
@@ -122,77 +129,6 @@ struct PackageCaptureView: View {
                 onRecognized(lines)
                 dismiss()
             }
-        }
-    }
-}
-
-/// The text the live scanner currently sees, and whether scanning should stop.
-@MainActor
-@Observable
-final class ScannerState {
-    fileprivate var items: [RecognizedItem.ID: PackageTextReader.Line] = [:]
-    fileprivate(set) var isFrozen = false
-
-    /// Stops scanning and returns the recognized lines, tallest text first.
-    func freeze() -> [PackageTextReader.Line] {
-        isFrozen = true
-        return items.values.sorted { $0.height > $1.height }
-    }
-}
-
-/// VisionKit's live text scanner. Scanning stops when frozen or when the view goes away, so no
-/// camera session is kept after dismissal.
-private struct LiveTextScanner: UIViewControllerRepresentable {
-    let state: ScannerState
-
-    func makeUIViewController(context: Context) -> DataScannerViewController {
-        let scanner = DataScannerViewController(
-            recognizedDataTypes: [.text()], qualityLevel: .accurate, recognizesMultipleItems: true,
-            isHighFrameRateTrackingEnabled: false, isHighlightingEnabled: true
-        )
-        scanner.delegate = context.coordinator
-        try? scanner.startScanning()
-        return scanner
-    }
-
-    func updateUIViewController(_ scanner: DataScannerViewController, context: Context) {
-        if state.isFrozen { scanner.stopScanning() }
-    }
-
-    static func dismantleUIViewController(_ scanner: DataScannerViewController, coordinator: Coordinator) {
-        scanner.stopScanning()
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(state: state) }
-
-    @MainActor
-    final class Coordinator: NSObject, DataScannerViewControllerDelegate {
-        let state: ScannerState
-        init(state: ScannerState) { self.state = state }
-
-        func dataScanner(_ scanner: DataScannerViewController, didAdd added: [RecognizedItem], allItems: [RecognizedItem]) {
-            update(allItems, in: scanner)
-        }
-
-        func dataScanner(_ scanner: DataScannerViewController, didUpdate updated: [RecognizedItem], allItems: [RecognizedItem]) {
-            update(allItems, in: scanner)
-        }
-
-        func dataScanner(_ scanner: DataScannerViewController, didRemove removed: [RecognizedItem], allItems: [RecognizedItem]) {
-            update(allItems, in: scanner)
-        }
-
-        private func update(_ items: [RecognizedItem], in scanner: DataScannerViewController) {
-            guard !state.isFrozen else { return }
-            let viewHeight = max(scanner.view.bounds.height, 1)
-            var lines: [RecognizedItem.ID: PackageTextReader.Line] = [:]
-            for item in items {
-                guard case let .text(text) = item else { continue }
-                let bounds = item.bounds
-                let height = abs(bounds.bottomLeft.y - bounds.topLeft.y) / viewHeight
-                lines[item.id] = PackageTextReader.Line(text: text.transcript, height: Double(height))
-            }
-            state.items = lines
         }
     }
 }

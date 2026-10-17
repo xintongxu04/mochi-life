@@ -14,19 +14,19 @@ something described here must update this file in the same commit (see `CLAUDE.m
 | Area | What's used |
 |---|---|
 | Language | Swift 6 language mode (`SWIFT_VERSION = 6.0`); built with Apple Swift 6.4 |
-| IDE / SDK | Xcode 27.0 (27A266a), iOS 27.0 SDK; project `objectVersion = 77` |
+| IDE / SDK | Xcode 27.1 (27A9275), iOS 27.1 SDK (the built binary's `LC_BUILD_VERSION` reads `minos 27.0`, `sdk 27.1`); project `objectVersion = 77` |
 | Minimum iOS | `IPHONEOS_DEPLOYMENT_TARGET = 27.0` (app and UI test targets) |
-| Devices | iPhone only (`TARGETED_DEVICE_FAMILY = 1`); Mac Catalyst, "Designed for iPhone" on Mac and visionOS all off |
+| Devices | iPhone only (`TARGETED_DEVICE_FAMILY = 1`), including iPhone Duo (outer and inner display, §17); portrait and both landscape orientations; Mac Catalyst, "Designed for iPhone" on Mac and visionOS all off |
 | UI | SwiftUI (one root `NavigationStack(path:)`, no tab bar, `Form`/`List`, `.searchable`, `ContentUnavailableView`) |
 | Persistence | SwiftData with versioned schemas: `ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: MochiLifeMigrationPlan.self)` created in `MochiLifeApp.init()`; views use the environment `modelContext` (main context). All saves go through `Persistence.save(_:)`. `UserDefaults` / `@AppStorage` for small settings. |
 | Charts | Swift Charts (`Charts`): `LineMark`, `PointMark`, `BarMark`, `RuleMark` |
-| Other Apple frameworks | VisionKit (`DataScannerViewController`, live text), FoundationModels (on-device match judge, optional), Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
+| Other Apple frameworks | AVFoundation (`AVCaptureSession`, `AVCapturePhotoOutput`, `AVCaptureDevice.RotationCoordinator`) and AVKit (`AVCaptureDeviceDirectionCoordinator`, iOS 27.1) for the package camera, Synchronization (`Mutex`), FoundationModels (on-device match judge, optional), Foundation, UIKit (`UIImage`, `UIImagePickerController`, `UIGraphicsImageRenderer`, `UIAlertController` for save errors), PhotosUI (`PhotosPicker`), Vision (`VNRecognizeTextRequest`, on-device package text), ImageIO (thumbnails), Security (Keychain for AI keys), os (`Logger`), XCTest (UI tests) |
 | Network services | Optional, owner-supplied keys: Brave Search Web Search API and DeepSeek chat completions (§11). No other networking. |
 | Third-party dependencies | None. No Swift packages, CocoaPods or Carthage. |
 | Info.plist | Generated (`GENERATE_INFOPLIST_FILE = YES`) and merged with `MochiLife/Info.plist` (`INFOPLIST_FILE`; excluded from the synchronized group's resources by an exception set), which declares the backup file type (`UTExportedTypeDeclarations`, `CFBundleDocumentTypes`, `LSSupportsOpeningDocumentsInPlace = NO`). Other keys set via build settings: display name "Mochi Life", `NSCameraUsageDescription` ("Take a photo of your cat for her profile, or of a food package so its name can be read on this iPhone. Photos aren't uploaded."), generated launch screen and scene manifest. |
 | Bundle IDs | `com.xintongxu.MochiLife`, `com.xintongxu.MochiLifeUITests` |
 
-Simulator used for development: **iPhone 18 Pro** (iOS 27.0).
+Simulators used for development: **iPhone 18 Pro** (iOS 27.0, so it runs the pre-27.1 fallbacks) and **iPhone Duo** (iOS 27.1). iPhone Duo's poses (Closed, Open, Book, Rotate) are switched by hand in Device Hub; `simctl` can't set them.
 
 ---
 
@@ -58,16 +58,18 @@ Targets:
 |---|---|
 | `MochiState.swift` | `MochiState` (sitting, eating, playing, stretching; 16 frames, 8 fps), frame asset names. |
 | `MochiAnimator.swift` | `@Observable @MainActor` animator: autonomous schedule (sitting segments, random playing/stretching), user one-shots, Reduce Motion, two-state frame cache. |
-| `MochiSpriteView.swift` | Draws the current frame at 132 × 126 pt with a ground shadow; the 8 fps clock task runs only while visible and active. |
-| `FloatingMochiView.swift` | Mochi floating over the Calories screen: drag (8 pt) vs tap, safe-area clamping with spring-back, saved position (fractions). |
-| `MochiHome.swift` | `AppScreen`, `MochiHome` (navigation path, animator, menu, Log Food sheet, what hides Mochi, sprite frame, Play and eating timings, eating signal), `FoodLoggedAction`. |
-| `RadialActionMenu.swift` | The five Liquid Glass buttons, their safe-area layout, glass morph from Mochi's centre, tap catcher and actions. |
+| `MochiSpriteView.swift` | Draws the current frame at 132 × 126 pt (compact width) or 160 × 153 pt (regular width) with a ground shadow; the 8 fps clock task runs only while visible and active. |
+| `FloatingMochiView.swift` | Mochi floating over the Calories screen: drag (8 pt) vs tap, clamping to `MochiArea` with spring-back, one saved position (fractions) per display configuration, re-placing on fold, unfold and rotate. |
+| `MochiArea.swift` | `ToolbarPlacement` (the Calories toolbar's side insets and vertical flag) and `MochiArea`: the window minus safe area, toolbar and reserved regions; resolving her position, default corner, fractions, the ring's bounds. Pure geometry. |
+| `MochiHome.swift` | `AppScreen`, `MochiHome` (navigation path, animator, menu, Log Food sheet, what hides Mochi, sprite frame, toolbar placement, Mochi's area, Play and eating timings, eating signal), `FoodLoggedAction`. |
+| `RadialActionMenu.swift` | The five Liquid Glass buttons, their layout inside Mochi's area, glass morph from Mochi's centre, tap catcher and actions. |
 | `SettingsView.swift` | Settings: weight unit, AI lookup keys (`AILookupSettingsSections`), Back Up and Restore. |
 
 **`Shared/`**
 | File | Purpose |
 |---|---|
 | `Schema.swift` | `SchemaV1` (frozen copies of the original models), `SchemaV2` (current, lists the live model types) and `MochiLifeMigrationPlan`. |
+| `AdaptiveLayout.swift` | Layout for every screen size (§17): `AdaptiveLayout` (readable width, two-column rule, free-rect cutting), `ReservedAreas` (active reserved regions, iOS 27.1), `readableContent()` / `avoidingReservedRegions()`, `SplitPanes` (`ArrangementView` split style on iOS 27.1, stacks before). |
 | `Persistence.swift` | `Persistence.save(_:)` — the only way data is saved; logs failures with `os.Logger` and shows a Try Again / Discard Changes alert. |
 | `NumberInput.swift` | The one parser for typed numbers, with a `Field` (range + decimal places) per kind of input. |
 | `LaunchMaintenance.swift` | Repeat-safe upkeep run each time the app opens: single profile, food library update, missing fractions. |
@@ -88,7 +90,7 @@ Targets:
 **`Calories/`**
 | File | Purpose |
 |---|---|
-| `CaloriesView.swift` | The app root: `NavigationStack(path:)` → `DayLogView` (Mochi's sprite, day navigation, total vs target, entries, chart) with `AppScreen` destinations; private `DayEntriesList`, `CalorieProgressView`, `LogEntryRow`. |
+| `CaloriesView.swift` | The app root: `NavigationStack(path:)` → `DayLogView` (day navigation, total vs target, entries, chart; toolbar placement for Mochi) with `AppScreen` destinations; private `DayEntriesList` (single, two-column and stacked layouts), `CalorieProgressView`, `LogEntryRow`, `ToolbarVerticalEdgeReader`. |
 | `CalorieTarget.swift` | Daily calorie target logic (own target or Merck-based estimate), `CalorieEstimate`, `MissingCalorieDetail`, `CalorieTargetReader` view, `MissingCalorieDetailsView`. |
 | `CalorieTargetSettingsView.swift` | Settings screen: own daily target, "Gains weight easily" switch, explanation of the estimate. |
 | `CalorieChartView.swift` | Bar chart of daily calorie totals (7 or 30 days) with a dashed target line. |
@@ -118,12 +120,13 @@ Targets:
 |---|---|
 | `FoodMatcher.swift` | Pure, synchronous library matcher: normalization, IDF-weighted token scoring with fuzzy matches, classification, thresholds, size detection. |
 | `MatchJudge.swift` | Optional on-device Apple Intelligence judge (Foundation Models, guided generation) with a 5-second timeout; `MatchJudgement`; `LogFlowLog`. |
-| `PackageCaptureView.swift` | Live text scanning (VisionKit `DataScannerViewController`) with a shutter, photo capture fallback, and PhotosPicker. |
+| `PackageCaptureView.swift` | The Read Package screen: live preview from the rear camera with a shutter, and PhotosPicker; the photo is read by `PackageTextReader`. |
+| `PackageCamera.swift` | `PackageCamera` (actor on its own queue: session, rear wide camera, photo capture), `PackageCameraController` (permission, camera choice by facing direction, rotation, recovery), `CameraPreviewView`, `PackageCameraPreview`. |
 | `RecentUsage.swift` | Works out Recent and Frequent from log entries: items resolve to a saved food, an entry snapshot (food gone) or a quick entry; row ids include the section; Frequent excludes Recent. |
 | `LogFoodFlow.swift` | `LogRoute`, `LogFlowModel` (index, text and camera decisions), `LogFoodFlowView` (the sheet), home (search, Recent, Frequent rows), candidate list, web fallback. |
 | `Portion.swift` | `Portion` value (chosen amount + calories), quick fractions (the full can shows "1", spoken "1 whole"), number formatting, `amountDescription` (the one portion-text formatter), `PortionSource`. |
 | `PortionPicker.swift` | Reusable size-and-portion picker (by can/pouch or grams, own calorie number). |
-| `SavedFoodsView.swift` | Saved foods: brand → line → product browsing, search, browse/pick/schedule modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `FoodsList`, `FoodRow`. |
+| `SavedFoodsView.swift` | Saved foods: brand → line → product browsing (two columns in regular width), search, browse/pick/schedule modes, "Add with AI" and "Add Food" buttons; `BrandFoodsView`, `LineFoodsView`, private `BrandProductsList`, `FoodsList`, `FoodRow`. |
 | `FoodThumbnailStore.swift` | Photos the app saves for foods (one file per food, `user/<name>` keys, JPEG files in Application Support/FoodThumbnails), the "none" marker, the shared ImageIO thumbnail maker, and `ThumbnailRevision` (redraw on change). |
 
 **`Calories/AILookup/`** ("Add with AI", §11)
@@ -465,14 +468,15 @@ MochiLifeApp
    └─ CaloriesView: NavigationStack(path: MochiHome.path) → DayLogView
         — title "Today" / "Yesterday" / "Tomorrow" / date
           Days: back to any earlier day; forward up to the last future day with entries
-          DayEntriesList (List): day arrows + CalorieProgressView (or PlannedCaloriesView on
-            future days), entries, CalorieChartView
+          DayEntriesList: day arrows + CalorieProgressView (or PlannedCaloriesView on
+            future days), entries, CalorieChartView — one List, or two (SplitPanes) in regular
+            width ≥ 800 pt or across an active horizontal division band (§17)
           overlay: FloatingMochiView (only her rect is hit-testable; hidden while a sheet is up)
           navigationDestination(for: AppScreen):
-            .weight → WeightView — title "Weight"; List: chart + entries; safeAreaInset(top):
+            .weight → WeightView — title "Weight"; List: chart + entries (two panes ≥ 800 pt); safeAreaInset(top):
                       kg/lb picker; toolbar + → sheet AddWeightView (own NavigationStack)
             .profile → MochiView — title = profile name; List: photo + age, Details,
-                      Vaccinations, Medical History; toolbar "Edit" → sheet ProfileFormView
+                      Vaccinations, Medical History (two panes ≥ 800 pt); toolbar "Edit" → sheet ProfileFormView
                       (fullScreenCover CameraPicker); sheets VaccinationFormView,
                       MedicalRecordFormView (add and edit)
             .settings → SettingsView — Units (kg/lb), AI lookup keys, NavigationLink →
@@ -488,7 +492,8 @@ MochiLifeApp
              sheet(item:): edit entry → NavigationStack → LogEntryForm(.edit)
              confirmationDialog: delete with carried days
        
-           SavedFoodsView (browse) pushed in the Calories stack; destinations come from
+           SavedFoodsView (browse) pushed in the Calories stack (regular width: brands beside
+           the chosen brand's products, BrandProductsList); destinations come from
            savedFoodsDestinations at the stack root:
              BrandSelection → BrandFoodsView → LineSelection → LineFoodsView
              Food → FoodDetailView
@@ -569,6 +574,8 @@ closes via an `onFinish` closure instead of `dismiss`.
 | Calories vs target on Today | `CaloriesView.swift` (`CalorieProgressView`) | — |
 | Daily calories chart (7/30 days) | `CalorieChartView.swift` | Uses the current target for the line. |
 | Add with AI (search, page choice, extraction, review, save) | `Calories/AILookup/*`, `FoodThumbnailStore.swift` | Needs the owner's Brave Search and DeepSeek keys; 50 lookups a day; script-built pages are read through the 12-second rendered fallback; the full pipeline hasn't been run against the live services by the developer (only the verifier is unit-tested). |
+| Layouts for every iPhone size, including iPhone Duo (§17) | `Shared/AdaptiveLayout.swift`, `CaloriesView.swift`, `WeightView.swift`, `MochiView.swift`, `SavedFoodsView.swift`, `Home/MochiArea.swift`, every form | Poses can't be set from the command line, so the iPhone Duo layouts are checked by hand in Device Hub. In a vertical toolbar iOS shows Log Food as an icon (its spoken label is unchanged). Scroll position resets when switching to or from two columns. |
+| Package camera (rear camera by facing direction, recovery after pose changes) | `PackageCamera.swift`, `PackageCaptureView.swift` | No live text highlighting; the text is read after the shutter. Not testable in the simulator (no camera). |
 | Profile, vaccinations, medical history | `Profile/*` | Exactly one profile (enforced at launch). Camera unavailable in the simulator. The camera permission text (Info.plist) says "Mochi" and can't follow the profile name. No reminders. |
 
 ---
@@ -638,11 +645,22 @@ closes via an `onFinish` closure instead of `dismiss`.
   - *Why (2026-10-05):* SwiftUI infers a row's separator start from its text. A row beginning
     with a `TextField` took it from the unit or hint `Text` partway across, and a `Label` moved
     it past its icon, so those separators started further in than their neighbours.
+- **Adaptive layout** (§17) — branch on `horizontalSizeClass` and the width a view actually gets
+  (`onGeometryChange`), never on `userInterfaceIdiom`, the device model or `UIScreen.main`. Every
+  `Form` and `List` gets `.readableContent()` (about 640 pt, centred, and out of active reserved
+  regions); two panes use `SplitPanes`. Sheets have no fixed heights or detents. Keep system
+  toolbars, `NavigationStack`, sheets and `List`s so the system can place bars vertically; never
+  force horizontal bars (`toolbarVerticalBehavior(.disabled)`).
+- **Availability** — the deployment target stays iOS 27.0. Every iOS 27.1 API sits behind
+  `if #available(iOS 27.1, *)` or `@available(iOS 27.1, *)`, with a fallback that works on 27.0.
 - **Controls stay visible** — a screen's controls are never collapsed into menus, overflow ("More")
   buttons or nested groups. Every action stays directly visible as its own button with its icon
   and label. If a bar can't fit everything, plain icon buttons move to the other side, still
   individually; if it still doesn't fit, that's raised with the owner rather than collapsing
-  anything. **One deliberate exception, by the owner's design:** the ring of actions around Mochi
+  anything. The Calories toolbar marks this with visibility priorities: the three leading icon
+  buttons are `.high` and Log Food is higher still (`ToolbarItemVisibilityPriority(higherThan:
+  .high)`), so the system never prefers to move them into its overflow. *(2026-10-16: the owner
+  kept this rule when iPhone Duo support was added, rather than letting the three icons overflow.)* **One deliberate exception, by the owner's design:** the ring of actions around Mochi
   (§15) is the app's navigation (Eat, Play, Settings, Weight, Profile), one flat level. Every other
   control stays visible.
 
@@ -699,7 +717,12 @@ closes via an `onFinish` closure instead of `dismiss`.
 ## 10. Known issues and technical debt
 
 - **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05 (`BackupRoundTripTests` re-run after adding schedules: passing). `RecentUsageTests` (4) and the UI test `RecentFoodsUITests` (Recent rows for a saved food, a deleted food and a quick entry each open on the first tap with the keyboard up, 4 rounds; logging again from a deleted food) passed on 2026-10-05. Scheduled-feeding materialization has no automated test. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
-  Live scanning, the model judge and the Log Food screens have no automated tests.
+  The package camera, the model judge and the Log Food screens have no automated tests.
+- **iPhone Duo layouts are checked by hand only** (Device Hub poses can't be scripted). Not yet
+  confirmed on a pose-by-pose basis: two columns on the open display, the stacked Calories layout
+  in a partly folded turned pose, Mochi's per-configuration spots and her avoidance of the
+  division band and occlusions, the camera after a pose change. Whether reserved regions update
+  `onGeometryChange` on their own (without a size change) is assumed from the SDK guidance.
 - **The UI test target is not confirmed green.** Last run (2026-10-04, stopped by the owner
   before a rerun): `WeightLoggingUITests` passed; both `SavedFoodsUITests` tests failed when
   tapping a brand in Saved Foods opened from Today — the navigation bug fixed afterwards
@@ -1092,6 +1115,11 @@ the whole label at every text size. There are no custom backgrounds, frames, cli
 fallbacks.
 - The accessibility label is "Log Food", and the hint is "Opens search and camera logging for
   <day>".
+- It has the highest toolbar visibility priority (`ToolbarItemVisibilityPriority(higherThan:
+  .high)`), so it's never moved into an overflow menu. When iOS places the bars vertically at the
+  trailing edge (iPhone Duo's outer display; seen in the Closed pose on 2026-10-16), it stays
+  visible and prominent (filled accent glass) but is drawn as its "+" icon only; the spoken label
+  is still "Log Food". Bars aren't forced horizontal to get the text back (§17).
 - *Fixed 2026-10-05:* it used a `ViewThatFits` whose full label was `.fixedSize()`, inside
   `.borderedProminent` with a capsule shape and a fixed minimum frame. The toolbar gave the button
   less width than that label, so the capsule was drawn at the narrower size and the fixed-size text
@@ -1163,14 +1191,41 @@ submit with nothing to show (classification none, no results) the web fallback s
 "Not listed? Search the web" row is always under the results.
 
 ### Camera path and capture strategy
-`PackageCaptureView`: VisionKit `DataScannerViewController` (text, accurate, multiple items,
-highlighting) when `isSupported && isAvailable`, with a shutter that freezes the currently
-recognized items (their text and on-screen height) and stops scanning; scanning also stops when the
-view is dismantled. Otherwise a photo (`CameraPicker`); PhotosPicker is always offered (the
-simulator path). Photos are read with `VNRecognizeTextRequest` (accurate, language correction) via
-`PackageTextReader.recognizedLines`, which also returns each line's height. Images stay in memory
-and are never stored or uploaded. Lines are weighted 0.4 + 0.6 × (height / tallest) before
-matching; the four tallest lines form the web query. Matching is cancelled when the sheet closes.
+`PackageCaptureView` (full-screen cover, own `NavigationStack`): a live preview from the rear
+camera with a shutter, plus PhotosPicker (always offered; the simulator path, since it has no
+camera). The shutter takes a photo (`AVCapturePhotoOutput`, upright for the current rotation),
+and a photo — taken or chosen — is read with `VNRecognizeTextRequest` (accurate, language
+correction) via `PackageTextReader.recognizedLines`, which also returns each line's height.
+Images stay in memory and are never stored or uploaded. Lines are weighted 0.4 + 0.6 × (height /
+tallest) before matching; the four tallest lines form the web query. Matching is cancelled when
+the sheet closes.
+
+**Camera** (`PackageCamera.swift`):
+- `PackageCamera` is an actor whose executor is its own serial `DispatchSerialQueue`, so the
+  blocking `startRunning`/`stopRunning` and all configuration stay off the main actor. The
+  session is a `nonisolated(unsafe) let`, only so the preview layer can be attached to it on the
+  main actor.
+- **Choosing the camera** (`PackageCameraController`): on iOS 27.1, an
+  `AVCaptureDeviceDirectionCoordinator(view:deviceTypes:changeHandler:)` on the preview view, for
+  `.builtInWideAngleCamera`. Its first `backwardFacingDeviceDescriptors` entry (cameras that
+  capture the scene behind the display, i.e. world-facing) gives the `uniqueID` used; when the set
+  changes (iPhone Duo opened, closed or turned) the session switches camera. Fallback (before
+  iOS 27.1, or until the coordinator's first callback): `AVCaptureDevice.default(.builtInWideAngleCamera,
+  for: .video, position: .back)`.
+- **Upright:** an `AVCaptureDevice.RotationCoordinator` for the active camera and the preview
+  layer; the preview's angle is updated on every size change, and each photo uses
+  `videoRotationAngleForHorizonLevelCapture`.
+- **Recovery:** `interruptionEndedNotification` restarts the session; `runtimeErrorNotification`,
+  `AVCaptureDevice.wasDisconnectedNotification`, or finding the session stopped after a size change
+  (fold, unfold, rotate) rebuilds it (inputs and outputs removed and added again on the same session,
+  so the preview layer stays attached and shows the picture again).
+- Permission is asked on first use; refused, the screen says so and offers Choose Photo. The
+  session stops when the screen closes.
+- The preview and the controls sit inside the safe area and use `avoidingReservedRegions()`, so
+  neither goes under the camera or status occlusions or the division band.
+- *Changed 2026-10-16:* this replaced VisionKit's `DataScannerViewController` (live text with
+  highlighting), which picks its own camera and so couldn't guarantee the world-facing camera on
+  iPhone Duo. The owner chose the guaranteed rear camera over live highlighting.
 
 ### Apple Intelligence judge (`MatchJudge`)
 Checked against the iOS 27 SDK (2026-10-05): `SystemLanguageModel.default.availability`
@@ -1322,8 +1377,10 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   image set each, PNG in the **@2x slot only**. Names are referenced as `Mochi/mochi_<state>_<NN>`.
 - **Canvas:** 352 × 336 px, transparent, soft alpha edges. The feet sit on a fixed baseline
   (y = 320 px), at the same scale in every state.
-- **Display:** 132 × 126 pt (the same 352:336 aspect). Every frame is drawn in that identical
-  rectangle (`.resizable()`, `.interpolation(.high)`), so she never jumps between states.
+- **Display:** 132 × 126 pt on compact width and 160 × 153 pt on regular width (iPhone Duo open),
+  the same 352:336 aspect (`MochiSpriteView.size(for:)`). Every frame is drawn in that identical
+  rectangle (`.resizable()`, `.interpolation(.high)`), so she never jumps between states; the
+  ground shadow scales with her.
 - **Ground shadow:** a soft blurred ellipse (half her width, 9 pt tall) centred on the baseline,
   black at 18% opacity in light mode and 55% in dark mode.
 - No mirroring: eating and stretching face left by design. Eating frames include the bowl, and
@@ -1331,28 +1388,42 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 
 ### Floating overlay (`FloatingMochiView`)
 - **Coordinate space:** a full-screen root layer, an `.overlay` on `ContentView` above the
-  `NavigationStack`, with a `GeometryReader` that `.ignoresSafeArea()`. Positions are screen
-  points. Nothing that happens while the list scrolls (the large title collapsing, the bar, the
+  `NavigationStack`, measured with `onGeometryChange` and `.ignoresSafeArea()`. Positions are
+  window points. Nothing that happens while the list scrolls (the large title collapsing, the bar, the
   scroll-edge effect, safe-area changes inside the stack) can move her.
   *(Fixed 2026-10-05: she used to be an overlay on the Calories root view inside the stack, and
   her point was re-derived every render from the saved fractions times a safe-area frame that
   shrank as the large title collapsed. So she drifted while scrolling.)*
-- **Live position:** an absolute `origin` (`@State`), set when she's placed (on launch, or if the
-  screen size really changes) and at drag end. It's never re-clamped or re-derived in response to
-  scroll-driven geometry.
-- **Drag bounds:** the screen inset by the safe area + 8 pt on the leading, trailing and bottom
-  sides. The **top limit** is just below the toolbar button row: the window's top safe area +
-  the standard 44 pt inline navigation bar (the row with the three leading icon buttons and Log
-  Food) + 4 pt (`MochiHome.topLimit(safeAreaTop:)`). It's a constant in the root coordinate space
-  that never follows the bar as the large title collapses. She may sit over the large "Today"
-  title, the summary card and the list.
+- **Live position:** an absolute `origin` (`@State`), set when she's placed and at drag end. She's
+  placed on launch and on a **genuine change of window size or size class** (fold, unfold, rotate),
+  animating to the new configuration's saved spot (the ring closes). If only the area changes
+  (reserved regions arriving a few layout passes late, the toolbar moving to the side) she's
+  re-clamped. Nothing that changes while scrolling feeds the area, so she's never re-derived by
+  scrolling. *(Amended 2026-10-16: before iPhone Duo support she was re-derived only on launch and
+  drag end.)*
+- **Drag bounds** (`MochiArea`, pure geometry): the window inside its safe area, minus the
+  toolbar, inset 8 pt on the leading, trailing and bottom sides, and clear of every active
+  reserved region.
+  - **Toolbar:** with horizontal bars, the top limit is just below the toolbar button row: the
+    window's top safe area + the standard 44 pt inline bar (the row with the three leading icon
+    buttons and Log Food) + 4 pt. With vertical bars (iOS 27.1 `toolbarVerticalEdge` non-nil,
+    read inside the stack by `ToolbarVerticalEdgeReader`), there's no top row: the top is the safe
+    area + 4 pt, and the side strip is excluded through the Calories content's leading and
+    trailing safe-area insets (`ToolbarPlacement`, measured by `DayLogView`; insets, not
+    positions, so push and pop animations can't change them). The top is a constant that never
+    follows the bar as the large title collapses. She may sit over the large "Today" title, the
+    summary card and the list.
+  - **Reserved regions** (iOS 27.1, `ReservedAreas`, read on every geometry change of her layer):
+    the division band and the camera and status occlusions. `MochiArea.resolve` clamps her to the
+    area, then moves her off any region she overlaps by the shortest move that stays inside, so a
+    clamp that would leave her in the division band puts her on its nearer side.
   *(Until 2026-10-05 the top was the bottom of the expanded bar including the large title, so
   she couldn't go above the start of the food list.)*
 - **Animation:** her offset has no implicit animation (`.transaction` clears it). The only
   animated move is the explicit spring when she's released outside the region. The lift on
   pick-up (scale 1.06 and a soft shadow) uses a scoped `.animation { }` that covers only those
   two modifiers. The ground shadow is part of the sprite view, so it moves only with her.
-- **Hit testing:** the layer has no background, so only her own 132 × 126 rectangle
+- **Hit testing:** the layer has no background, so only her own sprite rectangle
   (`contentShape(Rectangle())`, moved with `.offset`) takes touches. The list underneath scrolls
   normally everywhere else.
 - **Gestures:** one `DragGesture(minimumDistance: 0, coordinateSpace: .global)` on her
@@ -1368,13 +1439,16 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
 
   Her animation keeps running while dragged. VoiceOver: the default action toggles the ring, and
   a custom action **"Pet Mochi"** grooms.
-- **Persistence:** her top-left corner is stored in screen points in
-  `@AppStorage("mochi.origin.x"/".y")` (−1 = not saved).
-  - On placement it's used as is, and clamped only if it now falls outside the bounds.
-  - Positions saved by older versions as fractions of the old area
-    (`mochi.position.x`/`.y`) are converted once.
-  - The default is bottom-trailing, 16 pt from the safe edges. She stays exactly where she's
-    dropped (no edge-snapping).
+- **Persistence:** one position per display configuration, as fractions (0…1) of the drag area
+  (`MochiArea.spriteRegion`): `@AppStorage("mochi.compact.x"/".y")` for compact width (ordinary
+  iPhones, iPhone Duo closed) and `"mochi.regular.x"/".y"` for regular width (iPhone Duo open);
+  −1 = not saved. Fractions, because the two configurations' windows differ; the area they're
+  measured against never changes while scrolling, so they don't drift.
+  - Each configuration's default is bottom-trailing, 16 pt from the area's edges, outside
+    reserved regions. She stays exactly where she's dropped (no edge-snapping).
+  - Older saved positions are converted once, for compact width: her top-left corner in screen
+    points (`mochi.origin.x`/`.y`, 2026-10-05 to 2026-10-16), else the earlier fractions
+    (`mochi.position.x`/`.y`).
 - **Visibility:** she shows only on the Calories root with nothing presented over it
   (`MochiHome.isSpriteHidden`). She's hidden whenever:
   - a screen is pushed (`path` isn't empty), or
@@ -1447,13 +1521,17 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
   Motion there is no seed, and they fade.
 - **Placement** (`RadialMenuGeometry`, pure, no views): drawn in an overlay on `ContentView`,
   above the navigation bar. **The ring's centre is always Mochi's centre** and never moves; the
-  radius is **96 pt**.
-  - **Bounds:** the screen inset by the safe area + 4 pt, with the top at Mochi's own top limit
-    (`MochiHome.topLimit`, just below the toolbar button row). The near-top test and the fit check
-    use it, so no button can cover the toolbar buttons.
-  - **Near edges** (`nearEdges(center:bounds:previous:)`): an edge becomes near when her centre
-    is less than R + 28 = 124 pt from it. It stops being near only beyond R + 52 = 148 pt
-    (hysteresis). The last set is kept in memory (`MochiHome.menuNearEdges`, not saved to disk)
+  radius is **96 pt** at her compact size, scaled by her size (160 / 132, about 116 pt, on regular
+  width; the 160 pt growth cap scales the same way).
+  - **Bounds** (`MochiArea.menuBounds(around:)`): Mochi's own area (safe area, toolbar wherever it
+    is) with a 4 pt margin, the top just below the toolbar button row. A reserved region that runs
+    right across it (the division band) trims it to her side, so the band counts as an edge.
+    The near-edge test and the fit check use these bounds, and the fit check also keeps every
+    button clear of the remaining reserved regions, so no button covers the toolbar, the band or
+    an occlusion.
+  - **Near edges** (`nearEdges(center:bounds:previous:scale:)`): an edge becomes near when her
+    centre is less than R + 28 pt from it (124 pt at compact size). It stops being near only
+    beyond R + 52 pt (hysteresis). The last set is kept in memory (`MochiHome.menuNearEdges`, not saved to disk)
     and updated each time the ring opens.
   - **Presets** (`preset(for:center:bounds:)`, `place(center:bounds:nearEdges:)`). Angles are in
     degrees: 0 = right, −90 = up, clockwise positive. Actions always run in clockwise order
@@ -1466,7 +1544,8 @@ opens a ring of five Liquid Glass actions. No SwiftData or backup changes.
       - Bottom: −180, −135, −90, −45, 0.
     - **Corner** (two adjacent near edges): a 140° fan centred on the inward diagonal (top-left
       45°, top-right 135°, bottom-left −45°, bottom-right −135°), at 35° steps.
-    - Two opposite near edges (not possible in portrait) count as the nearer one.
+    - Two opposite near edges (possible on short windows, such as iPhone Duo closed and turned)
+      count as the nearer one.
   - **Stability:** within a preset, every button's offset from her centre is a constant, so
     small moves never shuffle the buttons.
   - **Fit check**, once per opening: if a fan's 48 pt circles don't all fit inside the bounds,
@@ -1550,3 +1629,88 @@ and plays eating for 6 loops, then grooming for 3.
   4. The serving rule.
 - **Seed loader:** bundled "food" products are stored as wet food.
 - Kinds don't change calories, totals, the chart or any filtering.
+
+---
+
+## 17. Adaptive layout and iPhone Duo (`Shared/AdaptiveLayout.swift`)
+
+The app runs on ordinary iPhones and on iPhone Duo, a foldable with an outer and an inner display.
+Added 2026-10-16 with the iOS 27.1 SDK; the deployment target stays iOS 27.0. No data model or
+backup changes.
+
+### Device facts (iOS 27.1 simulator, read at runtime, never hard-coded)
+| Pose | Window | Size classes (h / v) | Notes |
+|---|---|---|---|
+| Closed (outer display) | about 466 × 678 pt | compact / regular | Bars may be vertical on the trailing edge (they were in the Closed pose on 2026-10-16); camera and status-column occlusions. |
+| Closed, turned | about 678 × 466 pt | compact / compact | Bars may be vertical on the trailing edge. |
+| Open (inner display) | about 951 × 669 pt | regular / regular | A division band about 40 pt wide near the middle, active in Book pose. |
+| Open, turned | about 669 × 951 pt | regular / regular | Horizontal bars; a horizontal division band. |
+
+`UIScreen.main.bounds` is wrong on the inner display, so the app never uses it (it never did);
+sizes come from `onGeometryChange` in each view. The app had no `UIScreen.main`,
+`userInterfaceIdiom` or orientation checks before this change either; its fixed sizes are chart
+heights, icon slots and Mochi's sprite.
+
+### Rules
+- **Branch on the size class and the width a view gets**, never on the device
+  (`AdaptiveLayout.Columns`): regular width of at least 800 pt shows two columns; anything else is
+  one column. Widths are content widths (minus the leading and trailing safe area, which includes
+  a vertical toolbar).
+- **Readable width:** `readableContent()` on every `Form` and `List` keeps content to about 640 pt,
+  centred, with at least the 20 pt list margin. For scrolling content it sets horizontal
+  `contentMargins` on the scroll content (the list background still fills the screen); otherwise
+  it pads. Where nothing needs narrowing (an iPhone in portrait, iPhone Duo closed) it passes
+  `nil`, leaving the system's own margins, so those layouts are unchanged.
+- **Reserved regions** (iOS 27.1 `GeometryProxy.reservedRegions(kind:options:layoutDirectionBehavior:)`,
+  kinds `.division` and `.occlusion`, active ones only): read in `onGeometryChange` on every
+  geometry change, never once at first layout, because they can be empty for the first passes.
+  `readableContent()` and `avoidingReservedRegions()` cut every active region that reaches past
+  the safe area out of the content rect, along the side that keeps the most room
+  (`AdaptiveLayout.freeRect`): a vertical band leaves the wider side (horizontal margins), a
+  horizontal band the taller part (padding, so rows can't scroll under it). Regions inside the safe
+  area are already avoided. Before iOS 27.1, `ReservedAreas` is always empty.
+- **Two panes:** `SplitPanes` is an `ArrangementView` with `.arrangementViewStyle(.split.axes(…))`
+  on iOS 27.1, which places the primary and secondary panes on either side of the division band
+  so nothing is drawn under it; before iOS 27.1, an `HStack` (or `VStack`) of equal panes. Each
+  pane is its own `List` with `readableContent()`, scrolling on its own.
+- **Bars:** system toolbars, `NavigationStack`, sheets and `List`s throughout, so iOS can place
+  bars vertically on the outer display. Nothing forces horizontal bars. The Calories toolbar's
+  priorities are in §8 (Controls stay visible) and §13 (Log Food).
+- **Sheets** keep the system sizing; none has a fixed height or detent.
+- **Switching layouts** (fold, unfold, rotate) keeps the selected day (`DayLogView` state), open
+  sheets (the Log Food sheet and the entry edit sheet and delete dialog are attached outside the
+  layout switch) and, between the one-column layouts, the list's scroll position (the same `List`
+  is used on every width). Switching to or from two columns starts the new lists at the top.
+
+### Screens
+| Screen | Compact width | Regular width < 800 pt | Regular width ≥ 800 pt |
+|---|---|---|---|
+| Calories (`DayEntriesList`) | One list: summary, entries, chart (unchanged) | One list at readable width; with an **active horizontal division band**, `SplitPanes(axis: .vertical)`: summary and chart above the band, entries below | `SplitPanes`: date navigator, summary card and Daily Calories chart leading; the day's entries trailing |
+| Saved foods (`SavedFoodsView`) | Push brand → line → product | Two columns: brands (tap to select, highlighted) beside the brand's products grouped under their lines (`BrandProductsList`); products open as before. Search results are one list. No new menus. | Same |
+| Weight | One list (chart, entries) | One list, readable width | Unit picker and chart beside the entries |
+| Profile (`MochiView`) | One list | One list, readable width | Photo and details beside vaccinations and medical history |
+| Settings, every form and sheet | Unchanged | Readable width, out of reserved regions | Same |
+
+### Mochi (§15)
+Her area excludes the safe area, the toolbar wherever it is (top row, or a vertical strip at the
+side) and every active reserved region; the ring uses the same area. She's larger on regular width
+(160 × 153 pt, ring radius scaled to match), keeps one saved spot per configuration (compact and
+regular), and animates to the right one when the configuration changes.
+
+### Camera (§13)
+Package scanning uses its own capture session and picks the world-facing wide camera with the
+iOS 27.1 `AVCaptureDeviceDirectionCoordinator` (fallback: the back wide-angle camera), switching
+and rebuilding when a pose change changes the camera or interrupts the session.
+
+### iOS 27.1 APIs used, and their fallbacks
+| API | Used for | Before iOS 27.1 |
+|---|---|---|
+| `GeometryProxy.reservedRegions(kind:options:layoutDirectionBehavior:)`, `ReservedRegion` | `ReservedAreas` (layout, Mochi, ring, camera screen) | No regions (empty) |
+| `ArrangementView`, `.split` (`SplitArrangementViewStyle.axes(_:)`), `arrangementViewStyle(_:)` | `SplitPanes` | `HStack` / `VStack` of equal panes |
+| `EnvironmentValues.toolbarVerticalEdge` | `ToolbarVerticalEdgeReader` (Mochi's top limit) | Bars are always horizontal |
+| `AVCaptureDeviceDirectionCoordinator`, `AVCaptureDeviceDirectionMap`, `AVCaptureDeviceDescriptor` (AVKit) | Choosing the world-facing camera | `AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)` |
+
+Not used: `toolbarVerticalBehavior(_:)` (the default already allows vertical bars, and `.disabled`
+would force them horizontal), `UIArrangementViewController` (the app is SwiftUI), and the hinge APIs
+(`UIHinge`, `UIHingeInteraction`; nothing needs the hinge angle). `ToolbarItemVisibilityPriority`
+is iOS 27.0, so it needs no gate.

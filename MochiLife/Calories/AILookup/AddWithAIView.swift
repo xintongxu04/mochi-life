@@ -181,6 +181,7 @@ struct AddWithAIView: View {
                 Text("\(AILookupLimit.remainingToday) of \(AILookupLimit.dailyCap) lookups left today.")
             }
         }
+        .readableContent()
     }
 
     private func progressView(_ stage: LookupStage) -> some View {

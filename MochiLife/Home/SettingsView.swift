@@ -32,6 +32,7 @@ struct SettingsView: View {
                 Text("Backup")
             }
         }
+        .readableContent()
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -29,17 +29,10 @@ final class MochiHome {
     var menuNearEdges: RadialMenuGeometry.Edges = []
     /// Floating Mochi shows only on the Calories screen with nothing presented over it.
     var isSpriteHidden: Bool { isLoggingFood || isEditingEntry || isRestoring || !path.isEmpty }
-    /// Height of the standard inline navigation bar: the row holding the toolbar buttons.
-    static let toolbarRowHeight: CGFloat = 44
-    /// Gap below the toolbar button row.
-    static let toolbarRowGap: CGFloat = 4
-
-    /// The top of the area Mochi and her ring may use, in screen points: just below the toolbar
-    /// button row (the window's top safe area + the inline bar + 4 pt). It never includes the
-    /// large "Today" title or anything that scrolls, and never changes while scrolling.
-    static func topLimit(safeAreaTop: CGFloat) -> CGFloat {
-        safeAreaTop + toolbarRowHeight + toolbarRowGap
-    }
+    /// Where the Calories screen's toolbar is, measured inside the navigation stack.
+    var toolbarPlacement = ToolbarPlacement()
+    /// The area Mochi and her ring may use, kept current by her layer for the ring.
+    var mochiArea: MochiArea?
 
     /// A food was logged; Mochi eats once the Calories screen is showing again.
     private var pendingEating = false

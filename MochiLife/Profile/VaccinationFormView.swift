@@ -47,6 +47,7 @@ struct VaccinationFormView: View {
                         .lineLimit(2...6)
                 }
             }
+            .readableContent()
             .navigationTitle(vaccination == nil ? "Add Vaccination" : "Edit Vaccination")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

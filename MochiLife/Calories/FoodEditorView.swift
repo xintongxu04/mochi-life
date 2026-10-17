@@ -297,6 +297,7 @@ struct FoodEditorView: View {
                 notesSection
             }
         }
+        .readableContent()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

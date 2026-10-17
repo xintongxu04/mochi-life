@@ -7,12 +7,14 @@ import CoreGraphics
 /// Angles are in degrees: 0 = right, −90 = up, positive = clockwise (screen coordinates). The
 /// actions are always laid out in clockwise order: Eat, Play, Settings, Weight, Profile.
 enum RadialMenuGeometry {
+    /// The radius at Mochi's compact size; `scale` (her size over 132 pt) multiplies it, so the
+    /// ring around the larger regular-width sprite is proportionally wider.
     static let radius: CGFloat = 96
     static let buttonDiameter: CGFloat = 48
-    /// An edge becomes "near" when Mochi's centre is closer to it than this…
-    static let nearDistance: CGFloat = radius + 28
-    /// …and stops being near only once she's farther than this (hysteresis).
-    static let farDistance: CGFloat = radius + 52
+    /// An edge becomes "near" when Mochi's centre is closer to it than the radius plus this…
+    static let nearMargin: CGFloat = 28
+    /// …and stops being near only once she's farther than the radius plus this (hysteresis).
+    static let farMargin: CGFloat = 52
     static let fullStep: Double = 72
     static let edgeSpan: Double = 180
     static let cornerSpan: Double = 140
@@ -22,6 +24,8 @@ enum RadialMenuGeometry {
     static let minimumSpacing: CGFloat = 56
     static let radiusStep: CGFloat = 4
     static let maximumRadius: CGFloat = 160
+
+    static func radius(scale: CGFloat) -> CGFloat { radius * scale }
 
     struct Edges: OptionSet, Sendable, Equatable {
         let rawValue: Int
@@ -44,9 +48,11 @@ enum RadialMenuGeometry {
         var preset: Preset
     }
 
-    /// The edges Mochi is near, with hysteresis: an edge joins below `nearDistance` and leaves
-    /// only above `farDistance`, so the preset doesn't flip on small moves.
-    static func nearEdges(center: CGPoint, bounds: CGRect, previous: Edges) -> Edges {
+    /// The edges Mochi is near, with hysteresis: an edge joins below radius + 28 pt and leaves
+    /// only above radius + 52 pt, so the preset doesn't flip on small moves.
+    static func nearEdges(center: CGPoint, bounds: CGRect, previous: Edges, scale: CGFloat = 1) -> Edges {
+        let nearDistance = radius(scale: scale) + nearMargin
+        let farDistance = radius(scale: scale) + farMargin
         let distances: [(Edges, CGFloat)] = [
             (.left, center.x - bounds.minX), (.right, bounds.maxX - center.x),
             (.top, center.y - bounds.minY), (.bottom, bounds.maxY - center.y),
@@ -77,22 +83,32 @@ enum RadialMenuGeometry {
     }
 
     /// The five button centres for `edges` (from `nearEdges`), checked once: if a fan doesn't
-    /// fit inside `bounds`, its span narrows in 10° steps, and only when neighbours would be
-    /// closer than 56 pt does the radius grow, in 4 pt steps. The ring never moves off Mochi.
-    static func place(center: CGPoint, bounds: CGRect, nearEdges edges: Edges, count: Int = 5) -> Placement {
+    /// fit inside `bounds` clear of every obstacle (active reserved regions), its span narrows in
+    /// 10° steps, and only when neighbours would be closer than 56 pt does the radius grow, in
+    /// 4 pt steps. The ring never moves off Mochi.
+    static func place(center: CGPoint, bounds: CGRect, nearEdges edges: Edges, count: Int = 5,
+                      scale: CGFloat = 1, obstacles: [CGRect] = []) -> Placement {
         let preset = preset(for: edges, center: center, bounds: bounds)
+        let baseRadius = radius(scale: scale)
+        let fits: ([CGPoint]) -> Bool = { points in
+            points.allSatisfy { point in
+                let circle = circle(at: point)
+                return bounds.contains(circle) && !obstacles.contains { $0.intersects(circle) }
+            }
+        }
         guard case let (middle?, initialSpan) = fan(for: preset) else {
             // Full ring: 72° steps from the top.
             let angles = (0..<count).map { -90 + fullStep * Double($0) }
-            return Placement(points: angles.map { point(center, radius, $0) }, radius: radius, preset: preset)
+            return Placement(points: angles.map { point(center, baseRadius, $0) }, radius: baseRadius, preset: preset)
         }
         var span = initialSpan
-        var currentRadius = radius
+        var currentRadius = baseRadius
         while true {
             let angles = fanAngles(middle: middle, span: span, count: count)
             let points = angles.map { point(center, currentRadius, $0) }
-            let fits = points.allSatisfy { bounds.contains(circle(at: $0)) }
-            if fits || currentRadius >= maximumRadius { return Placement(points: points, radius: currentRadius, preset: preset) }
+            if fits(points) || currentRadius >= maximumRadius * scale {
+                return Placement(points: points, radius: currentRadius, preset: preset)
+            }
             let narrower = span - spanStep
             if narrower > 0, chord(currentRadius, narrower / Double(count - 1)) >= minimumSpacing {
                 span = narrower

@@ -13,27 +13,11 @@ struct WeightView: View {
     @State private var isAddingEntry = false
     @Environment(\.catName) private var catName
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var width: CGFloat = 0
+
     var body: some View {
-            List {
-                if !entries.isEmpty {
-                    Section {
-                        WeightChartView(entries: entries, unit: unit)
-                    }
-                }
-                Section {
-                    ForEach(entries) { entry in
-                        HStack {
-                            Text(entry.date, format: .dateTime.day().month(.abbreviated).year())
-                            Spacer()
-                            Text(unit.formatted(kilograms: entry.kilograms))
-                                .monospacedDigit()
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("weightEntry")
-                    }
-                    .onDelete(perform: deleteEntries)
-                }
-            }
+        content
             .overlay {
                 if entries.isEmpty {
                     ContentUnavailableView(
@@ -43,16 +27,7 @@ struct WeightView: View {
                     )
                 }
             }
-            .safeAreaInset(edge: .top) {
-                Picker("Unit", selection: $unit) {
-                    ForEach(WeightUnit.allCases) { unit in
-                        Text(unit.rawValue).tag(unit)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            }
+            .onGeometryChange(for: CGFloat.self) { AdaptiveLayout.contentWidth(in: $0) } action: { width = $0 }
             .navigationTitle("Weight")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -64,6 +39,67 @@ struct WeightView: View {
             .sheet(isPresented: $isAddingEntry) {
                 AddWeightView(unit: unit)
             }
+    }
+
+    /// One list (chart, then entries), or with 800 pt of regular width the unit and chart beside
+    /// the entries.
+    @ViewBuilder
+    private var content: some View {
+        switch AdaptiveLayout.Columns(sizeClass: sizeClass, width: width) {
+        case .single:
+            List {
+                chartSection
+                entriesSection
+            }
+            .readableContent()
+            .safeAreaInset(edge: .top) { unitPicker }
+        case .two:
+            SplitPanes {
+                List { chartSection }
+                    .readableContent()
+                    .safeAreaInset(edge: .top) { unitPicker }
+            } secondary: {
+                List { entriesSection }
+                    .readableContent()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var chartSection: some View {
+        if !entries.isEmpty {
+            Section {
+                WeightChartView(entries: entries, unit: unit)
+            }
+        }
+    }
+
+    private var entriesSection: some View {
+        Section {
+            ForEach(entries) { entry in
+                HStack {
+                    Text(entry.date, format: .dateTime.day().month(.abbreviated).year())
+                    Spacer()
+                    Text(unit.formatted(kilograms: entry.kilograms))
+                        .monospacedDigit()
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("weightEntry")
+            }
+            .onDelete(perform: deleteEntries)
+        }
+    }
+
+    private var unitPicker: some View {
+        Picker("Unit", selection: $unit) {
+            ForEach(WeightUnit.allCases) { unit in
+                Text(unit.rawValue).tag(unit)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal)
+        .padding(.bottom, 8)
+        .frame(maxWidth: AdaptiveLayout.readableWidth)
     }
 
     private func deleteEntries(at offsets: IndexSet) {

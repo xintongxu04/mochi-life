@@ -28,6 +28,7 @@ struct AddWeightView: View {
                         .foregroundStyle(.red)
                 }
             }
+            .readableContent()
             .navigationTitle("Add Weight")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

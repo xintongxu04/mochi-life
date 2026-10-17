@@ -171,6 +171,7 @@ struct LogEntryForm: View {
                 DatePicker("When", selection: $loggedAt)
             }
         }
+        .readableContent()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: defaultToViewedDay)

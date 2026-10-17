@@ -123,6 +123,7 @@ struct ScheduleEditorView: View {
                 }
             }
         }
+        .readableContent()
         .navigationTitle(isEditing ? "Edit Schedule" : "New Schedule")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

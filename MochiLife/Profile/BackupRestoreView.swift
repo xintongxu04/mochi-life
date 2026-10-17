@@ -81,6 +81,7 @@ struct BackupRestoreView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .readableContent()
         .navigationTitle("Back Up and Restore")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $isImporting, allowedContentTypes: [.mochiBackup]) { result in
@@ -228,6 +229,7 @@ struct RestoreFlowView: View {
                 Text("Everything on this iPhone is replaced by the backup. A safety backup of the current data is saved first, and you can restore it from Back Up and Restore.")
             }
         }
+        .readableContent()
         .confirmationDialog("Replace all data on this iPhone?", isPresented: $isConfirming, titleVisibility: .visible) {
             Button("Replace All Data", role: .destructive) { restore(prepared) }
             Button("Cancel", role: .cancel) {}

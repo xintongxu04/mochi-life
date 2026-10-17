@@ -281,6 +281,7 @@ private struct LogFoodHomeView: View {
                 }
             }
         }
+        .readableContent()
         .navigationTitle("Log Food")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -488,6 +489,7 @@ private struct CandidateListView: View {
                 Button("Add a Food by Hand", systemImage: "square.and.pencil", action: onManualAdd)
             }
         }
+        .readableContent()
         .navigationTitle("Choose the Food")
         .navigationBarTitleDisplayMode(.inline)
     }

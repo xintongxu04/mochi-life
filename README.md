@@ -15,7 +15,8 @@ tabs). Messages in the app use the name from her profile (**Mochi** unless you c
 - Mochi floats over the Calories screen like a little desktop pet, with a soft
   shadow under her paws. She starts in the bottom-right corner.
   - **Drag her** anywhere (she stays where you drop her, and she's remembered
-    next time). If you drop her partly off screen, she springs back in.
+    next time). If you drop her partly off screen, or on the toolbar, she
+    springs back in.
   - The list underneath still scrolls normally around her.
   - She hides on other screens and while Log Food is open.
 - She lives her own life. She rests (sitting, or loafing with her paws tucked
@@ -79,9 +80,9 @@ The app opens on the Calories screen for **Today**.
   is never listed twice, and foods you've since deleted, or quick entries, still
   work and are marked "not in saved foods"), and a
   search box that finds your saved foods as you type, even with a typo.
-- Or tap the **camera** button next to the search box and point it at the front
-  of the package (or choose a photo). The app reads the label on the iPhone and
-  finds the food: if it's sure, it opens it straight away (with "Not this one?"
+- Or tap the **camera** button next to the search box, point the back camera at
+  the front of the package and tap the round shutter button (or choose a photo).
+  The app reads the label on the iPhone and finds the food: if it's sure, it opens it straight away (with "Not this one?"
   if it guessed wrong); if two or three are close, it asks which; on iPhones
   with Apple Intelligence, the on-device model helps decide. Photos are never
   stored or uploaded.
@@ -160,7 +161,9 @@ The app opens on the Calories screen for **Today**.
   creating duplicates. Foods you've edited or added yourself are never changed,
   foods you've deleted don't come back, and your food log is never changed.
 - Browse foods by brand, then by line (with how many products are in each),
-  then by product. Foods without a brand are grouped under "My foods".
+  then by product. Foods without a brand are grouped under "My foods". On a
+  wide screen (iPhone Duo open) the brands are listed on the left; tap one to
+  see all its products on the right, grouped by line.
 - Each Tiki Cat food shows a small product photo next to it in lists and search
   results. The photos are stored inside the app, so they work offline. Foods
   and log entries without a photo show a little pixel-art picture for their kind.
@@ -257,6 +260,36 @@ The app opens on the Calories screen for **Today**.
   surgery, medication or other), vet or clinic, and notes, newest first. Tap to
   edit, swipe to delete.
 
+### iPhone Duo and bigger screens
+
+The app works on ordinary iPhones and on iPhone Duo, closed or open, upright or
+turned. Screens adjust to the space they get:
+
+- **Closed** (the outer screen): the same layout as on an ordinary iPhone. iOS
+  may move the buttons at the top into a strip down the right-hand side; Log
+  Food stays there as a blue **+** button.
+- **Open:** the Calories screen shows two columns. The day, the calorie
+  summary and the Daily Calories chart are on the left, and the foods logged
+  that day are on the right. Each side scrolls on its own. Weight shows the
+  chart beside the list of weights, Mochi's profile shows her photo and details
+  beside her vaccinations and medical history, and Saved Foods shows brands
+  beside their products.
+- **Open and turned:** one column, kept to a comfortable width in the middle.
+  If the phone is partly folded, the summary and chart sit above the fold and
+  the day's foods below it.
+- Settings and every form are kept to a comfortable width in the middle of
+  wide screens.
+- Nothing is placed on the fold while the phone is partly folded, or under the
+  camera on the outer screen.
+- **Mochi** is a little bigger on the open screen. She remembers one spot for
+  the closed screen and another for the open screen, and moves to the right one
+  when you fold, unfold or turn the phone. She never sits on the fold or on the
+  toolbar.
+- The package camera always uses the back camera, and comes back by itself
+  after you fold, unfold or turn the phone.
+- Folding, unfolding or turning keeps the day you're looking at and anything
+  you have open, such as Log Food or an entry you're editing.
+
 If saving ever fails, the app tells you and lets you try again or discard the
 change, instead of failing silently.
 
@@ -287,6 +320,9 @@ product page's text to DeepSeek.
    with Mochi at the top.
 
 To stop the app, click the **■ Stop** button next to Play.
+
+To try iPhone Duo, choose **iPhone Duo** in step 3 instead. Switch it between
+Closed, Open, Book and Rotate in **Device Hub**.
 
 ## Where the food data comes from
 
