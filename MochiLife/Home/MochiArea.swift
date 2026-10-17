@@ -35,7 +35,11 @@ struct MochiArea: Equatable, Sendable {
     static let menuMargin: CGFloat = 4
     static let defaultEdgeDistance: CGFloat = 16
 
-    init(window: CGSize, safeArea: EdgeInsets, toolbar: ToolbarPlacement, reserved: [CGRect], spriteSize: CGSize) {
+    /// `foldBand` is the Calories layout's fold band (`MochiHome.calorieFoldBand`), which she
+    /// avoids even when the system marks the fold inactive (iPhone Duo open flat) or the layout
+    /// falls back to the midpoint.
+    init(window: CGSize, safeArea: EdgeInsets, toolbar: ToolbarPlacement, reserved: [CGRect], foldBand: CGRect? = nil,
+         spriteSize: CGSize) {
         // The top is a constant: just below the toolbar button row, or the safe area when the
         // bars are at the side. It never follows the large title as it collapses.
         let top = safeArea.top + (toolbar.isVertical ? 0 : Self.toolbarRowHeight) + Self.toolbarRowGap
@@ -44,7 +48,7 @@ struct MochiArea: Equatable, Sendable {
         let bottom = window.height - safeArea.bottom
         let usable = CGRect(x: minX, y: top, width: max(0, maxX - minX), height: max(0, bottom - top))
         self.usable = usable
-        self.obstacles = reserved.filter { $0.intersects(usable) }
+        self.obstacles = (reserved + [foldBand].compactMap(\.self)).filter { $0.intersects(usable) }
         self.spriteSize = spriteSize
     }
 

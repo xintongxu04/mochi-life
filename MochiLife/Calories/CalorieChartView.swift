@@ -5,6 +5,10 @@ import SwiftUI
 /// Total calories per day as bars, with a line at Mochi's daily target.
 struct CalorieChartView: View {
     let target: CalorieTarget
+    /// The bars' height; larger only in iPhone Duo's split layout, where the chart fills its pane.
+    var chartHeight = CalorieChartView.defaultChartHeight
+
+    static let defaultChartHeight: CGFloat = 200
 
     enum Range: Int, CaseIterable, Identifiable {
         case week = 7
@@ -92,6 +96,6 @@ struct CalorieChartView: View {
                 }
             }
         }
-        .frame(height: 200)
+        .frame(height: chartHeight)
     }
 }

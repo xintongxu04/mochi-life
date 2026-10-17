@@ -196,38 +196,32 @@ private struct DayEntriesList<Controls: View>: View {
 
     private var total: Double { entries.reduce(0) { $0 + $1.kilocalories } }
 
-    /// The layout for the space this screen gets.
-    private enum Layout: Equatable {
-        /// One list: the iPhone layout (readable width when there's more room).
-        case single
-        /// Regular width of 800 pt or more: date, summary and chart on the leading side, the
-        /// day's foods on the trailing side, each scrolling on its own.
-        case twoColumns
-        /// Regular width under 800 pt with an active division band across the screen (iPhone
-        /// Duo open and turned, partly folded): the same two parts above and below the band.
-        case stacked
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The window as this screen measures it: full size, side insets and the fold.
+    @State private var window = CaloriesWindowGeometry()
+    /// The chart's height in the split layout's trailing pane: the room left under the summary,
+    /// at least 200 pt.
+    @State private var chartHeight = CalorieChartView.defaultChartHeight
 
-        init(sizeClass: UserInterfaceSizeClass?, width: CGFloat, reserved: ReservedAreas) {
-            switch AdaptiveLayout.Columns(sizeClass: sizeClass, width: width) {
-            case .two: self = .twoColumns
-            case .single: self = sizeClass == .regular && reserved.hasHorizontalDivision ? .stacked : .single
-            }
-        }
+    private var layout: CaloriesLayout {
+        CaloriesLayoutResolver.resolve(.init(
+            windowSize: window.size, fold: window.fold, isRegularWidth: sizeClass == .regular,
+            leadingInset: window.leadingInset, actionBarWidth: window.trailingInset,
+            margin: AdaptiveLayout.minimumMargin
+        ))
     }
 
-    @Environment(\.horizontalSizeClass) private var sizeClass
-    @State private var width: CGFloat = 0
-    @State private var reserved = ReservedAreas()
-
-    private var layout: Layout { Layout(sizeClass: sizeClass, width: width, reserved: reserved) }
-
     var body: some View {
+        let layout = layout
         CalorieTargetReader { target in
-            content(target: target)
+            content(target: target, layout: layout)
         }
-        // Read on every geometry change (reserved regions can arrive a few passes late).
-        .onGeometryChange(for: CGFloat.self) { AdaptiveLayout.contentWidth(in: $0) } action: { width = $0 }
-        .onGeometryChange(for: ReservedAreas.self) { ReservedAreas.active(in: $0) } action: { reserved = $0 }
+        .animation(reduceMotion ? nil : .default, value: layout)
+        // The screen's root reads the window once and passes the layout down.
+        .onGeometryChange(for: CaloriesWindowGeometry.self) { CaloriesWindowGeometry.read($0) } action: { window = $0 }
+        // Floating Mochi keeps out of whichever fold band the layout uses.
+        .onChange(of: layout.foldBand, initial: true) { _, band in home.calorieFoldBand = band }
         // Outside the layout switch, so folding, unfolding or turning keeps an open sheet.
         .onChange(of: entryBeingEdited != nil) { _, isEditing in home.isEditingEntry = isEditing }
         .sheet(item: $entryBeingEdited) { entry in
@@ -257,39 +251,89 @@ private struct DayEntriesList<Controls: View>: View {
     }
 
     @ViewBuilder
-    private func content(target: CalorieTarget) -> some View {
+    private func content(target: CalorieTarget, layout: CaloriesLayout) -> some View {
         switch layout {
-        case .single:
-            // The same list on every iPhone (and iPhone Duo closed or open and turned), so its
-            // scroll position survives a change of width.
-            List {
-                summarySection(target: target)
-                entriesSection
-                chartSection(target: target)
-            }
-            .readableContent()
-        case .twoColumns, .stacked:
-            // ArrangementView (iOS 27.1) puts the two parts on either side of the division band.
-            SplitPanes(axis: layout == .twoColumns ? .horizontal : .vertical) {
+        case let .split(split):
+            splitPanes(split, target: target)
+        case .singleColumn where layout.stacksAroundFold:
+            // iPhone Duo open, turned and partly folded: the same two parts above and below the
+            // fold, so nothing sits in the band.
+            SplitPanes(axis: .vertical) {
                 List {
-                    summarySection(target: target)
+                    summarySection(target: target, showsDayControls: true)
                     chartSection(target: target)
                 }
-                .readableContent()
             } secondary: {
                 List {
                     entriesSection
                 }
-                .readableContent()
+            }
+        case .singleColumn:
+            // Today's iPhone layout at the full available width (also iPhone Duo closed, and open
+            // and turned).
+            List {
+                summarySection(target: target, showsDayControls: true)
+                entriesSection
+                chartSection(target: target)
             }
         }
     }
 
-    /// The day arrows and the day's calories against the target.
-    private func summarySection(target: CalorieTarget) -> some View {
+    /// Two panes meeting at the fold: the day's foods on the leading side (under the date
+    /// controls), the summary and the chart on the trailing side, each scrolling on its own.
+    /// Nothing is drawn in the fold band. Each pane's list sets its margins from the layout: the
+    /// standard margin from the band, and the trailing pane's also clear the action bar. VoiceOver
+    /// reads the food list, then the summary, then the chart.
+    private func splitPanes(_ split: CaloriesLayout.Split, target: CalorieTarget) -> some View {
+        // The root starts at the window's leading safe-area inset.
+        HStack(spacing: 0) {
+            List {
+                entriesSection
+            }
+            .contentMargins(.leading, split.leadingMargins.leading, for: .scrollContent)
+            .contentMargins(.trailing, split.leadingMargins.trailing, for: .scrollContent)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                dayControls
+                    .padding(.horizontal, AdaptiveLayout.minimumMargin)
+                    .padding(.vertical, 8)
+                    .contentShape(.rect)
+                    .gesture(swipeBetweenDays)
+            }
+            .frame(width: max(0, split.leading.width - window.leadingInset))
+
+            // The fold band: only the lists' own background, so nothing shows in it.
+            Color(uiColor: .systemGroupedBackground)
+                .frame(width: split.foldBand.width)
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+
+            List {
+                summarySection(target: target, showsDayControls: false)
+                chartSection(target: target, chartHeight: chartHeight)
+            }
+            .contentMargins(.leading, split.trailingMargins.leading, for: .scrollContent)
+            .contentMargins(.trailing, split.trailingMargins.trailing, for: .scrollContent)
+            // The chart takes the height the summary leaves (at least 200 pt); with large text or
+            // a short window the pane scrolls instead.
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
+                    - geometry.contentSize.height
+            } action: { _, room in
+                let height = max(CalorieChartView.defaultChartHeight, (chartHeight + room).rounded())
+                if abs(height - chartHeight) >= 1 { chartHeight = height }
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// The day's calories against the target, with the day arrows when they aren't shown above
+    /// the food list (split layout).
+    private func summarySection(target: CalorieTarget, showsDayControls: Bool) -> some View {
         Section {
             VStack(spacing: 12) {
-                dayControls
+                if showsDayControls {
+                    dayControls
+                }
                 if isFuture {
                     PlannedCaloriesView(planned: total)
                 } else {
@@ -329,9 +373,9 @@ private struct DayEntriesList<Controls: View>: View {
         }
     }
 
-    private func chartSection(target: CalorieTarget) -> some View {
+    private func chartSection(target: CalorieTarget, chartHeight: CGFloat = CalorieChartView.defaultChartHeight) -> some View {
         Section("Daily Calories") {
-            CalorieChartView(target: target)
+            CalorieChartView(target: target, chartHeight: chartHeight)
         }
     }
 
@@ -362,6 +406,37 @@ private struct DayEntriesList<Controls: View>: View {
                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
                 onSwipe(value.translation.width > 0 ? -1 : 1)
             }
+    }
+}
+
+/// The window geometry the Calories layout depends on, in window points.
+private struct CaloriesWindowGeometry: Equatable, Sendable {
+    var size = CGSize.zero
+    var leadingInset: CGFloat = 0
+    /// The trailing safe-area inset: on iPhone Duo, the vertical action bar with its padding.
+    var trailingInset: CGFloat = 0
+    var fold: CaloriesLayoutResolver.Fold?
+
+    /// Read from the screen's root view, whose frame is the window inside its safe area and whose
+    /// insets are the strips around it (`AdaptiveLayout.contentWidth`), so the window is the frame
+    /// grown by the insets. Insets, not positions, so push and pop animations can't change it.
+    /// The fold is iOS 27.1's division region, read even while inactive (iPhone Duo open flat),
+    /// on every geometry change because it can arrive a few layout passes late.
+    nonisolated static func read(_ proxy: GeometryProxy) -> CaloriesWindowGeometry {
+        let insets = proxy.safeAreaInsets
+        var geometry = CaloriesWindowGeometry(
+            size: CGSize(width: proxy.size.width + insets.leading + insets.trailing,
+                         height: proxy.size.height + insets.top + insets.bottom),
+            leadingInset: insets.leading,
+            trailingInset: insets.trailing
+        )
+        if #available(iOS 27.1, *),
+           let region = proxy.reservedRegions(kind: .division, options: .includeInactive).first {
+            // From the root's coordinates (origin at the safe area's corner) to the window's.
+            let rect = region.frame.offsetBy(dx: insets.leading, dy: insets.top)
+            geometry.fold = CaloriesLayoutResolver.Fold(rect: rect, isActive: region.isActive)
+        }
+        return geometry
     }
 }
 

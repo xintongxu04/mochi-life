@@ -74,7 +74,8 @@ struct FloatingMochiView: View {
 
     private var area: MochiArea {
         MochiArea(window: window.size, safeArea: window.safeArea, toolbar: home.toolbarPlacement,
-                  reserved: window.reserved.all, spriteSize: MochiSpriteView.size(for: sizeClass))
+                  reserved: window.reserved.all, foldBand: home.calorieFoldBand,
+                  spriteSize: MochiSpriteView.size(for: sizeClass))
     }
 
     var body: some View {

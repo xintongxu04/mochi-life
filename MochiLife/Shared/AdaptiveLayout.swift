@@ -23,10 +23,20 @@ enum AdaptiveLayout {
         }
     }
 
-    /// The width a view's content can use: its width minus the leading and trailing safe area
-    /// (which includes toolbars placed vertically at the side).
+    /// The width a view's content can use: the proxy's own width.
+    ///
+    /// On a `List` (and other views that extend under the safe area), the proxy's frame already
+    /// leaves out the safe area, including a toolbar placed vertically at the side, while
+    /// `safeAreaInsets` reports the safe-area strips around it: the regions the list extends
+    /// into, which its content margins are measured across. So the width is never reduced by the
+    /// insets again.
+    ///
+    /// *Why (2026-10-16):* subtracting the insets counted iPhone Duo's 84 pt vertical action bar
+    /// twice (783 pt instead of 867 pt), so the Calories screen never split into two panes, and
+    /// its margins were worked out for the wrong area, leaving one column about two thirds of
+    /// the window wide and across the fold.
     nonisolated static func contentWidth(in proxy: GeometryProxy) -> CGFloat {
-        max(0, proxy.size.width - proxy.safeAreaInsets.leading - proxy.safeAreaInsets.trailing)
+        proxy.size.width
     }
 
     /// What's left of `content` after cutting away every reserved area that reaches into it.
@@ -111,30 +121,33 @@ private struct ReadableContentModifier: ViewModifier {
             .padding(.top, insets.top)
             .padding(.bottom, insets.bottom)
             // Measured outside the padding, so the result never feeds back into the measurement.
-            .onGeometryChange(for: Insets.self) { [limitsWidth] proxy in
-                Self.insets(in: proxy, limitsWidth: limitsWidth)
+            .onGeometryChange(for: Insets.self) { [scrolls, limitsWidth] proxy in
+                Self.insets(in: proxy, scrolls: scrolls, limitsWidth: limitsWidth)
             } action: { insets = $0 }
     }
 
-    nonisolated static func insets(in proxy: GeometryProxy, limitsWidth: Bool) -> Insets {
-        let bounds = CGRect(origin: .zero, size: proxy.size)
+    /// The proxy's frame is the content area (see `AdaptiveLayout.contentWidth`). Padding is
+    /// measured from it; scroll-content margins are measured from the scroll view's edges, which
+    /// lie beyond it by the safe-area insets, so those are added.
+    nonisolated static func insets(in proxy: GeometryProxy, scrolls: Bool, limitsWidth: Bool) -> Insets {
         let safe = proxy.safeAreaInsets
-        let content = CGRect(x: safe.leading, y: safe.top,
-                             width: max(0, bounds.width - safe.leading - safe.trailing),
-                             height: max(0, bounds.height - safe.top - safe.bottom))
+        let content = CGRect(origin: .zero, size: proxy.size)
         let free = AdaptiveLayout.freeRect(content, avoiding: ReservedAreas.active(in: proxy).all)
         let extraWidth = free.width - AdaptiveLayout.readableWidth - 2 * AdaptiveLayout.minimumMargin
         let leadingCut = free.minX - content.minX
         let trailingCut = content.maxX - free.maxX
+        // Where margins are measured from: the full area's edges for scroll content.
+        let leadingBase = scrolls ? safe.leading : 0
+        let trailingBase = scrolls ? safe.trailing : 0
         var insets = Insets(top: free.minY - content.minY, bottom: content.maxY - free.maxY)
         if !limitsWidth {
-            insets.leading = leadingCut
-            insets.trailing = trailingCut
+            insets.leading = leadingBase + leadingCut
+            insets.trailing = trailingBase + trailingCut
         } else if extraWidth > 0 || leadingCut > 0 || trailingCut > 0 {
             // The system's own margins are left alone unless something needs narrowing.
             let centring = max(0, extraWidth / 2) + AdaptiveLayout.minimumMargin
-            insets.leading = (leadingCut + centring).rounded()
-            insets.trailing = (trailingCut + centring).rounded()
+            insets.leading = (leadingBase + leadingCut + centring).rounded()
+            insets.trailing = (trailingBase + trailingCut + centring).rounded()
         }
         return insets
     }

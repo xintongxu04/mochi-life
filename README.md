@@ -265,18 +265,22 @@ The app opens on the Calories screen for **Today**.
 The app works on ordinary iPhones and on iPhone Duo, closed or open, upright or
 turned. Screens adjust to the space they get:
 
-- **Closed** (the outer screen): the same layout as on an ordinary iPhone. iOS
-  may move the buttons at the top into a strip down the right-hand side; Log
-  Food stays there as a blue **+** button.
-- **Open:** the Calories screen shows two columns. The day, the calorie
-  summary and the Daily Calories chart are on the left, and the foods logged
-  that day are on the right. Each side scrolls on its own. Weight shows the
-  chart beside the list of weights, Mochi's profile shows her photo and details
-  beside her vaccinations and medical history, and Saved Foods shows brands
-  beside their products.
-- **Open and turned:** one column, kept to a comfortable width in the middle.
-  If the phone is partly folded, the summary and chart sit above the fold and
-  the day's foods below it.
+- **Closed** (the outer screen): the same one-column layout as on an ordinary
+  iPhone, across the full width. iOS may move the buttons at the top into a
+  strip down the right-hand side; Log Food stays there as a blue **+** button.
+- **Open or Book** (the inner screen, flat or half open): the Calories screen
+  splits exactly at the fold. On the left: the day arrows and the foods logged
+  that day. On the right: the calorie summary, with the Daily Calories chart
+  below it filling the rest of the height. Nothing is drawn on the fold, and the
+  right-hand cards stay clear of the buttons down the right edge (so they're a
+  little narrower than the list). Each side scrolls on its own. The fold's
+  position comes from iOS; if iOS doesn't report it, the screen splits in the
+  middle. Weight shows the chart beside the list of weights, Mochi's profile
+  shows her photo and details beside her vaccinations and medical history, and
+  Saved Foods shows brands beside their products.
+- **Open and turned** (Rotate): one column across the full width. If the phone
+  is partly folded, the summary and chart sit above the fold and the day's
+  foods below it.
 - Settings and every form are kept to a comfortable width in the middle of
   wide screens.
 - Nothing is placed on the fold while the phone is partly folded, or under the

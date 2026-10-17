@@ -33,6 +33,9 @@ final class MochiHome {
     var toolbarPlacement = ToolbarPlacement()
     /// The area Mochi and her ring may use, kept current by her layer for the ring.
     var mochiArea: MochiArea?
+    /// The fold band the Calories layout keeps clear (window points), also for Mochi: the band
+    /// between its panes, or a fold running across one column. Nil without a fold.
+    var calorieFoldBand: CGRect?
 
     /// A food was logged; Mochi eats once the Calories screen is showing again.
     private var pendingEating = false
