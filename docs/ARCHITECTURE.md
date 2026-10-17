@@ -182,7 +182,7 @@ UI tests expect a **fresh install** (no saved data). See §10 for their current 
 | `FoodMatcherTests.swift` | FoodMatcher against the bundled seed data: exact name, line + recipe, shreds-vs-pâté ambiguity, one-letter OCR error, unrelated brand, size detection. |
 | `CalorieVerifierTests.swift` | The verifier only, on fixed texts: evidence present/absent, a value missing from its evidence, kJ vs kcal, per-cup vs per-can, a feeding-guide amount, a multipack total, consistent and inconsistent triples, calculated per-can calories, oz and lb conversion, deduplication, out-of-range kcal/kg. |
 | `RecentUsageTests.swift` | Recent/Frequent: a deleted food stays as a snapshot item, a quick entry opens prefilled, a food in Recent isn't repeated in Frequent (ids unique per section), same-named foods with different IDs stay separate. |
-| `CaloriesLayoutResolverTests.swift` | The Calories layout for iPhone Duo's Book and Open (split at the fold, nothing in the band, trailing content narrower than the list), Closed and Rotated (one full-width column), no fold information (midpoint split), and an ordinary iPhone. |
+| `CaloriesLayoutResolverTests.swift` | The Calories layout for iPhone Duo's Book and Open (split at the fold, nothing in the band, trailing content narrower than the list, the same split in both), a fold off the safe area's midpoint (unequal insets), Closed and Rotated (one full-width column), no fold information (the full window's centre in root coordinates), and an ordinary iPhone. |
 | `BackupRoundTripTests.swift` | One of every backed-up record, export → file → read/validate → restore into a second in-memory container → export again; compares every field and the photo files. |
 
 ### Other files
@@ -725,13 +725,13 @@ closes via an `onFinish` closure instead of `dismiss`.
 - **Unit tests:** `BackupRoundTripTests`, `FoodMatcherTests` and `CalorieVerifierTests` (13 tests); all run and passing on 2026-10-05 (`BackupRoundTripTests` re-run after adding schedules: passing). `RecentUsageTests` (4) and the UI test `RecentFoodsUITests` (Recent rows for a saved food, a deleted food and a quick entry each open on the first tap with the keyboard up, 4 rounds; logging again from a deleted food) passed on 2026-10-05. Scheduled-feeding materialization has no automated test. The lookup pipeline, rendered fallback and multi-source resolution have no automated tests (they need live services).
   The package camera, the model judge and the Log Food screens have no automated tests.
 - **`BackupRoundTripTests` fails** (checked 2026-10-16, also on commit 8dea341 without later
-  changes): the re-exported payload differs from the exported one. It has failed since the
-  scheduled-feeding change (d20d131); likely cause, not confirmed: the restore now runs
+  changes; still the only failure after the fold fixes, 33 of 34 pass): the re-exported payload
+  differs from the exported one. It has failed since the scheduled-feeding change (d20d131); likely cause, not confirmed: the restore now runs
   `ScheduleMaterializer`, which adds the restored schedule's entries up to the 60-day horizon.
-  The other 31 unit tests pass.
 - **iPhone Duo layouts are checked by hand only** (Device Hub poses can't be scripted). Not yet
   confirmed on a pose-by-pose basis: the Calories split in the flat Open pose (Book was checked on
-  2026-10-16), Weight and Profile two columns on the open display, the stacked Calories layout
+  2026-10-16; a thin line reported in Open couldn't be reproduced without that pose, and whether
+  Open reports the fold region is still unknown), Weight and Profile two columns on the open display, the stacked Calories layout
   in a partly folded turned pose, Mochi's per-configuration spots and her avoidance of the
   division band and occlusions, the camera after a pose change. Whether reserved regions update
   `onGeometryChange` on their own (without a size change) is assumed from the SDK guidance.
@@ -1716,26 +1716,45 @@ heights, icon slots and Mochi's sprite.
 | Settings, every form and sheet | Unchanged | Readable width, out of reserved regions | Same |
 
 ### Calories layout (`CaloriesLayoutResolver`)
-The screen's root reads the window once (`CaloriesWindowGeometry`: size, side insets, fold) and the
-resolver returns the layout. Checked in Book pose on 2026-10-16.
+The screen's root reads the window once (`CaloriesWindowGeometry`) and the resolver returns the
+layout. Everything is in **one coordinate space, the root's own** (origin at the safe area's
+top-left corner), because that's where SwiftUI reports the fold: the resolver takes the
+container frame (the whole window, safe-area strips included: the root's bounds grown by its
+insets), the content frame (the root's bounds) and the fold rect, all in that space, and returns
+pane rects in it. Checked in Book pose on 2026-10-16, light and dark.
 
 | Pose | Layout |
 |---|---|
-| Book and Open (regular width, the fold runs vertically) | **Split at the fold.** Leading pane, from the window's leading edge to the fold band: the date controls (fixed above the list, as a top safe-area inset) and the day's food list. Trailing pane, from the band to the window's trailing edge: the summary card (without the date controls), then the Daily Calories chart, which takes the height left (at least 200 pt, from `onScrollGeometryChange`) and scrolls with large text or a short window. The band shows only the grouped background. Each pane is its own `List`, scrolling on its own, with `contentMargins` from the resolver: the standard 20 pt from the band; the trailing pane's trailing margin is the action bar's width (the measured trailing safe-area inset, 84 pt in the simulator) + 20 pt, so its cards are narrower than the list's and clear of the bar. VoiceOver order: date controls, food list, summary, chart. |
+| Book and Open (regular width, the fold runs vertically) | **Split at the fold**, in the same place in both poses. Leading pane, from the window's leading edge to the fold band: the date controls (fixed above the list, as a top safe-area inset) and the day's food list. Trailing pane, from the band to the window's trailing edge: the summary card (without the date controls), then the Daily Calories chart, which takes the height left (at least 200 pt, from `onScrollGeometryChange`) and scrolls with large text or a short window. The band is empty and transparent. Each pane is its own `List`, scrolling on its own, with `contentMargins` from the resolver: the standard 20 pt from the band; the trailing pane's trailing margin is the action bar's width (the measured trailing safe-area inset, 84 pt in the simulator) + 20 pt, so its cards are narrower than the list's and clear of the bar. VoiceOver order: date controls, food list, summary, chart. |
 | Closed (compact width) | One list at the full width: summary (with the date controls), entries, chart. The same as an ordinary iPhone, unchanged. |
 | Rotated (regular width, the fold runs horizontally) | One list at the full width. With the fold **active** (partly folded), `SplitPanes(axis: .vertical)`: summary and chart above the band, entries below. |
 
+- **One background:** a single `systemGroupedBackground` layer at the screen's root fills the
+  whole window and ignores the safe areas. Every list on the screen hides its own background
+  (`.scrollContentBackground(.hidden)`; cards and rows keep their styling), and the fold band is
+  `Color.clear`, so the background runs unbroken across the fold in light and dark mode. Only
+  content (cards, rows, text, Mochi) keeps out of the band. *(Fixed 2026-10-16: the band was an
+  empty gap between the two lists' own backgrounds, so the window's white background showed through
+  as a bar; it was then painted grey for one commit, which this replaced.)*
 - **Fold position:** from a system API, iOS 27.1's division region
-  (`reservedRegions(kind: .division, options: .includeInactive)`), read even when inactive (Open
-  flat) and on every geometry change. In Book pose it reported x = 455.5, 40 pt wide, which
-  includes the region's 20 pt margins on each side. With no fold information (before iOS 27.1, or
-  none reported) a regular-width window that's wider than tall splits at its midpoint around a
-  `CaloriesLayoutResolver.fallbackFoldBandWidth` (40 pt) band; a taller one stays one column. The
-  hinge API (`UIHinge`) gives only angle and status, not the fold's position, so it isn't used.
+  (`reservedRegions(kind: .division, options: .includeInactive)`), read on every geometry change,
+  even when inactive (Open flat). Its frame is already in the root's coordinate space (SwiftUI
+  converts it; there's no screen-coordinate conversion to do) and is used as is. In Book pose it
+  reported x = 455.5, 40 pt wide (the region's 20 pt margins on each side included), i.e. centred
+  on the 951 pt window.
+  - The root remembers the last reported fold for each window size (relative to the window's
+    corner). A pose that reports none for that size (possibly Open flat; not yet observed) reuses
+    it, so the split doesn't move between Book and Open.
+  - With nothing known (before iOS 27.1, or never reported), a regular-width window that's wider
+    than tall splits at the centre of the full window (the screen, on iPhone), never of the safe
+    area, around a `CaloriesLayoutResolver.fallbackFoldBandWidth` (40 pt) band; a taller one stays
+    one column. On iPhone Duo that's where the fold is.
+  - The hinge API (`UIHinge`) gives only angle and status, not the fold's position, so it isn't
+    used. No private API.
 - Pose changes re-resolve live; the change animates with the default animation (none under Reduce
   Motion). The selected day and open sheets are kept; scroll position resets when switching
   between one column and the split.
-- The fold band is also given to Mochi (`MochiHome.calorieFoldBand`).
+- The fold band is also given to Mochi (`MochiHome.calorieFoldBand`), converted to window points.
 
 ### Mochi (§15)
 Her area excludes the safe area, the toolbar wherever it is (top row, or a vertical strip at the

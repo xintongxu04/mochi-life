@@ -271,13 +271,16 @@ turned. Screens adjust to the space they get:
 - **Open or Book** (the inner screen, flat or half open): the Calories screen
   splits exactly at the fold. On the left: the day arrows and the foods logged
   that day. On the right: the calorie summary, with the Daily Calories chart
-  below it filling the rest of the height. Nothing is drawn on the fold, and the
-  right-hand cards stay clear of the buttons down the right edge (so they're a
-  little narrower than the list). Each side scrolls on its own. The fold's
-  position comes from iOS; if iOS doesn't report it, the screen splits in the
-  middle. Weight shows the chart beside the list of weights, Mochi's profile
-  shows her photo and details beside her vaccinations and medical history, and
-  Saved Foods shows brands beside their products.
+  below it filling the rest of the height. Nothing is drawn on the fold: the
+  background runs straight across it with no bar or line, in light and dark
+  mode. The split sits on the fold in the same place whether the phone is flat
+  or half open, and the right-hand cards stay clear of the buttons down the
+  right edge (so they're a little narrower than the list). Each side scrolls on
+  its own. The fold's position comes from iOS; if iOS doesn't report it, the
+  screen splits in the middle of the screen, where the fold is. Weight shows
+  the chart beside the list of weights, Mochi's profile shows her photo and
+  details beside her vaccinations and medical history, and Saved Foods shows
+  brands beside their products.
 - **Open and turned** (Rotate): one column across the full width. If the phone
   is partly folded, the summary and chart sit above the fold and the day's
   foods below it.
