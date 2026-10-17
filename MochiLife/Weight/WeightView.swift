@@ -13,55 +13,56 @@ struct WeightView: View {
     @State private var isAddingEntry = false
     @Environment(\.catName) private var catName
 
-    @Environment(\.horizontalSizeClass) private var sizeClass
-    @State private var width: CGFloat = 0
-
     var body: some View {
-        content
-            .overlay {
-                if entries.isEmpty {
-                    ContentUnavailableView(
-                        "No weights yet",
-                        systemImage: "scalemass",
-                        description: Text("Tap + to log \(catName)'s first weight.")
-                    )
+        FoldAwareContainer { layout in
+            content(layout)
+        }
+        .navigationTitle("Weight")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Add Weight", systemImage: "plus") {
+                    isAddingEntry = true
                 }
             }
-            .onGeometryChange(for: CGFloat.self) { AdaptiveLayout.contentWidth(in: $0) } action: { width = $0 }
-            .navigationTitle("Weight")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Add Weight", systemImage: "plus") {
-                        isAddingEntry = true
-                    }
-                }
-            }
-            .sheet(isPresented: $isAddingEntry) {
-                AddWeightView(unit: unit)
-            }
+        }
+        .sheet(isPresented: $isAddingEntry) {
+            AddWeightView(unit: unit)
+        }
     }
 
-    /// One list (chart, then entries), or with 800 pt of regular width the unit and chart beside
-    /// the entries.
+    /// One list (chart, then entries), or, when the fold splits the screen, the unit and chart in
+    /// the leading (or top) pane and the entries in the other.
     @ViewBuilder
-    private var content: some View {
-        switch AdaptiveLayout.Columns(sizeClass: sizeClass, width: width) {
-        case .single:
+    private func content(_ layout: FoldLayout) -> some View {
+        if layout.isSplit {
+            FoldPanes(layout: layout) { pane in
+                List { chartSection }
+                    .paneMargins(pane)
+                    .safeAreaInset(edge: .top) { unitPicker }
+            } secondary: { pane in
+                List { entriesSection }
+                    .paneMargins(pane)
+                    .overlay { emptyState }
+            }
+        } else {
             List {
                 chartSection
                 entriesSection
             }
-            .readableContent()
+            .placedInColumn(of: layout)
             .safeAreaInset(edge: .top) { unitPicker }
-        case .two:
-            SplitPanes {
-                List { chartSection }
-                    .readableContent()
-                    .safeAreaInset(edge: .top) { unitPicker }
-            } secondary: {
-                List { entriesSection }
-                    .readableContent()
-            }
+            .overlay { emptyState }
+        }
+    }
+
+    @ViewBuilder
+    private var emptyState: some View {
+        if entries.isEmpty {
+            ContentUnavailableView(
+                "No weights yet",
+                systemImage: "scalemass",
+                description: Text("Tap + to log \(catName)'s first weight.")
+            )
         }
     }
 

@@ -44,7 +44,7 @@ struct MedicalRecordFormView: View {
                         .lineLimit(3...8)
                 }
             }
-            .readableContent()
+            .foldAwareColumn()
             .navigationTitle(record == nil ? "Add to History" : "Edit History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

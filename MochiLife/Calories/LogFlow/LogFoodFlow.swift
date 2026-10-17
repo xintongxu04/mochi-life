@@ -281,7 +281,7 @@ private struct LogFoodHomeView: View {
                 }
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .navigationTitle("Log Food")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -489,7 +489,7 @@ private struct CandidateListView: View {
                 Button("Add a Food by Hand", systemImage: "square.and.pencil", action: onManualAdd)
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .navigationTitle("Choose the Food")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -516,6 +516,7 @@ private struct LogWebLookupView: View {
                 switch session.phase {
                 case .input:
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .foldAwareMessage()
                 case let .running(stage):
                     VStack(spacing: 20) {
                         ProgressView().controlSize(.large)
@@ -527,6 +528,7 @@ private struct LogWebLookupView: View {
                         .buttonStyle(.bordered)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .foldAwareMessage()
                 case let .review(draft):
                     FoodEditorView(mode: .review(draft), onSavedFood: onFoodSaved) { saved in
                         if !saved { dismiss() }
@@ -562,5 +564,6 @@ private struct LogWebLookupView: View {
                 .buttonStyle(.borderedProminent)
             Button("Add the Food by Hand", systemImage: "square.and.pencil", action: onManualAdd)
         }
+        .foldAwareMessage()
     }
 }

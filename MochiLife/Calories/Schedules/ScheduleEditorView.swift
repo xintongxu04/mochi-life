@@ -123,7 +123,7 @@ struct ScheduleEditorView: View {
                 }
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .navigationTitle(isEditing ? "Edit Schedule" : "New Schedule")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

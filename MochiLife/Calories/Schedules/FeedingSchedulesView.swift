@@ -37,7 +37,6 @@ struct FeedingSchedulesView: View {
                 .accessibilityIdentifier("scheduleRow")
             }
         }
-        .readableContent()
         .overlay {
             if schedules.isEmpty {
                 ContentUnavailableView {
@@ -50,6 +49,7 @@ struct FeedingSchedulesView: View {
                 }
             }
         }
+        .foldAwareColumn()
         .navigationTitle("Schedules")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

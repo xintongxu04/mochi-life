@@ -32,7 +32,7 @@ struct SettingsView: View {
                 Text("Backup")
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
     }

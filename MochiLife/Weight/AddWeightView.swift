@@ -28,7 +28,7 @@ struct AddWeightView: View {
                         .foregroundStyle(.red)
                 }
             }
-            .readableContent()
+            .foldAwareColumn()
             .navigationTitle("Add Weight")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

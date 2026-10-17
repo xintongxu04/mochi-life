@@ -1,6 +1,7 @@
 import CoreGraphics
 
-/// Decides how the Calories screen is laid out for a window. Pure, no views; unit-tested.
+/// Decides how the Calories screen is laid out for a window, on top of the shared
+/// `FoldLayoutResolver`. Pure, no views; unit-tested.
 ///
 /// **Split** when the window has regular width and the fold runs vertically (iPhone Duo open,
 /// flat or in Book pose), so the screen is two halves side by side. The panes meet the fold band
@@ -17,16 +18,9 @@ import CoreGraphics
 /// top-left corner.
 enum CaloriesLayoutResolver {
     /// The fold band's width when no fold position is known.
-    static let fallbackFoldBandWidth: CGFloat = 40
+    static let fallbackFoldBandWidth = FoldLayoutResolver.fallbackFoldBandWidth
 
-    /// The display fold, as reported by the system (iOS 27.1 division region, margins included).
-    struct Fold: Equatable, Sendable {
-        var rect: CGRect
-        var isActive: Bool
-
-        /// Runs top to bottom, so the screen is two halves side by side.
-        var isVertical: Bool { rect.height > rect.width }
-    }
+    typealias Fold = FoldLayoutResolver.Fold
 
     struct Input: Equatable, Sendable {
         /// The whole window the screen covers (the screen on iPhone), safe-area strips included.
@@ -39,42 +33,13 @@ enum CaloriesLayoutResolver {
         var isRegularWidth: Bool
         /// The standard horizontal content margin.
         var margin: CGFloat
-
-        var leadingInset: CGFloat { max(0, contentFrame.minX - containerFrame.minX) }
-        var actionBarWidth: CGFloat { max(0, containerFrame.maxX - contentFrame.maxX) }
     }
 
+    /// The shared fold layout (`FoldLayoutResolver`), read as the Calories screen's layout.
     static func resolve(_ input: Input) -> CaloriesLayout {
-        guard input.isRegularWidth, let band = splitBand(for: input) else {
-            return .singleColumn(contentWidth: input.contentFrame.width, fold: input.fold)
-        }
-        let container = input.containerFrame
-        let leading = CGRect(x: container.minX, y: container.minY,
-                             width: max(0, band.minX - container.minX), height: container.height)
-        let trailing = CGRect(x: band.maxX, y: container.minY,
-                              width: max(0, container.maxX - band.maxX), height: container.height)
-        return .split(CaloriesLayout.Split(
-            leading: leading,
-            trailing: trailing,
-            leadingMargins: .init(leading: input.leadingInset + input.margin, trailing: input.margin),
-            trailingMargins: .init(leading: input.margin, trailing: input.actionBarWidth + input.margin)
-        ))
-    }
-
-    /// The vertical band the panes meet at: the reported fold if it runs vertically; the centre
-    /// of the full window if there's no fold information and the window is wider than tall;
-    /// otherwise nil.
-    private static func splitBand(for input: Input) -> CGRect? {
-        let container = input.containerFrame
-        if let fold = input.fold {
-            guard fold.isVertical else { return nil }
-            let minX = min(max(fold.rect.minX, container.minX), container.maxX)
-            let maxX = min(max(fold.rect.maxX, minX), container.maxX)
-            return CGRect(x: minX, y: container.minY, width: maxX - minX, height: container.height)
-        }
-        guard container.width > container.height else { return nil }
-        return CGRect(x: container.midX - fallbackFoldBandWidth / 2, y: container.minY,
-                      width: fallbackFoldBandWidth, height: container.height)
+        let foldLayout = FoldLayoutResolver.resolve(.init(containerFrame: input.containerFrame, contentFrame: input.contentFrame,
+                                                          fold: input.fold, isRegularWidth: input.isRegularWidth))
+        return CaloriesLayout(foldLayout, isRegularWidth: input.isRegularWidth, margin: input.margin)
     }
 }
 
@@ -85,6 +50,24 @@ enum CaloriesLayout: Equatable, Sendable {
     case singleColumn(contentWidth: CGFloat, fold: CaloriesLayoutResolver.Fold?)
     /// Two panes meeting at a vertical fold.
     case split(Split)
+
+    /// The Calories screen's reading of the shared fold layout: side by side is the split (with
+    /// regular width; compact width never splits), a fold side to side keeps one column (stacked
+    /// around an active fold), anything else is one column.
+    init(_ foldLayout: FoldLayout, isRegularWidth: Bool, margin: CGFloat) {
+        let contentWidth = foldLayout.content.width
+        guard isRegularWidth, foldLayout.arrangement == .sideBySide, let trailing = foldLayout.secondary else {
+            self = .singleColumn(contentWidth: contentWidth, fold: foldLayout.fold)
+            return
+        }
+        let leading = foldLayout.primary
+        self = .split(Split(
+            leading: leading.frame,
+            trailing: trailing.frame,
+            leadingMargins: .init(leading: leading.insets.leading + margin, trailing: leading.insets.trailing + margin),
+            trailingMargins: .init(leading: trailing.insets.leading + margin, trailing: trailing.insets.trailing + margin)
+        ))
+    }
 
     /// Horizontal content margins, measured from a pane's own edges (a list's content margins).
     struct Margins: Equatable, Sendable {

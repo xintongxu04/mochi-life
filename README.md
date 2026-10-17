@@ -268,26 +268,38 @@ turned. Screens adjust to the space they get:
 - **Closed** (the outer screen): the same one-column layout as on an ordinary
   iPhone, across the full width. iOS may move the buttons at the top into a
   strip down the right-hand side; Log Food stays there as a blue **+** button.
-- **Open or Book** (the inner screen, flat or half open): the Calories screen
-  splits exactly at the fold. On the left: the day arrows and the foods logged
-  that day. On the right: the calorie summary, with the Daily Calories chart
-  below it filling the rest of the height. Nothing is drawn on the fold: the
-  background runs straight across it with no bar or line, in light and dark
-  mode. The split sits on the fold in the same place whether the phone is flat
-  or half open, and the right-hand cards stay clear of the buttons down the
-  right edge (so they're a little narrower than the list). Each side scrolls on
-  its own. The fold's position comes from iOS; if iOS doesn't report it, the
-  screen splits in the middle of the screen, where the fold is. Weight shows
-  the chart beside the list of weights, Mochi's profile shows her photo and
-  details beside her vaccinations and medical history, and Saved Foods shows
-  brands beside their products.
-- **Open and turned** (Rotate): one column across the full width. If the phone
-  is partly folded, the summary and chart sit above the fold and the day's
-  foods below it.
-- Settings and every form are kept to a comfortable width in the middle of
-  wide screens.
-- Nothing is placed on the fold while the phone is partly folded, or under the
-  camera on the outer screen.
+- **Open or Book** (the inner screen, fold running top to bottom): the Calories
+  screen splits exactly at the fold. On the left: the day arrows and the foods
+  logged that day. On the right: the calorie summary, with the Daily Calories
+  chart below it filling the rest of the height. The right-hand cards stay
+  clear of the buttons down the right edge (so they're a little narrower than
+  the list), and each side scrolls on its own. The split sits on the fold in the
+  same place whether the phone is flat or half open.
+  - **Saved Foods:** the search box and the brands on the left, the chosen
+    brand's foods on the right.
+  - **Weight:** the chart on the left, the list of weights on the right.
+  - **Mochi's profile:** her photo and details on the left, vaccinations and
+    medical history on the right.
+  - **Every other screen and sheet** (Log Food, Add with AI, food details and
+    editing, Settings, Back Up and Restore, AI Lookup keys, schedules, forms):
+    one column on the left half.
+- **Turned** (fold running side to side):
+  - **Calories:** one column across the full width. If the phone is partly
+    folded, the summary and chart sit above the fold and the day's foods below.
+  - **Saved Foods:** the search box and brands on the top half, the chosen
+    brand's foods on the bottom half ("Pick a Brand" if none).
+  - **Weight and Mochi's profile:** chart or details on top, lists below.
+  - **Every other screen and sheet:** one column on the top half.
+  - **Searching** in Saved Foods or Log Food: the search box and the results
+    stay on the top half and the keyboard uses the bottom half. Nothing jumps
+    when the keyboard appears.
+- **On every screen and sheet:** the background runs straight across the fold
+  with no bar or line, in light and dark mode, and nothing (text, rows, buttons,
+  search boxes, Mochi) sits on the fold. The fold's position comes from iOS; if
+  iOS doesn't report it, wide screens split in the middle of the screen, where
+  the fold is.
+- Settings and every form are kept to a comfortable width on wide screens, and
+  nothing is placed under the camera on the outer screen.
 - **Mochi** is a little bigger on the open screen. She remembers one spot for
   the closed screen and another for the open screen, and moves to the right one
   when you fold, unfold or turn the phone. She never sits on the fold or on the

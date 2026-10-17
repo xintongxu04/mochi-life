@@ -117,7 +117,7 @@ struct FoodDetailView: View {
                 }
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .navigationTitle(food.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

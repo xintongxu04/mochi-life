@@ -39,23 +39,17 @@ struct SavedFoodsView: View {
     @State private var searchText = ""
     @State private var isAddingFood = false
     @State private var isAddingWithAI = false
-    @Environment(\.horizontalSizeClass) private var sizeClass
-    /// The brand shown in the second column (regular width).
+    /// The brand whose products show in the other pane when the fold splits the screen.
     @State private var selectedBrand: BrandSelection?
+    /// The search field used when the fold splits the screen (the system one sits in the
+    /// navigation bar, across the fold).
+    @FocusState private var isSearchFocused: Bool
 
-    private var brands: [(brand: String?, count: Int)] {
-        let grouped = Dictionary(grouping: foods, by: \.brand)
-        return grouped
-            .map { (brand: $0.key, count: $0.value.count) }
-            .sorted { first, second in
-                // Brands in alphabetical order, with "My foods" last.
-                switch (first.brand, second.brand) {
-                case (nil, _): false
-                case (_, nil): true
-                case let (first?, second?): first.localizedStandardCompare(second) == .orderedAscending
-                }
-            }
-    }
+    static let searchPrompt = "Search brand, line or food"
+
+    private var catalog: BrandCatalog { BrandCatalog(foods: foods) }
+
+    private var brands: [(brand: String?, count: Int)] { catalog.brands }
 
     private var searchResults: [Food] {
         foods.filter { FoodSearch.matches($0, query: searchText) }.sortedByName()
@@ -72,40 +66,24 @@ struct SavedFoodsView: View {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    /// Regular width (iPhone Duo open) browses in two columns: brands, then the chosen brand's
-    /// products grouped by line. Compact width pushes brand → line → product. Search results are
-    /// one list either way.
-    private var showsColumns: Bool { sizeClass == .regular && !isSearching && !foods.isEmpty }
+    private var currentBrand: BrandSelection? { catalog.current(selected: selectedBrand) }
 
-    private var currentBrand: BrandSelection? {
-        if let selectedBrand, brands.contains(where: { $0.brand == selectedBrand.brand }) { return selectedBrand }
-        return brands.first.map { BrandSelection(brand: $0.brand) }
-    }
-
+    /// With the fold top to bottom (Book, Open) or side to side (turned), brands and products are
+    /// two panes (`FoldPanes`); otherwise (iPhone Duo closed, an ordinary iPhone) one list that
+    /// pushes brand → line → product, with the system search field.
     var body: some View {
-        Group {
-            if showsColumns {
-                columns
+        FoldAwareContainer { layout in
+            if layout.isSplit {
+                panes(layout)
+                    // Two lists: the large title can't follow the one being scrolled, so it
+                    // would sit over the search row.
+                    .navigationBarTitleDisplayMode(.inline)
             } else {
-                list
+                list(layout)
+                    .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
+                                prompt: Self.searchPrompt)
             }
         }
-        .overlay {
-            if foods.isEmpty {
-                ContentUnavailableView(
-                    "No foods yet",
-                    systemImage: "fork.knife",
-                    description: Text("Tap + to add a food \(catName) eats.")
-                )
-            } else if isSearching && searchResults.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-            }
-        }
-        .searchable(
-            text: $searchText,
-            placement: .navigationBarDrawer(displayMode: .always),
-            prompt: "Search brand, line or food"
-        )
         .navigationTitle(isPicking ? "Choose a Food" : "Saved Foods")
         .toolbar {
             switch mode {
@@ -136,17 +114,11 @@ struct SavedFoodsView: View {
         }
     }
 
-    /// The compact-width list: brands to push, or search results.
-    private var list: some View {
+    /// The one-column list: brands to push, or search results.
+    private func list(_ layout: FoldLayout) -> some View {
         List {
             if isSearching {
-                ForEach(searchResults) { food in
-                    FoodRow(food: food, showsBrandAndLine: true)
-                }
-                .onDelete { offsets in
-                    FoodRow.delete(offsets.map { searchResults[$0] })
-                }
-                .deleteDisabled(isPickingFood)
+                searchResultRows
             } else {
                 quickEntrySection
                 ForEach(brands, id: \.brand) { brand in
@@ -157,36 +129,76 @@ struct SavedFoodsView: View {
                 }
             }
         }
-        .readableContent()
+        .placedInColumn(of: layout)
+        .overlay { emptyState }
     }
 
-    /// Brands beside the chosen brand's products (regular width). Tapping a brand shows its
-    /// products; tapping a product opens it as usual.
-    private var columns: some View {
-        SplitPanes {
+    /// The fold splits the screen: the search field and the brands (or the results) in the
+    /// leading pane, or the top pane when the fold runs side to side; the chosen brand's products
+    /// in the other pane, clear of the action bar. While searching with the fold side to side, the
+    /// bottom pane is left to the keyboard: only the background shows there.
+    private func panes(_ layout: FoldLayout) -> some View {
+        FoldPanes(layout: layout) { pane in
             List {
-                quickEntrySection
-                Section("Brands") {
-                    ForEach(brands, id: \.brand) { brand in
-                        let isSelected = currentBrand?.brand == brand.brand
-                        Button {
-                            selectedBrand = BrandSelection(brand: brand.brand)
-                        } label: {
-                            LabeledContent(brand.brand ?? Food.noBrandTitle, value: "\(brand.count)")
-                                .foregroundStyle(.primary)
+                // The search field: the list's first row, at the top of this pane.
+                Section {
+                    PaneSearchField(text: $searchText, prompt: Self.searchPrompt, isFocused: $isSearchFocused)
+                }
+                if isSearching {
+                    searchResultRows
+                } else {
+                    quickEntrySection
+                    Section("Brands") {
+                        ForEach(brands, id: \.brand) { brand in
+                            let isSelected = currentBrand?.brand == brand.brand
+                            Button {
+                                selectedBrand = BrandSelection(brand: brand.brand)
+                            } label: {
+                                LabeledContent(brand.brand ?? Food.noBrandTitle, value: "\(brand.count)")
+                                    .foregroundStyle(.primary)
+                            }
+                            .listRowBackground(isSelected ? Color.accentColor.opacity(0.15) : nil)
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
+                            .accessibilityIdentifier("brandRow")
                         }
-                        .listRowBackground(isSelected ? Color.accentColor.opacity(0.15) : nil)
-                        .accessibilityAddTraits(isSelected ? .isSelected : [])
-                        .accessibilityIdentifier("brandRow")
                     }
                 }
             }
-            .readableContent()
-        } secondary: {
-            if let currentBrand {
+            .paneMargins(pane)
+            .overlay { emptyState }
+        } secondary: { pane in
+            if layout.isStacked && (isSearching || isSearchFocused) {
+                Color.clear
+            } else if let currentBrand {
                 BrandProductsList(brand: currentBrand.brand)
-                    .readableContent()
+                    .paneMargins(pane)
+            } else if !foods.isEmpty {
+                ContentUnavailableView("Pick a Brand", systemImage: "hand.tap",
+                                       description: Text("Its foods show here."))
             }
+        }
+    }
+
+    private var searchResultRows: some View {
+        ForEach(searchResults) { food in
+            FoodRow(food: food, showsBrandAndLine: true)
+        }
+        .onDelete { offsets in
+            FoodRow.delete(offsets.map { searchResults[$0] })
+        }
+        .deleteDisabled(isPickingFood)
+    }
+
+    @ViewBuilder
+    private var emptyState: some View {
+        if foods.isEmpty {
+            ContentUnavailableView(
+                "No foods yet",
+                systemImage: "fork.knife",
+                description: Text("Tap + to add a food \(catName) eats.")
+            )
+        } else if isSearching && searchResults.isEmpty {
+            ContentUnavailableView.search(text: searchText)
         }
     }
 
@@ -274,7 +286,7 @@ struct BrandFoodsView: View {
                     }
                     .accessibilityIdentifier("lineRow")
                 }
-                .readableContent()
+                .foldAwareColumn()
             }
         }
         .navigationTitle(brand ?? Food.noBrandTitle)
@@ -294,25 +306,15 @@ struct LineFoodsView: View {
     }
 }
 
-/// One brand's products, grouped under their lines, for the second column of the regular-width
-/// browser. Foods without a line come last under "Other" (no heading if the brand has no lines).
+/// One brand's products, grouped under their lines, for the products pane when the fold splits
+/// the screen. Foods without a line come last under "Other" (no heading if the brand has no lines).
 private struct BrandProductsList: View {
     let brand: String?
 
     @Environment(\.isPickingFood) private var isPickingFood
     @Query private var allFoods: [Food]
 
-    private var lines: [(line: String?, foods: [Food])] {
-        Dictionary(grouping: allFoods.filter { $0.brand == brand }, by: \.line)
-            .map { (line: $0.key, foods: $0.value.sortedByName()) }
-            .sorted { first, second in
-                switch (first.line, second.line) {
-                case (nil, _): false
-                case (_, nil): true
-                case let (first?, second?): first.localizedStandardCompare(second) == .orderedAscending
-                }
-            }
-    }
+    private var lines: [(line: String?, foods: [Food])] { BrandCatalog(foods: allFoods).lines(for: brand) }
 
     var body: some View {
         let lines = lines
@@ -360,12 +362,12 @@ private struct FoodsList: View {
             }
             .deleteDisabled(isPickingFood)
         }
-        .readableContent()
         .overlay {
             if foods.isEmpty {
                 ContentUnavailableView("No foods here", systemImage: "fork.knife")
             }
         }
+        .foldAwareColumn()
     }
 }
 
@@ -405,5 +407,66 @@ private struct FoodRow: View {
             context.delete(food)
         }
         Persistence.save(context)
+    }
+}
+
+/// Saved foods grouped for browsing: brands (alphabetical, "My foods" last) and one brand's products
+/// under their lines. Pure; the products pane shows `lines(for: current(selected:))`.
+struct BrandCatalog {
+    let foods: [Food]
+
+    var brands: [(brand: String?, count: Int)] {
+        Dictionary(grouping: foods, by: \.brand)
+            .map { (brand: $0.key, count: $0.value.count) }
+            .sorted { Self.nilLast($0.brand, $1.brand) }
+    }
+
+    /// The brand whose products show: the one picked, while it still has foods, else the first.
+    func current(selected: BrandSelection?) -> BrandSelection? {
+        if let selected, foods.contains(where: { $0.brand == selected.brand }) { return selected }
+        return brands.first.map { BrandSelection(brand: $0.brand) }
+    }
+
+    /// One brand's products by line (alphabetical, foods without a line last), each line's foods
+    /// sorted by name.
+    func lines(for brand: String?) -> [(line: String?, foods: [Food])] {
+        Dictionary(grouping: foods.filter { $0.brand == brand }, by: \.line)
+            .map { (line: $0.key, foods: $0.value.sortedByName()) }
+            .sorted { Self.nilLast($0.line, $1.line) }
+    }
+
+    private static func nilLast(_ first: String?, _ second: String?) -> Bool {
+        switch (first, second) {
+        case (nil, _): false
+        case (_, nil): true
+        case let (first?, second?): first.localizedStandardCompare(second) == .orderedAscending
+        }
+    }
+}
+
+/// A search field row inside a pane (the system's sits in the navigation bar, across the fold),
+/// like Log Food's.
+private struct PaneSearchField: View {
+    @Binding var text: String
+    let prompt: String
+    var isFocused: FocusState<Bool>.Binding
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            TextField(prompt, text: $text)
+                .focused(isFocused)
+                .submitLabel(.search)
+                .autocorrectionDisabled()
+                .accessibilityIdentifier("savedFoodsSearch")
+            if !text.isEmpty {
+                Button("Clear Search", systemImage: "xmark.circle.fill") { text = "" }
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
+            }
+        }
     }
 }

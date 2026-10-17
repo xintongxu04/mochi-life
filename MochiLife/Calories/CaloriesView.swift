@@ -198,54 +198,24 @@ private struct DayEntriesList<Controls: View>: View {
 
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The window as this screen measures it: its full frame, the safe part and the fold.
-    @State private var window = CaloriesWindowGeometry()
-    /// The fold last reported for each window size, relative to the window's corner, so a pose
-    /// that reports none (or differs) keeps the split where the fold really is.
-    @State private var knownFolds: [CaloriesWindowGeometry.SizeKey: CGRect] = [:]
     /// The chart's height in the split layout's trailing pane: the room left under the summary,
     /// at least 200 pt.
     @State private var chartHeight = CalorieChartView.defaultChartHeight
 
-    /// The fold the system reports now, else the one it last reported for this window size.
-    private var fold: CaloriesLayoutResolver.Fold? {
-        if let fold = window.fold { return fold }
-        guard let known = knownFolds[window.sizeKey] else { return nil }
-        let container = window.containerFrame
-        return .init(rect: known.offsetBy(dx: container.minX, dy: container.minY), isActive: false)
-    }
-
-    private var layout: CaloriesLayout {
-        CaloriesLayoutResolver.resolve(.init(
-            containerFrame: window.containerFrame, contentFrame: window.contentFrame, fold: fold,
-            isRegularWidth: sizeClass == .regular, margin: AdaptiveLayout.minimumMargin
-        ))
-    }
-
     var body: some View {
-        let layout = layout
-        CalorieTargetReader { target in
-            content(target: target, layout: layout)
-        }
-        .animation(reduceMotion ? nil : .default, value: layout)
-        // One background for the whole window. The lists and the fold band are transparent over
-        // it, so nothing shows at the fold.
-        .background {
-            Color(uiColor: .systemGroupedBackground)
-                .ignoresSafeArea()
-        }
-        // The screen's root reads the window once and passes the layout down.
-        .onGeometryChange(for: CaloriesWindowGeometry.self) { CaloriesWindowGeometry.read($0) } action: { geometry in
-            window = geometry
-            if let fold = geometry.fold {
-                let container = geometry.containerFrame
-                knownFolds[geometry.sizeKey] = fold.rect.offsetBy(dx: -container.minX, dy: -container.minY)
+        // The shared fold-aware root: measures the window and the fold, draws the one background
+        // (the lists hide their own, so nothing shows at the fold) and passes the layout down.
+        FoldAwareContainer { foldLayout in
+            let layout = CaloriesLayout(foldLayout, isRegularWidth: sizeClass == .regular, margin: AdaptiveLayout.minimumMargin)
+            CalorieTargetReader { target in
+                content(target: target, layout: layout, foldLayout: foldLayout)
             }
-        }
-        // Floating Mochi keeps out of whichever fold band the layout uses (in window points).
-        .onChange(of: layout.foldBand, initial: true) { _, band in
-            let container = window.containerFrame
-            home.calorieFoldBand = band?.offsetBy(dx: -container.minX, dy: -container.minY)
+            .animation(reduceMotion ? nil : .default, value: layout)
+            // Floating Mochi keeps out of whichever fold band the layout uses (in window points).
+            .onChange(of: layout.foldBand.map { $0.offsetBy(dx: -foldLayout.container.minX, dy: -foldLayout.container.minY) },
+                      initial: true) { _, band in
+                home.calorieFoldBand = band
+            }
         }
         // Outside the layout switch, so folding, unfolding or turning keeps an open sheet.
         .onChange(of: entryBeingEdited != nil) { _, isEditing in home.isEditingEntry = isEditing }
@@ -276,24 +246,22 @@ private struct DayEntriesList<Controls: View>: View {
     }
 
     @ViewBuilder
-    private func content(target: CalorieTarget, layout: CaloriesLayout) -> some View {
+    private func content(target: CalorieTarget, layout: CaloriesLayout, foldLayout: FoldLayout) -> some View {
         switch layout {
         case let .split(split):
             splitPanes(split, target: target)
         case .singleColumn where layout.stacksAroundFold:
             // iPhone Duo open, turned and partly folded: the same two parts above and below the
             // fold, so nothing sits in the band.
-            SplitPanes(axis: .vertical) {
+            FoldPanes(layout: foldLayout) { _ in
                 List {
                     summarySection(target: target, showsDayControls: true)
                     chartSection(target: target)
                 }
-                .scrollContentBackground(.hidden)
-            } secondary: {
+            } secondary: { _ in
                 List {
                     entriesSection
                 }
-                .scrollContentBackground(.hidden)
             }
         case .singleColumn:
             // Today's iPhone layout at the full available width (also iPhone Duo closed, and open
@@ -303,14 +271,13 @@ private struct DayEntriesList<Controls: View>: View {
                 entriesSection
                 chartSection(target: target)
             }
-            .scrollContentBackground(.hidden)
         }
     }
 
     /// Two panes meeting at the fold: the day's foods on the leading side (under the date
     /// controls), the summary and the chart on the trailing side, each scrolling on its own.
     /// Nothing is drawn in the fold band, and the lists draw no background of their own: the
-    /// screen's one background shows through both and the band. Each pane's list sets its margins
+    /// screen's one background (`FoldAwareContainer`) shows through both and the band. Each pane's list sets its margins
     /// from the layout: the standard margin from the band, and the trailing pane's also clear the
     /// action bar. VoiceOver reads the food list, then the summary, then the chart.
     private func splitPanes(_ split: CaloriesLayout.Split, target: CalorieTarget) -> some View {
@@ -319,7 +286,6 @@ private struct DayEntriesList<Controls: View>: View {
             List {
                 entriesSection
             }
-            .scrollContentBackground(.hidden)
             .contentMargins(.leading, split.leadingMargins.leading, for: .scrollContent)
             .contentMargins(.trailing, split.leadingMargins.trailing, for: .scrollContent)
             .safeAreaInset(edge: .top, spacing: 0) {
@@ -340,7 +306,6 @@ private struct DayEntriesList<Controls: View>: View {
                 summarySection(target: target, showsDayControls: false)
                 chartSection(target: target, chartHeight: chartHeight)
             }
-            .scrollContentBackground(.hidden)
             .contentMargins(.leading, split.trailingMargins.leading, for: .scrollContent)
             .contentMargins(.trailing, split.trailingMargins.trailing, for: .scrollContent)
             // The chart takes the height the summary leaves (at least 200 pt); with large text or
@@ -436,45 +401,6 @@ private struct DayEntriesList<Controls: View>: View {
                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
                 onSwipe(value.translation.width > 0 ? -1 : 1)
             }
-    }
-}
-
-/// The window geometry the Calories layout depends on, in the screen root's own coordinate space
-/// (origin at the safe area's top-left corner), which is where SwiftUI reports the fold.
-private struct CaloriesWindowGeometry: Equatable, Sendable {
-    /// The whole window, safe-area strips included (the screen, on iPhone).
-    var containerFrame = CGRect.zero
-    /// The part inside the safe area: the root's own bounds.
-    var contentFrame = CGRect.zero
-    /// iOS 27.1's division region, used as reported: it's already in this coordinate space.
-    var fold: CaloriesLayoutResolver.Fold?
-
-    /// Identifies a window size, for remembering its fold.
-    struct SizeKey: Hashable, Sendable {
-        var width: CGFloat
-        var height: CGFloat
-    }
-
-    var sizeKey: SizeKey { SizeKey(width: containerFrame.width, height: containerFrame.height) }
-
-    /// Read from the screen's root, whose frame is the window inside its safe area and whose
-    /// insets are the strips around it (`AdaptiveLayout.contentWidth`), so the window is the
-    /// bounds grown by the insets: never the midpoint of the safe area. Insets, not positions,
-    /// so push and pop animations can't change it. The fold is read even while inactive (iPhone
-    /// Duo open flat), on every geometry change because it can arrive a few layout passes late.
-    nonisolated static func read(_ proxy: GeometryProxy) -> CaloriesWindowGeometry {
-        let insets = proxy.safeAreaInsets
-        var geometry = CaloriesWindowGeometry(
-            containerFrame: CGRect(x: -insets.leading, y: -insets.top,
-                                   width: proxy.size.width + insets.leading + insets.trailing,
-                                   height: proxy.size.height + insets.top + insets.bottom),
-            contentFrame: CGRect(origin: .zero, size: proxy.size)
-        )
-        if #available(iOS 27.1, *),
-           let region = proxy.reservedRegions(kind: .division, options: .includeInactive).first {
-            geometry.fold = CaloriesLayoutResolver.Fold(rect: region.frame, isActive: region.isActive)
-        }
-        return geometry
     }
 }
 

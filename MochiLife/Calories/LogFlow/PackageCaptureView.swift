@@ -6,8 +6,8 @@ import SwiftUI
 /// choosing a photo from the library always works (also in the simulator). Images are processed
 /// in memory only and never stored or uploaded.
 ///
-/// The preview and the controls keep out of the safe area and of any active reserved region
-/// (iPhone Duo's camera and status occlusions, and its division band).
+/// The preview and the controls keep out of the safe area, the fold and the camera and status
+/// occlusions (`foldAwareColumn`).
 struct PackageCaptureView: View {
     /// Called with the recognized lines (and their letter heights), or not at all on Cancel.
     let onRecognized: ([PackageTextReader.Line]) -> Void
@@ -29,7 +29,6 @@ struct PackageCaptureView: View {
                     unavailable(reason)
                 } else if hasCamera {
                     PackageCameraPreview(controller: camera)
-                        .avoidingReservedRegions()
                         .accessibilityLabel("Camera view. Point at the front of the package.")
                         .overlay {
                             if camera.status == .starting { ProgressView() }
@@ -51,8 +50,9 @@ struct PackageCaptureView: View {
                     controls
                 }
                 .padding()
-                .avoidingReservedRegions()
             }
+            // Preview and controls in one pane, clear of the fold and the occlusions.
+            .foldAwareColumn(scrolls: false, limitsWidth: false, background: Color(uiColor: .systemBackground))
             .navigationTitle("Read Package")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

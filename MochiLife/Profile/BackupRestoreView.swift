@@ -81,7 +81,7 @@ struct BackupRestoreView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .navigationTitle("Back Up and Restore")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $isImporting, allowedContentTypes: [.mochiBackup]) { result in
@@ -152,6 +152,7 @@ struct RestoreFlowView: View {
                     } actions: {
                         Button("Done") { dismiss() }.buttonStyle(.borderedProminent)
                     }
+                    .foldAwareMessage()
                 case let .failed(message):
                     ContentUnavailableView {
                         Label("Can't Restore", systemImage: "exclamationmark.triangle")
@@ -160,6 +161,7 @@ struct RestoreFlowView: View {
                     } actions: {
                         Button("Close") { dismiss() }
                     }
+                    .foldAwareMessage()
                 }
             }
             .navigationTitle("Restore Backup")
@@ -193,6 +195,7 @@ struct RestoreFlowView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .foldAwareMessage()
     }
 
     private func summary(_ prepared: PreparedRestore) -> some View {
@@ -229,7 +232,7 @@ struct RestoreFlowView: View {
                 Text("Everything on this iPhone is replaced by the backup. A safety backup of the current data is saved first, and you can restore it from Back Up and Restore.")
             }
         }
-        .readableContent()
+        .foldAwareColumn()
         .confirmationDialog("Replace all data on this iPhone?", isPresented: $isConfirming, titleVisibility: .visible) {
             Button("Replace All Data", role: .destructive) { restore(prepared) }
             Button("Cancel", role: .cancel) {}

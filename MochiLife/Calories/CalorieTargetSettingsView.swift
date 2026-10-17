@@ -66,7 +66,7 @@ struct CalorieTargetSettingsView: View {
                     Text("Based on the Merck Veterinary Manual. The estimate is a starting point, not veterinary advice.")
                 }
             }
-            .readableContent()
+            .foldAwareColumn()
         }
         .navigationTitle("Daily Calories")
         .navigationBarTitleDisplayMode(.inline)

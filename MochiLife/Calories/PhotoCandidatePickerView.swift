@@ -29,10 +29,12 @@ struct PhotoCandidatePickerView: View {
                 case .loading:
                     ProgressView("Finding photos…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .foldAwareMessage()
                 case let .ready(candidates):
                     grid(candidates)
                 case let .empty(message):
                     ContentUnavailableView("No Photos Found", systemImage: "photo", description: Text(message))
+                        .foldAwareMessage()
                 case .needsKey:
                     ContentUnavailableView {
                         Label("Brave Search Key Needed", systemImage: "key")
@@ -42,6 +44,7 @@ struct PhotoCandidatePickerView: View {
                         Button("Open AI Lookup Settings") { isShowingSettings = true }
                             .buttonStyle(.borderedProminent)
                     }
+                    .foldAwareMessage()
                 }
             }
             .navigationTitle("Find a Photo")
@@ -77,7 +80,7 @@ struct PhotoCandidatePickerView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
         }
-        .readableContent()
+        .foldAwareColumn(background: Color(uiColor: .systemBackground))
     }
 
     private func cell(_ candidate: ImageCandidate, number: Int, of total: Int) -> some View {

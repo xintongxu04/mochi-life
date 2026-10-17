@@ -181,7 +181,7 @@ struct AddWithAIView: View {
                 Text("\(AILookupLimit.remainingToday) of \(AILookupLimit.dailyCap) lookups left today.")
             }
         }
-        .readableContent()
+        .foldAwareColumn()
     }
 
     private func progressView(_ stage: LookupStage) -> some View {
@@ -197,6 +197,7 @@ struct AddWithAIView: View {
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .contain)
+        .foldAwareMessage()
     }
 
     private var notFoundView: some View {
@@ -209,6 +210,7 @@ struct AddWithAIView: View {
                 .buttonStyle(.borderedProminent)
             Button("Search Again") { session.phase = .input }
         }
+        .foldAwareMessage()
     }
 
     private func failureView(_ failure: LookupFailure) -> some View {
@@ -227,6 +229,7 @@ struct AddWithAIView: View {
             Button("Back") { session.phase = .input }
             Button("Enter Manually") { isAddingManually = true }
         }
+        .foldAwareMessage()
     }
 
     private func readPhoto(_ data: Data) async {

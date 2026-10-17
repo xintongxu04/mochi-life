@@ -61,7 +61,8 @@ struct BackupRoundTripTests {
         quick.kind = .treat
         context.insert(quick)
 
-        // A feeding schedule already caught up to today, and one entry it made.
+        // A feeding schedule already caught up (to the rolling horizon, today + 60 days), and one
+        // entry it made.
         let schedule = FeedingSchedule(foodName: aiFood.name, measureRawValue: "containers", kilocaloriesPerOccurrence: 36.15,
                                        weekdays: Weekdays.weekdaysOnly, startDate: Calendar.current.startOfDay(for: date), createdAt: date)
         schedule.record(aiFood)
@@ -70,7 +71,7 @@ struct BackupRoundTripTests {
         schedule.label = "Morning"
         // One day (a Friday) so the restore's fill-in has nothing new to add: no duplicates.
         schedule.endDate = Calendar.current.startOfDay(for: date)
-        schedule.lastMaterializedDay = Calendar.current.startOfDay(for: .now)
+        schedule.lastMaterializedDay = ScheduleMaterializer(context: context).horizon()
         context.insert(schedule)
         context.insert(schedule.makeEntry(for: date))
 

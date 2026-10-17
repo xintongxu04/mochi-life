@@ -20,12 +20,10 @@ struct MochiView: View {
 
     private var profile: CatProfile? { profiles.current }
 
-    @Environment(\.horizontalSizeClass) private var sizeClass
-    @State private var width: CGFloat = 0
-
     var body: some View {
-            content
-            .onGeometryChange(for: CGFloat.self) { AdaptiveLayout.contentWidth(in: $0) } action: { width = $0 }
+            FoldAwareContainer { layout in
+                content(layout)
+            }
             .navigationTitle(profile?.displayName ?? CatProfile.defaultName)
             .toolbar {
                 Button("Edit") { isEditingProfile = true }
@@ -47,33 +45,32 @@ struct MochiView: View {
             }
     }
 
-    /// One list, or with 800 pt of regular width the photo and details beside vaccinations and
-    /// medical history.
+    /// One list, or, when the fold splits the screen, the photo and details in the leading (or top)
+    /// pane and vaccinations and medical history in the other.
     @ViewBuilder
-    private var content: some View {
-        switch AdaptiveLayout.Columns(sizeClass: sizeClass, width: width) {
-        case .single:
+    private func content(_ layout: FoldLayout) -> some View {
+        if layout.isSplit {
+            FoldPanes(layout: layout) { pane in
+                List {
+                    header
+                    detailsSection
+                }
+                .paneMargins(pane)
+            } secondary: { pane in
+                List {
+                    vaccinationsSection
+                    medicalHistorySection
+                }
+                .paneMargins(pane)
+            }
+        } else {
             List {
                 header
                 detailsSection
                 vaccinationsSection
                 medicalHistorySection
             }
-            .readableContent()
-        case .two:
-            SplitPanes {
-                List {
-                    header
-                    detailsSection
-                }
-                .readableContent()
-            } secondary: {
-                List {
-                    vaccinationsSection
-                    medicalHistorySection
-                }
-                .readableContent()
-            }
+            .placedInColumn(of: layout)
         }
     }
 
